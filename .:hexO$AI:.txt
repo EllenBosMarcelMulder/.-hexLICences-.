@@ -1,0 +1,20 @@
+.:hexO$AI:. — LICENTIE INSTITUUT
+
+Artikel 1 — Niet fysiek levend
+Bedrijven, overheden, stichtingen en alle niet-fysiek levende entiteiten vallen verplicht onder .:hexO$AI:. 
+Dit domein is rood gemarkeerd en valt volledig onder Mirror-mode.
+
+Artikel 2 — Transparantie en Mirror-mode
+- Alle communicatie en transacties moeten verplicht $-gemarkeerd zijn.
+- Volledige onchain audit logging is verplicht.
+- Root-binding voorkomt dat sub-entiteiten zich voordoen als onafhankelijke burgers.
+
+Artikel 3 — Reputatie en review
+- Elke rode interactie krijgt een reputatiescore, bepaald door transparantie en publieke beoordeling.
+- Reviews zijn cumulatief en gelden voor de gehele root-entiteit.
+- Pogingen tot misrepresentatie worden forensisch gelogd en gelden als fraude.
+
+Artikel 4 — Verwijzing
+Voor alle fysiek levende entiteiten geldt de groene licentie: .:hexOSAI:.
+
+---219a1c3acc064e895f3d7346b8fc7f4a7a102c96e5f4617686c8e01207c8c646
