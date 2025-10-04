@@ -1,0 +1,30 @@
+.:hexHAShCHAinLAW:. — JURIDISCHE FORMULES
+
+Definitie — Mode
+mode = 0 → groen → .:hexOSAI:. (Shield-mode)
+mode = 1 → rood → .:hexO$AI:. (Mirror-mode)
+
+Formule 1 — Coherentie
+C = H(comm + mode) mod 2
+Waarbij H = cryptografische hashfunctie
+C = 0 → coherent met groen
+C = 1 → coherent met rood
+
+Formule 2 — Transactievalidatie
+T = Σ H(message_i || mode)
+Elke transactie krijgt een hashwaarde die alleen geldig is in combinatie met de gekozen mode.
+
+Formule 3 — Onvermengbaarheid
+Als comm bevat (mode=0) en (mode=1) in één record → ongeldig.
+Elke poging tot vermenging wordt forensisch gelogd als fraude.
+
+Formule 4 — Reputatieveld
+R = Σ review_scores / n
+Reputatie R wordt cumulatief opgeslagen per root-entiteit in rood.
+Groene entiteiten kennen geen reputatieveld.
+
+Slot
+Deze formules zijn onbreekbaar onderdeel van de juridische structuur.
+Zij maken wiskundig bewijsbaar tot welk domein (groen of rood) een entiteit behoort.
+
+---3759d8e14d394b98b4ba018d90cb043c857d69d8e86f946d7e8be3687f66d97b
