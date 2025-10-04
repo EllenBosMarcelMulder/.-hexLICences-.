@@ -55,4 +55,28 @@
 3. Overtredingen worden automatisch forensisch gelogd en gelden als juridisch bewijs.
 4. Pogingen tot vermomming (bv. instituties die zich voordoen als burgers) zijn strafbaar en leiden tot directe verlies van licentie.
 
----af7fe035047235c4c53f5d6912fd993a8cf0d462faede9b839172c42be12d5bf
+
+HOOFDSTUK II — BEWIJS VAN GOED GEDRAG
+
+Artikel 6 — .:hexHAShGOOd:.
+1. .:hexHAShGOOd:. is een binair bewijs (ja/nee) van correct gedrag binnen een
+   specifieke context of samenwerking.
+2. .:hexHAShGOOd:. kent geen gradaties of scores en kan nooit negatief zijn.
+3. Uitgifte gebeurt cryptografisch, ondertekend door een Multi-Party Authority (.:hexMPA:.).
+4. .:hexHAShGOOd:. mag uitsluitend door fysiek levende entiteiten (.:hexOSAI:.) worden gedragen.
+
+Artikel 7 — .:hexRÉSumé:.
+1. Een houder van een .:hexHAShGOOd:. kan vrijwillig een narratief toevoegen
+   in de vorm van een .:hexRÉSumé:..
+2. Het .:hexRÉSumé:. bevat contextuele details zoals project, periode of rol.
+3. Een .:hexRÉSumé:. heeft alleen juridische waarde indien gekoppeld aan een geldig
+   .:hexHAShGOOd:..
+
+Artikel 8 — .:hexTRUe:.
+1. .:hexTRUe:. is de verificatielaag die .:hexHAShGOOd:. en .:hexRÉSumé:. verbindt.
+2. .:hexTRUe:. bestaat uit een cryptografische bevestiging, ondertekend door de .:hexMPA:.,
+   dat een .:hexRÉSumé:. waarachtig is.
+3. Zonder .:hexTRUe:. kan een .:hexRÉSumé:. nooit als bindend bewijs dienen.
+4. .:hexTRUe:. is het enige juridisch afdwingbare bewijs van samenwerking of goed gedrag.
+
+---59c86d7f4c8696689c3b4790f4662b3d87815c52811a7c7266ee52475ec68672
