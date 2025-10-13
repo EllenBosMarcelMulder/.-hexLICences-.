@@ -1,0 +1,45 @@
+Preamble
+This Work (the "Technology") — including design files, source code, documentation, schematics, and associated artifacts — is hereby dedicated to the common heritage of humankind. The Licensor's intent is to enable broad civilian and humanitarian uses while explicitly forbidding institutional, corporate, and military exploitation.
+
+1. Definitions
+1.1 "Technology" — the materials, files, and documentation delivered under this License.
+1.2 "Natural Person" — a living human being who accepts this License as an individual.
+1.3 "Military Use" — the design, development, manufacture, modification, or operational use of weapons, directed-energy systems, offensive cyber capabilities, intelligence exploitation tools, surveillance systems used for repression, or use by armed forces, defense agencies, intelligence services, or their contractors.
+1.4 "Institutional Use" — use by governments, government agencies, departments, ministries, corporations, contractors, research institutions, NGOs, foundations, or any legal entity other than a living natural person.
+1.5 "Humanitarian / Civil Use" — scientific research, medical, public health, educational, climate, civilian communications, environmental protection, non-military infrastructure, and other uses intended to benefit humanity and not to enable conflict or repression.
+
+2. Grant
+2.1 Subject to the terms and conditions below, Licensor hereby grants to each qualifying Natural Person, worldwide, royalty-free, non-exclusive rights to use, reproduce, study, and modify the Technology solely for Humanitarian / Civil Use, provided such use is not Institutional or Military as defined above.
+2.2 Each license is personal to the Natural Person who accepts the License and is non-transferable except as specified in Section 7. The License covers only the Natural Person's acts and does not extend to any Institution, company, NGO, or government entity.
+
+3. Qualification & Acceptance
+3.1 By clicking the acceptance mechanism and submitting the required acceptance record, the Natural Person attests under penalty of perjury that they are a living human being and that they will not transfer the Technology or any derived works to Institutions, corporations, NGOs, governments, military bodies, or contractors for any purpose that would enable Military Use or Institutional Use.
+3.2 Each acceptance will produce a verifiable acceptance record (name, UTC timestamp, SHA-256 digest of the licensed file, and acceptance signature/record), which the Licensor may publish or archive for enforcement.
+
+4. Prohibition of Institutional and Military Use
+4.1 Institutional Use and Military Use are strictly prohibited. Any attempt to utilize, integrate, adapt, transfer, or otherwise operationalize the Technology for Institutional or Military Use constitutes an immediate material breach of this License.
+4.2 The Licensor reserves the right to revoke an individual's license if Licensor reasonably determines the licensee has violated these terms. Revocation will be accompanied by an entry in the Licensor's public audit log indicating the reason for revocation.
+
+5. Transparency & Audit
+5.1 Natural Persons who deploy or publish derivative works at scale (commercial distribution, public deployments, or large-scale installations) must provide transparency disclosures describing end-uses, end-users, and supply-chain partners upon reasonable request. This requirement aims to prevent indirect Institutional/Military misuse.
+5.2 Licensor may commission third-party audits upon reasonable suspicion of misuse. Licensees shall cooperate with such audits.
+
+6. Enforcement
+6.1 This License is enforceable in any competent jurisdiction. Licensor may pursue injunctive relief, civil remedies, and other available legal remedies against violators.
+6.2 If a governmental secrecy, export-control, or other order restricts Licensor's ability to publish or maintain records, Licensor will record that action publicly and pursue remedies to limit overbroad restrictions.
+
+7. Attribution & Stewardship
+7.1 All derivative works must preserve attribution to the original author(s) as specified in the metadata.
+7.2 The community may form a neutral stewardship board to adjudicate disputes and enforce the humanitarian covenant in this License. The establishment of such a board does not supplant Licensor's enforcement rights.
+
+8. Moral & Ethical Covenant
+8.1 Licensees will not knowingly use the Technology where such use will foreseeably cause disproportionate harm to human life, human rights, or environmental stability.
+8.2 Licensees should prefer open publication of non-sensitive improvements that preserve the humanitarian covenant.
+
+9. No Warranty
+9.1 The Technology is provided "as is," without warranty of any kind. Licensor disclaims all warranties, to the extent permitted by law.
+
+10. Severability & Survival
+10.1 If any provision of this License is found unenforceable, the remainder shall remain in full force. Provisions that are required to effect the humanitarian restrictions shall survive termination.
+
+---cdc035a453837b977c8a92e6d886a8a23437a4890069a5c37f6ad4ea1a7a10a4
