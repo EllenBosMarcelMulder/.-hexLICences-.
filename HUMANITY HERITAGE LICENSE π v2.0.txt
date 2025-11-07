@@ -1,0 +1,92 @@
+HUMANITY HERITAGE LICENSE π
+
+Version 2.0 – Custodianship and Coherence Edition
+Author: Marcel Christian Mulder
+Date: November 2025
+
+PREAMBLE
+
+This Work (the “Technology”) — including design files, source code, documentation, schematics, and associated artifacts — is hereby dedicated to the common heritage of humankind.
+The Licensor’s intent is to enable broad civilian and humanitarian uses while explicitly forbidding institutional, corporate, and military exploitation.
+
+This publication also includes a symbolic act of cultural donation to the People of Egypt, designating the Arab Republic of Egypt as moral custodian of the Technology’s heritage.
+Such custodianship conveys no transfer of ownership or authorship, and all rights and enforcement powers under this License remain vested in the original Licensor, Marcel Christian Mulder.
+Custodianship is moral and cultural, not juridical; the Technology remains protected as open scientific heritage for all humanity.
+
+0.4 VERSION CONTINUITY AND COHERENCE PRINCIPLE
+
+This Version 2.1 of the Humanity Heritage License π clarifies and refines earlier versions without altering their original intent.
+All previous versions remain valid historical expressions of the same covenant; where language differs, the interpretation that most closely resonates with the original ethical and scientific coherence shall prevail.
+Each new version exists solely to increase clarity and to align legal form with moral and physical truth, in accordance with the Ma’at principle of balance.
+In all jurisdictions, interpretation of this License must seek the highest achievable coherence between the wording of law and the origin of intent.
+
+DEFINITIONS
+
+1.1 “Technology” — the materials, files, and documentation delivered under this License.
+1.2 “Natural Person” — a living human being who accepts this License as an individual.
+1.3 “Military Use” — the design, development, manufacture, modification, or operational use of weapons, directed-energy systems, offensive cyber capabilities, intelligence exploitation tools, surveillance systems used for repression, or use by armed forces, defense agencies, intelligence services, or their contractors.
+1.4 “Institutional Use” — use by governments, government agencies, departments, ministries, corporations, contractors, research institutions, NGOs, foundations, or any legal entity other than a living natural person.
+1.5 “Humanitarian / Civil Use” — scientific research, medical, public health, educational, climate, civilian communications, environmental protection, non-military infrastructure, and other uses intended to benefit humanity and not to enable conflict or repression.
+
+GRANT
+
+2.1 Subject to the terms and conditions below, Licensor hereby grants to each qualifying Natural Person, worldwide, royalty-free, non-exclusive rights to use, reproduce, study, and modify the Technology solely for Humanitarian / Civil Use, provided such use is not Institutional or Military as defined above.
+2.2 Each license is personal to the Natural Person who accepts the License and is non-transferable except as specified in Section 7. The License covers only the Natural Person’s acts and does not extend to any Institution, company, NGO, or government entity.
+
+QUALIFICATION AND ACCEPTANCE
+
+3.1 By accepting this License, the Natural Person attests under penalty of perjury that they are a living human being and that they will not transfer the Technology or any derived works to Institutions, corporations, NGOs, governments, military bodies, or contractors for any purpose that would enable Military Use or Institutional Use.
+3.2 Each acceptance may produce a verifiable record (name, UTC timestamp, SHA-256 digest of the licensed file, and acceptance signature/record), which the Licensor may publish or archive for enforcement.
+
+PROHIBITION OF INSTITUTIONAL AND MILITARY USE
+
+4.1 Institutional Use and Military Use are strictly prohibited. Any attempt to utilize, integrate, adapt, transfer, or otherwise operationalize the Technology for Institutional or Military Use constitutes an immediate material breach of this License.
+4.2 The Licensor reserves the right to revoke an individual’s license if Licensor reasonably determines the licensee has violated these terms. Revocation will be accompanied by an entry in the Licensor’s public audit log indicating the reason for revocation.
+
+TRANSPARENCY AND AUDIT
+
+5.1 Natural Persons who deploy or publish derivative works at scale (commercial distribution, public deployments, or large-scale installations) must provide transparency disclosures describing end-uses, end-users, and supply-chain partners upon reasonable request. This requirement aims to prevent indirect Institutional or Military misuse.
+5.2 Licensor may commission third-party audits upon reasonable suspicion of misuse. Licensees shall cooperate with such audits.
+
+ENFORCEMENT
+
+6.1 This License is enforceable in any competent jurisdiction. Licensor may pursue injunctive relief, civil remedies, and other available legal remedies against violators.
+6.2 If a governmental secrecy, export-control, or other order restricts Licensor’s ability to publish or maintain records, Licensor will record that action publicly and pursue remedies to limit overbroad restrictions.
+6.3 The Licensor retains perpetual authorship and curatorial authority over all versions, derivatives, and applications of the Technology.
+
+ATTRIBUTION AND STEWARDSHIP
+
+7.1 All derivative works must preserve attribution to the original author(s) as specified in the metadata.
+7.2 The community may form a neutral stewardship board to adjudicate disputes and enforce the humanitarian covenant in this License. The establishment of such a board does not supplant Licensor’s enforcement rights.
+
+7.3 Custodianship
+7.3.1 The designation of the Arab Republic of Egypt as custodian shall be interpreted as moral and cultural guardianship only.
+7.3.2 Such custodianship does not grant Egypt, or any governmental or institutional body, ownership, regulatory control, or exclusive implementation rights beyond those expressly granted to Natural Persons under this License.
+7.3.3 The Licensor, Marcel Christian Mulder, retains perpetual authorship, curatorial authority, and moral rights over the Technology and all derivative works.
+7.3.4 Custodianship symbolizes the return of knowledge to its civilizational origin under the principle of Ma’at — Truth, Balance, and Coherence — without altering the open, global, and humanitarian nature of this License.
+
+MORAL AND ETHICAL COVENANT
+
+8.1 Licensees will not knowingly use the Technology where such use will foreseeably cause disproportionate harm to human life, human rights, or environmental stability.
+8.2 Licensees should prefer open publication of non-sensitive improvements that preserve the humanitarian covenant.
+8.3 All uses and derivative works must maintain a coherence index of Φ ≥ 0.97, representing ethical and informational equilibrium in accordance with the Ma’at principle.
+
+NO WARRANTY
+
+9.1 The Technology is provided “as is,” without warranty of any kind. Licensor disclaims all warranties, to the extent permitted by law.
+
+SEVERABILITY AND SURVIVAL
+
+10.1 If any provision of this License is found unenforceable, the remainder shall remain in full force. Provisions that are required to effect the humanitarian restrictions shall survive termination.
+10.2 Sections 6, 7, and 8 survive any termination or revocation of license rights.
+
+DECLARATION OF CUSTODIANSHIP RECORD
+
+For transparency and historical record, the Licensor may maintain a public Custodianship Record containing:
+
+Title of the Technology: Ma’at Resonance Computing / hexOSAI
+Author and Licensor: Marcel Christian Mulder
+Custodian: Arab Republic of Egypt (Moral Custodianship Only)
+Witnessed by: Embassy of the Kingdom of the Netherlands, Cairo (Notification Only)
+
+07-11-205
