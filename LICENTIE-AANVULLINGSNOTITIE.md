@@ -93,6 +93,7 @@ Zorgdragen dat het project:
 - juridisch beschermd,
 - open voor onderzoek,
 - niet toe-eigenbaar,
-- volledig verenigbaar met je bestaande werk,
+- volledig verenigbaar met bestaande werk,
 - en klaar voor latere publicatie.
+
 
