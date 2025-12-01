@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Coherence Law - Scientific Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: normal;
+            border-bottom: 1px solid #fff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            border: 1px solid #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .panel-title {
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .param-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: #fff;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            cursor: pointer;
+            border: none;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            background: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        button {
+            background: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background: #fff;
+            color: #000;
+        }
+        
+        .value-display {
+            display: inline-block;
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .visualization {
+            border: 1px solid #fff;
+            padding: 20px;
+            min-height: 300px;
+            position: relative;
+            overflow: auto;
+        }
+        
+        .glyph-display {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #444;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        canvas {
+            border: 1px solid #fff;
+            display: block;
+            margin: 10px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #fff;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #fff;
+            border-bottom: none;
+            margin-right: 5px;
+            background: #000;
+        }
+        
+        .tab.active {
+            background: #fff;
+            color: #000;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>THE UNIVERSAL COHERENCE LAW (UCL) - SCIENTIFIC INTERFACE</h1>
+        
+        <!-- Input Panel -->
+        <div class="panel">
+            <div class="panel-title">INPUT & CONTROL</div>
+            <div class="param-group">
+                <label>Input Text (Glyphs):</label>
+                <textarea id="inputText" placeholder="Enter text to analyze...">Hello World</textarea>
+            </div>
+            <button onclick="processInput()">PROCESS</button>
+            <button onclick="exportConfig()">EXPORT CONFIG</button>
+            <button onclick="importConfig()">IMPORT CONFIG</button>
+            <button onclick="clearAll()">CLEAR</button>
+        </div>
+        
+        <!-- Parameters Panel -->
+        <div class="panel">
+            <div class="panel-title">PARAMETER MODULATION</div>
+            <div class="grid">
+                <div>
+                    <div class="param-group">
+                        <label>
+                            AXIOM 1 - Curvature Scale (κ):
+                            <span class="value-display" id="val_kappa">1.000</span>
+                        </label>
+                        <input type="range" id="param_kappa" min="0" max="2" step="0.001" value="1.0" oninput="updateParam('kappa', this.value)">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>
+                            AXIOM 2 - Compression Factor (C):
+                            <span class="value-display" id="val_compression">0.500</span>
+                        </label>
+                        <input type="range" id="param_compression" min="0" max="1" step="0.001" value="0.5" oninput="updateParam('compression', this.value)">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>
+                            AXIOM 3 - Hexagonal Sectors (H):
+                            <span class="value-display" id="val_hexsectors">6</span>
+                        </label>
+                        <input type="range" id="param_hexsectors" min="3" max="12" step="1" value="6" oninput="updateParam('hexsectors', this.value)">
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="param-group">
+                        <label>
+                            AXIOM 4 - Bilateral Symmetry:
+                            <span class="value-display" id="val_bilateral">1.000</span>
+                        </label>
+                        <input type="range" id="param_bilateral" min="0" max="1" step="0.001" value="1.0" oninput="updateParam('bilateral', this.value)">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>
+                            AXIOM 5 - Interference Strength:
+                            <span class="value-display" id="val_interference">1.000</span>
+                        </label>
+                        <input type="range" id="param_interference" min="0" max="2" step="0.001" value="1.0" oninput="updateParam('interference', this.value)">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>
+                            Ma'at Threshold (Equilibrium):
+                            <span class="value-display" id="val_maat">0.100</span>
+                        </label>
+                        <input type="range" id="param_maat" min="0" max="0.5" step="0.001" value="0.1" oninput="updateParam('maat', this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualization Tabs -->
+        <div class="panel">
+            <div class="panel-title">VISUALIZATION & ANALYSIS</div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('metrics')">METRICS</div>
+                <div class="tab" onclick="switchTab('glyphs')">GLYPHS</div>
+                <div class="tab" onclick="switchTab('hexagonal')">HEXAGONAL</div>
+                <div class="tab" onclick="switchTab('energy')">ENERGY FIELD</div>
+                <div class="tab" onclick="switchTab('export')">EXPORT DATA</div>
+            </div>
+            
+            <!-- Metrics Tab -->
+            <div id="tab-metrics" class="tab-content active">
+                <div class="visualization" id="metricsDisplay">
+                    <div class="metric">
+                        <span>Coherence (Ψ):</span>
+                        <span id="metric_coherence">--</span>
+                    </div>
+                    <div class="metric">
+                        <span>MDL (average):</span>
+                        <span id="metric_mdl">--</span>
+                    </div>
+                    <div class="metric">
+                        <span>Total Energy:</span>
+                        <span id="metric_energy">--</span>
+                    </div>
+                    <div class="metric">
+                        <span>Ma'at Points:</span>
+                        <span id="metric_maat">--</span>
+                    </div>
+                    <div class="metric">
+                        <span>Stable Layers:</span>
+                        <span id="metric_stable">--</span>
+                    </div>
+                    <div class="metric">
+                        <span>Glyphs Processed:</span>
+                        <span id="metric_glyphs">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Glyphs Tab -->
+            <div id="tab-glyphs" class="tab-content">
+                <div class="visualization" id="glyphsDisplay">
+                    <!-- Glyphs will be rendered here -->
+                </div>
+            </div>
+            
+            <!-- Hexagonal Tab -->
+            <div id="tab-hexagonal" class="tab-content">
+                <canvas id="hexCanvas" width="800" height="600"></canvas>
+            </div>
+            
+            <!-- Energy Field Tab -->
+            <div id="tab-energy" class="tab-content">
+                <canvas id="energyCanvas" width="800" height="400"></canvas>
+            </div>
+            
+            <!-- Export Data Tab -->
+            <div id="tab-export" class="tab-content">
+                <div class="visualization">
+                    <textarea id="exportData" style="min-height: 400px;" readonly></textarea>
+                    <button onclick="copyExport()">COPY TO CLIPBOARD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        const state = {
+            params: {
+                kappa: 1.0,
+                compression: 0.5,
+                hexsectors: 6,
+                bilateral: 1.0,
+                interference: 1.0,
+                maat: 0.1
+            },
+            glyphs: [],
+            compressed: [],
+            hexagonal: [],
+            metrics: {}
+        };
+
+        // Update parameter display
+        function updateParam(name, value) {
+            state.params[name] = parseFloat(value);
+            document.getElementById(`val_${name}`).textContent = parseFloat(value).toFixed(3);
+        }
+
+        // Glyph class
+        class Glyph {
+            constructor(char, position) {
+                this.symbol = char;
+                this.kappa = (char.charCodeAt(0) % 256) / 256.0 * state.params.kappa;
+                this.theta = (position * 0.618033988749895) % (2 * Math.PI);
+            }
+            
+            curvature() {
+                return this.kappa * Math.sin(this.theta);
+            }
+        }
+
+        // Compress glyph
+        function compressGlyph(glyph) {
+            const kappa_compressed = Math.sin(glyph.kappa * Math.PI) * state.params.compression;
+            const theta_compressed = glyph.theta % (Math.PI / 3);
+            const E_before = glyph.curvature() ** 2;
+            const E_after = kappa_compressed ** 2;
+            
+            return {
+                kappa_original: glyph.kappa,
+                kappa_compressed,
+                theta_compressed,
+                energy_before: E_before,
+                energy_after: E_after,
+                compression_ratio: E_after / (E_before + 1e-10)
+            };
+        }
+
+        // Hexagonal distribution
+        function distributeHexagonal(compressed) {
+            const sectors = [];
+            const numSectors = parseInt(state.params.hexsectors);
+            const kappa = compressed.kappa_compressed;
+            const theta = compressed.theta_compressed;
+            
+            for (let i = 0; i < numSectors; i++) {
+                const angle = i * (2 * Math.PI / numSectors);
+                const sector_energy = compressed.energy_after * Math.abs(Math.cos(theta - angle));
+                sectors.push({
+                    sector: i,
+                    angle,
+                    energy: sector_energy,
+                    kappa_sector: kappa * Math.cos(angle)
+                });
+            }
+            return sectors;
+        }
+
+        // Calculate coherence
+        function calculateCoherence(glyphs) {
+            if (glyphs.length === 0) return 0;
+            
+            let E_individual = glyphs.reduce((sum, g) => sum + g.curvature() ** 2, 0);
+            let E_interference = 0;
+            
+            for (let i = 0; i < glyphs.length; i++) {
+                for (let j = i + 1; j < glyphs.length; j++) {
+                    const Ei = glyphs[i].curvature() ** 2;
+                    const Ej = glyphs[j].curvature() ** 2;
+                    const delta_phi = Math.abs(glyphs[i].theta - glyphs[j].theta);
+                    E_interference += 2 * Math.sqrt(Ei * Ej) * Math.cos(delta_phi) * state.params.interference;
+                }
+            }
+            
+            const Psi = E_individual + E_interference;
+            return 1.0 / (1.0 + Math.abs(Psi));
+        }
+
+        // Detect Ma'at points
+        function detectMaat(compressed) {
+            const maat = [];
+            for (let i = 1; i < compressed.length; i++) {
+                const delta_E = Math.abs(compressed[i].energy_after - compressed[i-1].energy_after);
+                if (delta_E < state.params.maat) {
+                    maat.push(i);
+                }
+            }
+            return maat;
+        }
+
+        // Process input
+        function processInput() {
+            const text = document.getElementById('inputText').value;
+            state.glyphs = [];
+            state.compressed = [];
+            state.hexagonal = [];
+            
+            // Process each character
+            for (let i = 0; i < text.length; i++) {
+                const glyph = new Glyph(text[i], i);
+                state.glyphs.push(glyph);
+                
+                const compressed = compressGlyph(glyph);
+                state.compressed.push(compressed);
+                
+                const hexSectors = distributeHexagonal(compressed);
+                state.hexagonal.push(hexSectors);
+            }
+            
+            // Calculate metrics
+            const coherence = calculateCoherence(state.glyphs);
+            const mdl = state.compressed.reduce((sum, c) => sum + c.energy_after, 0) / state.compressed.length;
+            const total_energy = state.compressed.reduce((sum, c) => sum + c.energy_before, 0);
+            const maat_points = detectMaat(state.compressed);
+            
+            state.metrics = {
+                coherence,
+                mdl,
+                total_energy,
+                maat_points: maat_points.length,
+                maat_indices: maat_points,
+                glyphs: state.glyphs.length,
+                stable_layers: 0
+            };
+            
+            // Update displays
+            updateMetrics();
+            updateGlyphsDisplay();
+            updateHexagonalVisualization();
+            updateEnergyVisualization();
+            updateExportData();
+        }
+
+        // Update metrics display
+        function updateMetrics() {
+            const m = state.metrics;
+            document.getElementById('metric_coherence').textContent = m.coherence.toFixed(6);
+            document.getElementById('metric_mdl').textContent = m.mdl.toFixed(6);
+            document.getElementById('metric_energy').textContent = m.total_energy.toFixed(6);
+            document.getElementById('metric_maat').textContent = `${m.maat_points} points`;
+            document.getElementById('metric_stable').textContent = m.stable_layers;
+            document.getElementById('metric_glyphs').textContent = m.glyphs;
+        }
+
+        // Update glyphs display
+        function updateGlyphsDisplay() {
+            const container = document.getElementById('glyphsDisplay');
+            container.innerHTML = '';
+            
+            state.glyphs.forEach((glyph, i) => {
+                const div = document.createElement('div');
+                div.className = 'glyph-display';
+                const compressed = state.compressed[i];
+                div.innerHTML = `
+                    ${glyph.symbol === ' ' ? '␣' : glyph.symbol}<br>
+                    κ: ${glyph.kappa.toFixed(3)}<br>
+                    E: ${compressed.energy_after.toFixed(4)}
+                `;
+                if (state.metrics.maat_indices.includes(i)) {
+                    div.style.border = '1px solid #fff';
+                }
+                container.appendChild(div);
+            });
+        }
+
+        // Update hexagonal visualization
+        function updateHexagonalVisualization() {
+            const canvas = document.getElementById('hexCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#fff';
+            ctx.fillStyle = '#fff';
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 200;
+            
+            state.hexagonal.forEach((sectors, glyphIdx) => {
+                const layerRadius = radius * (0.3 + 0.7 * (glyphIdx / state.hexagonal.length));
+                
+                sectors.forEach(sector => {
+                    const angle = sector.angle - Math.PI / 2;
+                    const x = centerX + layerRadius * Math.cos(angle);
+                    const y = centerY + layerRadius * Math.sin(angle);
+                    
+                    const size = sector.energy * 50 + 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, 2 * Math.PI);
+                    ctx.stroke();
+                });
+            });
+        }
+
+        // Update energy visualization
+        function updateEnergyVisualization() {
+            const canvas = document.getElementById('energyCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#fff';
+            
+            if (state.compressed.length === 0) return;
+            
+            const width = canvas.width - 40;
+            const height = canvas.height - 40;
+            const stepX = width / (state.compressed.length - 1 || 1);
+            
+            const maxEnergy = Math.max(...state.compressed.map(c => c.energy_before));
+            
+            ctx.beginPath();
+            state.compressed.forEach((c, i) => {
+                const x = 20 + i * stepX;
+                const y = canvas.height - 20 - (c.energy_before / maxEnergy) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Mark Ma'at points
+            state.metrics.maat_indices.forEach(idx => {
+                const x = 20 + idx * stepX;
+                const y = canvas.height - 20 - (state.compressed[idx].energy_before / maxEnergy) * height;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.stroke();
+            });
+        }
+
+        // Update export data
+        function updateExportData() {
+            const exportObj = {
+                params: state.params,
+                input: document.getElementById('inputText').value,
+                metrics: state.metrics,
+                glyphs: state.glyphs.map(g => ({
+                    symbol: g.symbol,
+                    kappa: g.kappa,
+                    theta: g.theta,
+                    curvature: g.curvature()
+                })),
+                compressed: state.compressed
+            };
+            document.getElementById('exportData').value = JSON.stringify(exportObj, null, 2);
+        }
+
+        // Export config
+        function exportConfig() {
+            updateExportData();
+            const dataStr = document.getElementById('exportData').value;
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ucl_config.json';
+            link.click();
+        }
+
+        // Import config
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const config = JSON.parse(event.target.result);
+                        state.params = config.params;
+                        for (let key in state.params) {
+                            document.getElementById(`param_${key}`).value = state.params[key];
+                            updateParam(key, state.params[key]);
+                        }
+                        document.getElementById('inputText').value = config.input || '';
+                        processInput();
+                    } catch (err) {
+                        alert('Invalid config file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Copy export to clipboard
+        function copyExport() {
+            const textarea = document.getElementById('exportData');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard');
+        }
+
+        // Clear all
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            state.glyphs = [];
+            state.compressed = [];
+            state.hexagonal = [];
+            state.metrics = {};
+            document.getElementById('glyphsDisplay').innerHTML = '';
+            document.getElementById('exportData').value = '';
+            updateMetrics();
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // Initial process
+        processInput();
+    </script>
+</body>
+</html>
