@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ CURVEVIEW PRO — WebGL Wave Interference Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --gold: #d4af37;
+            --cyan: #00f5ff;
+            --magenta: #ff00ff;
+            --emerald: #00ff88;
+            --crimson: #ff3366;
+            --void: #020204;
+            --deep: #08080c;
+            --surface: #0c0c14;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--void);
+            color: #c0c0d0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .app {
+            display: grid;
+            grid-template-rows: 50px 1fr 80px;
+            height: 100vh;
+        }
+        
+        /* HEADER */
+        header {
+            background: linear-gradient(90deg, var(--deep) 0%, var(--surface) 50%, var(--deep) 100%);
+            border-bottom: 1px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+        }
+        
+        .brand-icon::before,
+        .brand-icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+        }
+        
+        .brand-icon::after {
+            inset: 6px;
+            border-color: var(--cyan);
+            animation: orbit 3s linear infinite;
+        }
+        
+        @keyframes orbit {
+            to { transform: rotate(360deg); }
+        }
+        
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--gold), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.2em;
+        }
+        
+        .metrics {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.7rem;
+        }
+        
+        .metric {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .metric-label {
+            font-size: 0.55rem;
+            color: #606080;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--emerald);
+        }
+        
+        /* MAIN CANVAS */
+        main {
+            position: relative;
+            background: var(--void);
+        }
+        
+        #mainCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* OVERLAY UI */
+        .overlay {
+            position: absolute;
+            background: rgba(8, 8, 12, 0.9);
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.7rem;
+        }
+        
+        .overlay-tl {
+            top: 1rem;
+            left: 1rem;
+            max-width: 200px;
+        }
+        
+        .overlay-tr {
+            top: 1rem;
+            right: 1rem;
+            max-width: 180px;
+        }
+        
+        .overlay-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .formula {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--cyan);
+            margin-bottom: 0.4rem;
+            padding: 0.3rem;
+            background: rgba(0, 245, 255, 0.05);
+            border-radius: 2px;
+        }
+        
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slider-row label {
+            flex: 0 0 60px;
+            font-size: 0.6rem;
+            color: #808090;
+        }
+        
+        .slider-row input {
+            flex: 1;
+            height: 3px;
+            -webkit-appearance: none;
+            background: rgba(0, 245, 255, 0.2);
+            border-radius: 2px;
+        }
+        
+        .slider-row input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            background: var(--gold);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .slider-row .val {
+            flex: 0 0 40px;
+            text-align: right;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            color: var(--emerald);
+        }
+        
+        /* MODE BUTTONS */
+        .modes {
+            display: flex;
+            gap: 0.3rem;
+            margin-top: 0.6rem;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 0.4rem;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.55rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 2px;
+        }
+        
+        .mode-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .mode-btn.active {
+            background: var(--gold);
+            color: #000;
+        }
+        
+        /* FOOTER */
+        footer {
+            background: var(--surface);
+            border-top: 1px solid var(--gold);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--gold), #b89830);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn.cyan { background: linear-gradient(135deg, var(--cyan), #00a0b0); }
+        .btn.magenta { background: linear-gradient(135deg, var(--magenta), #a000a0); color: #fff; }
+        
+        .info {
+            flex: 1;
+            text-align: center;
+            font-size: 0.65rem;
+            color: #606080;
+        }
+        
+        .info strong {
+            color: var(--gold);
+            font-family: 'Orbitron', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="brand">
+                <div class="brand-icon"></div>
+                <h1>CURVEVIEW PRO</h1>
+            </div>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="metric-label">ΔΦ</span>
+                    <span class="metric-value" id="m-dphi">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Ψ</span>
+                    <span class="metric-value" id="m-psi">1.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">κ</span>
+                    <span class="metric-value" id="m-kappa">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">AKH</span>
+                    <span class="metric-value" id="m-akh">0.500</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">FPS</span>
+                    <span class="metric-value" id="m-fps">60</span>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <canvas id="mainCanvas"></canvas>
+            
+            <div class="overlay overlay-tl">
+                <div class="overlay-title">Wave Physics</div>
+                <div class="formula">wave = A·sin(ωt + φ)</div>
+                <div class="formula">sync = wave·e^(iΨΦ)</div>
+                <div class="formula">curve = sync·e^(iκR)</div>
+                
+                <div class="slider-row">
+                    <label>Freq ω</label>
+                    <input type="range" min="0.5" max="8" step="0.1" value="2" id="freq">
+                    <span class="val" id="freq-val">2.0</span>
+                </div>
+                <div class="slider-row">
+                    <label>Phase φ</label>
+                    <input type="range" min="0" max="6.28" step="0.01" value="0" id="phase">
+                    <span class="val" id="phase-val">0.00</span>
+                </div>
+                <div class="slider-row">
+                    <label>Amp A</label>
+                    <input type="range" min="0.1" max="2" step="0.1" value="1" id="amp">
+                    <span class="val" id="amp-val">1.0</span>
+                </div>
+            </div>
+            
+            <div class="overlay overlay-tr">
+                <div class="overlay-title">Retina Model</div>
+                <div class="slider-row">
+                    <label>Curve R</label>
+                    <input type="range" min="5" max="25" step="0.5" value="12" id="retina-r">
+                    <span class="val" id="retina-r-val">12</span>
+                </div>
+                <div class="slider-row">
+                    <label>Hex N</label>
+                    <input type="range" min="19" max="127" step="12" value="61" id="hex-n">
+                    <span class="val" id="hex-n-val">61</span>
+                </div>
+                
+                <div class="modes">
+                    <button class="mode-btn active" onclick="setMode('wave')">WAVE</button>
+                    <button class="mode-btn" onclick="setMode('hex')">HEX</button>
+                    <button class="mode-btn" onclick="setMode('perception')">PERC</button>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <button class="btn" id="playBtn" onclick="togglePlay()">▶ PLAY</button>
+            <button class="btn cyan" onclick="injectGlyph()">☥ GLYPH</button>
+            <button class="btn" onclick="maatPulse()">☥ MA'AT</button>
+            <button class="btn magenta" onclick="injectChaos()">⚡ CHAOS</button>
+            <button class="btn" onclick="resetAll()">↻ RESET</button>
+            
+            <div class="info">
+                Glyph: <strong id="glyph-name">Pure Wave</strong> | 
+                Mode: <strong id="mode-name">WAVE FIELD</strong>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // WEBGL SHADERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            attribute vec2 a_texCoord;
+            varying vec2 v_texCoord;
+            
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+                v_texCoord = a_texCoord;
+            }
+        `;
+        
+        const fragmentShaderSource = `
+            precision highp float;
+            
+            varying vec2 v_texCoord;
+            
+            uniform float u_time;
+            uniform float u_frequency;
+            uniform float u_phase;
+            uniform float u_amplitude;
+            uniform float u_psi;
+            uniform float u_kappa;
+            uniform float u_akh;
+            uniform float u_retinaR;
+            uniform int u_mode;
+            uniform int u_glyphType;
+            uniform vec2 u_resolution;
+            
+            const float PI = 3.14159265359;
+            const float PHI = 1.61803398875;
+            const float TAU = 6.28318530718;
+            
+            // Complex multiplication
+            vec2 cmul(vec2 a, vec2 b) {
+                return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
+            }
+            
+            // Complex exponential e^(i*theta)
+            vec2 cexp(float theta) {
+                return vec2(cos(theta), sin(theta));
+            }
+            
+            // Retina curvature function
+            float retinaCurve(vec2 uv) {
+                vec2 centered = uv - 0.5;
+                float rSq = dot(centered, centered) * 4.0;
+                if (rSq >= 1.0) return 0.0;
+                return sqrt(1.0 - rSq) * u_retinaR;
+            }
+            
+            // Generate glyph wave
+            float glyphWave(vec2 uv, float t) {
+                vec2 c = uv - 0.5;
+                float r = length(c);
+                float theta = atan(c.y, c.x);
+                
+                if (u_glyphType == 0) {
+                    // Pure wave interference
+                    return sin(uv.x * PI * 4.0 * u_frequency + t + u_phase) *
+                           cos(uv.y * PI * 4.0 * u_frequency + t * 0.8);
+                }
+                else if (u_glyphType == 1) {
+                    // Ankh pattern
+                    float loop = exp(-abs(r - 0.15) * 20.0) * step(uv.y, 0.5);
+                    float stem = exp(-abs(c.x) * 30.0) * step(0.35, uv.y);
+                    float arms = exp(-abs(c.y - 0.1) * 30.0) * step(abs(c.x), 0.15);
+                    return (loop + stem * 0.8 + arms * 0.6) * sin(t * 0.05 + theta * 3.0);
+                }
+                else if (u_glyphType == 2) {
+                    // Eye of Horus
+                    float eye = exp(-pow(r - 0.25, 2.0) * 50.0);
+                    float pupil = exp(-r * 15.0);
+                    float spiral = sin(theta * 6.0 + r * 20.0 - t * 0.1);
+                    return (eye * 0.6 + pupil + spiral * 0.2 * eye) * sin(t * 0.04);
+                }
+                else if (u_glyphType == 3) {
+                    // Hexagonal field
+                    float sum = 0.0;
+                    for (int i = 0; i < 6; i++) {
+                        float angle = float(i) * PI / 3.0;
+                        vec2 dir = vec2(cos(angle), sin(angle));
+                        sum += sin(dot(c * 2.0, dir) * PI * 3.0 + t * 0.05 + float(i) * PI / 3.0);
+                    }
+                    return sum / 6.0;
+                }
+                else if (u_glyphType == 4) {
+                    // Djed pillar
+                    float pillar = exp(-abs(c.x) * 25.0);
+                    float bars = 0.0;
+                    for (int i = 0; i < 4; i++) {
+                        float barY = 0.2 + float(i) * 0.15;
+                        bars += exp(-abs(uv.y - barY) * 40.0) * 
+                                step(abs(c.x), 0.12 + (1.0 - barY) * 0.08);
+                    }
+                    return (pillar * 0.5 + bars * 0.8) * cos(t * 0.03 + uv.y * TAU);
+                }
+                
+                return 0.0;
+            }
+            
+            // Phase synchronization
+            vec2 phaseSync(float wave, vec2 uv) {
+                float syncPhase = PHI * u_psi + u_phase;
+                return vec2(wave * cos(syncPhase), wave * sin(syncPhase));
+            }
+            
+            // Curve correction
+            vec2 curveCorrect(vec2 synced, vec2 uv) {
+                float curve = retinaCurve(uv);
+                vec2 correction = cexp(-u_kappa * curve * 0.1);
+                return cmul(synced, correction);
+            }
+            
+            // Hexagonal distance
+            float hexDist(vec2 p) {
+                p = abs(p);
+                return max(dot(p, vec2(1.0, 1.732) * 0.5), p.x);
+            }
+            
+            // Color mapping
+            vec3 waveColor(float value, float phase) {
+                // Cyan to magenta based on value
+                vec3 cyan = vec3(0.0, 0.96, 1.0);
+                vec3 magenta = vec3(1.0, 0.0, 1.0);
+                vec3 gold = vec3(0.83, 0.69, 0.22);
+                
+                float t = (value + 1.0) * 0.5;
+                vec3 base = mix(cyan, magenta, t);
+                
+                // Add gold based on AKH
+                base = mix(base, gold, u_akh * 0.3);
+                
+                return base;
+            }
+            
+            vec3 hexColor(float value, vec2 uv) {
+                float hue = mod(atan(uv.y - 0.5, uv.x - 0.5) / TAU + 0.5, 1.0);
+                float sat = 0.8;
+                float lum = 0.3 + value * 0.4;
+                
+                // HSL to RGB
+                float c = (1.0 - abs(2.0 * lum - 1.0)) * sat;
+                float x = c * (1.0 - abs(mod(hue * 6.0, 2.0) - 1.0));
+                float m = lum - c * 0.5;
+                
+                vec3 rgb;
+                if (hue < 1.0/6.0) rgb = vec3(c, x, 0.0);
+                else if (hue < 2.0/6.0) rgb = vec3(x, c, 0.0);
+                else if (hue < 3.0/6.0) rgb = vec3(0.0, c, x);
+                else if (hue < 4.0/6.0) rgb = vec3(0.0, x, c);
+                else if (hue < 5.0/6.0) rgb = vec3(x, 0.0, c);
+                else rgb = vec3(c, 0.0, x);
+                
+                return rgb + m;
+            }
+            
+            void main() {
+                vec2 uv = v_texCoord;
+                
+                // Generate base wave
+                float wave = glyphWave(uv, u_time) * u_amplitude;
+                
+                // Phase synchronization
+                vec2 synced = phaseSync(wave, uv);
+                
+                // Curve correction
+                vec2 curved = curveCorrect(synced, uv);
+                
+                float magnitude = length(curved);
+                float phase = atan(curved.y, curved.x);
+                
+                vec3 color;
+                
+                if (u_mode == 0) {
+                    // Wave field visualization
+                    color = waveColor(wave, phase);
+                    
+                    // Add interference rings
+                    float rings = sin(length(uv - 0.5) * 50.0 + u_time * 0.5) * 0.1;
+                    color += rings;
+                }
+                else if (u_mode == 1) {
+                    // Hexagonal retina view
+                    vec2 hexUV = uv * 10.0;
+                    vec2 hexID = floor(hexUV);
+                    vec2 hexF = fract(hexUV) - 0.5;
+                    
+                    // Offset every other row
+                    if (mod(hexID.y, 2.0) > 0.5) {
+                        hexF.x -= 0.5;
+                    }
+                    
+                    float d = hexDist(hexF);
+                    float hex = smoothstep(0.4, 0.35, d);
+                    
+                    color = hexColor(magnitude, uv) * hex;
+                    
+                    // Add H vector overlay
+                    vec2 center = uv - 0.5;
+                    float centerDist = length(center);
+                    if (centerDist < 0.02) {
+                        color = vec3(0.83, 0.69, 0.22); // Gold center
+                    }
+                }
+                else {
+                    // Perception reconstruction
+                    color = vec3(magnitude * 0.83, magnitude * 0.69 + 0.2, magnitude * 0.3 + 0.4);
+                    
+                    // AKH glow
+                    float glow = exp(-length(uv - 0.5) * 3.0) * u_akh;
+                    color += vec3(0.83, 0.69, 0.22) * glow * 0.5;
+                    
+                    // Coherence indicator
+                    float coherenceRing = abs(length(uv - vec2(0.9, 0.9)) - 0.05 * u_psi);
+                    if (coherenceRing < 0.005) {
+                        color = vec3(0.0, 1.0, 0.53);
+                    }
+                }
+                
+                // Vignette
+                float vignette = 1.0 - length(uv - 0.5) * 0.5;
+                color *= vignette;
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ENGINE STATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        const State = {
+            // Field
+            H: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            Hprime: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            deltaPhi: 0,
+            psi: 1,
+            kappa: 0,
+            KA: 0.5,
+            BA: 0.5,
+            AKH: 0.5,
+            
+            // Wave
+            frequency: 2,
+            phase: 0,
+            amplitude: 1,
+            
+            // Retina
+            retinaR: 12,
+            hexN: 61,
+            
+            // View
+            mode: 0,
+            glyphType: 0,
+            
+            // Animation
+            time: 0,
+            running: false,
+            lastTime: 0,
+            fps: 60
+        };
+        
+        const GLYPHS = ['Pure Wave', 'Ankh', 'Eye of Horus', 'Hex Field', 'Djed'];
+        const MODES = ['WAVE FIELD', 'HEX RETINA', 'PERCEPTION'];
+        
+        // ═══════════════════════════════════════════════════════════════
+        // WEBGL SETUP
+        // ═══════════════════════════════════════════════════════════════
+        
+        const canvas = document.getElementById('mainCanvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        let program, uniforms;
+        
+        function initWebGL() {
+            // Create shaders
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+            
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+            
+            // Check for errors
+            if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+                console.error('Fragment shader error:', gl.getShaderInfoLog(fragmentShader));
+            }
+            
+            // Create program
+            program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            
+            // Setup geometry (full-screen quad)
+            const positions = new Float32Array([
+                -1, -1,  1, -1,  -1, 1,
+                -1,  1,  1, -1,   1, 1
+            ]);
+            
+            const texCoords = new Float32Array([
+                0, 0,  1, 0,  0, 1,
+                0, 1,  1, 0,  1, 1
+            ]);
+            
+            // Position buffer
+            const posBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+            
+            const posLoc = gl.getAttribLocation(program, 'a_position');
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            // TexCoord buffer
+            const texBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+            
+            const texLoc = gl.getAttribLocation(program, 'a_texCoord');
+            gl.enableVertexAttribArray(texLoc);
+            gl.vertexAttribPointer(texLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            // Get uniform locations
+            uniforms = {
+                time: gl.getUniformLocation(program, 'u_time'),
+                frequency: gl.getUniformLocation(program, 'u_frequency'),
+                phase: gl.getUniformLocation(program, 'u_phase'),
+                amplitude: gl.getUniformLocation(program, 'u_amplitude'),
+                psi: gl.getUniformLocation(program, 'u_psi'),
+                kappa: gl.getUniformLocation(program, 'u_kappa'),
+                akh: gl.getUniformLocation(program, 'u_akh'),
+                retinaR: gl.getUniformLocation(program, 'u_retinaR'),
+                mode: gl.getUniformLocation(program, 'u_mode'),
+                glyphType: gl.getUniformLocation(program, 'u_glyphType'),
+                resolution: gl.getUniformLocation(program, 'u_resolution')
+            };
+        }
+        
+        function resize() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // MA'AT MOTOR
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateMotor() {
+            // Mirror
+            State.Hprime = [...State.H].reverse();
+            
+            // DeltaPhi
+            let sum = 0;
+            for (let i = 0; i < 6; i++) {
+                sum += Math.abs(State.H[i] - State.Hprime[i]);
+            }
+            State.deltaPhi = sum / 6;
+            
+            // Psi
+            State.psi = Math.max(0, 1 - State.deltaPhi);
+            
+            // Kappa
+            State.kappa = Math.PI * (1 - State.psi);
+            
+            // KA/BA/AKH
+            const t = State.time * 0.01;
+            State.KA = 0.5 + 0.3 * Math.sin(t) * State.psi;
+            State.BA = 0.5 + 0.3 * Math.cos(t * 1.5) * State.psi;
+            const alignment = 1 - Math.abs(State.KA - State.BA);
+            State.AKH = alignment * State.psi * 0.8 + 0.2;
+            
+            // Natural fluctuation
+            State.H = State.H.map(h => {
+                const noise = (Math.random() - 0.5) * 0.005;
+                return Math.max(0, Math.min(1, h + noise));
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER LOOP
+        // ═══════════════════════════════════════════════════════════════
+        
+        function render(timestamp) {
+            // FPS calculation
+            const delta = timestamp - State.lastTime;
+            State.fps = Math.round(1000 / delta);
+            State.lastTime = timestamp;
+            
+            if (State.running) {
+                State.time += delta * 0.01;
+                updateMotor();
+            }
+            
+            // Update uniforms
+            gl.uniform1f(uniforms.time, State.time);
+            gl.uniform1f(uniforms.frequency, State.frequency);
+            gl.uniform1f(uniforms.phase, State.phase);
+            gl.uniform1f(uniforms.amplitude, State.amplitude);
+            gl.uniform1f(uniforms.psi, State.psi);
+            gl.uniform1f(uniforms.kappa, State.kappa);
+            gl.uniform1f(uniforms.akh, State.AKH);
+            gl.uniform1f(uniforms.retinaR, State.retinaR);
+            gl.uniform1i(uniforms.mode, State.mode);
+            gl.uniform1i(uniforms.glyphType, State.glyphType);
+            gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+            
+            // Draw
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            
+            // Update UI
+            updateMetrics();
+            
+            requestAnimationFrame(render);
+        }
+        
+        function updateMetrics() {
+            document.getElementById('m-dphi').textContent = State.deltaPhi.toFixed(3);
+            document.getElementById('m-psi').textContent = State.psi.toFixed(3);
+            document.getElementById('m-kappa').textContent = State.kappa.toFixed(3);
+            document.getElementById('m-akh').textContent = State.AKH.toFixed(3);
+            document.getElementById('m-fps').textContent = State.fps;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONTROLS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function togglePlay() {
+            State.running = !State.running;
+            document.getElementById('playBtn').textContent = State.running ? '⏸ PAUSE' : '▶ PLAY';
+        }
+        
+        function injectGlyph() {
+            State.glyphType = (State.glyphType + 1) % GLYPHS.length;
+            document.getElementById('glyph-name').textContent = GLYPHS[State.glyphType];
+            
+            // Perturbation
+            State.H = State.H.map(h => h + (Math.random() - 0.5) * 0.15);
+        }
+        
+        function maatPulse() {
+            State.H = State.H.map(h => h + (0.5 - h) * 0.3);
+        }
+        
+        function injectChaos() {
+            State.H = State.H.map(h => {
+                const chaos = (Math.random() - 0.5) * 0.5;
+                return Math.max(0, Math.min(1, h + chaos));
+            });
+        }
+        
+        function resetAll() {
+            State.H = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+            State.time = 0;
+            State.glyphType = 0;
+            document.getElementById('glyph-name').textContent = GLYPHS[0];
+        }
+        
+        function setMode(mode) {
+            const modes = ['wave', 'hex', 'perception'];
+            State.mode = modes.indexOf(mode);
+            document.getElementById('mode-name').textContent = MODES[State.mode];
+            
+            document.querySelectorAll('.mode-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === State.mode);
+            });
+        }
+        
+        // Slider handlers
+        document.getElementById('freq').addEventListener('input', e => {
+            State.frequency = parseFloat(e.target.value);
+            document.getElementById('freq-val').textContent = State.frequency.toFixed(1);
+        });
+        
+        document.getElementById('phase').addEventListener('input', e => {
+            State.phase = parseFloat(e.target.value);
+            document.getElementById('phase-val').textContent = State.phase.toFixed(2);
+        });
+        
+        document.getElementById('amp').addEventListener('input', e => {
+            State.amplitude = parseFloat(e.target.value);
+            document.getElementById('amp-val').textContent = State.amplitude.toFixed(1);
+        });
+        
+        document.getElementById('retina-r').addEventListener('input', e => {
+            State.retinaR = parseFloat(e.target.value);
+            document.getElementById('retina-r-val').textContent = State.retinaR;
+        });
+        
+        document.getElementById('hex-n').addEventListener('input', e => {
+            State.hexN = parseInt(e.target.value);
+            document.getElementById('hex-n-val').textContent = State.hexN;
+        });
+        
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        window.addEventListener('load', () => {
+            resize();
+            initWebGL();
+            requestAnimationFrame(render);
+        });
+        
+        window.addEventListener('resize', resize);
+    </script>
+</body>
+</html>

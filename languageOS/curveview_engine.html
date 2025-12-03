@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ CURVEVIEW ENGINE — Direct Retinal Wave Projection</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --gold: #d4af37;
+            --gold-dim: #8b7355;
+            --cyan: #00f5ff;
+            --magenta: #ff00ff;
+            --green: #00ff88;
+            --red: #ff3366;
+            --bg-deep: #050508;
+            --bg-dark: #0a0a14;
+            --bg-panel: #101018;
+            --text: #e0e0e8;
+            --text-dim: #606080;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-deep);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           MAIN LAYOUT
+           ═══════════════════════════════════════════════════════════════ */
+        .curveview-container {
+            display: grid;
+            grid-template-areas:
+                "header header header header"
+                "wavefield hexretina perception controls"
+                "pipeline pipeline pipeline pipeline"
+                "footer footer footer footer";
+            grid-template-columns: 1fr 1fr 1fr 320px;
+            grid-template-rows: 60px 1fr 120px 40px;
+            height: 100vh;
+            gap: 2px;
+            background: #1a1a2a;
+        }
+        
+        .header { grid-area: header; }
+        .wavefield { grid-area: wavefield; }
+        .hexretina { grid-area: hexretina; }
+        .perception { grid-area: perception; }
+        .controls { grid-area: controls; }
+        .pipeline { grid-area: pipeline; }
+        .footer { grid-area: footer; }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           HEADER
+           ═══════════════════════════════════════════════════════════════ */
+        .header {
+            background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-deep) 100%);
+            border-bottom: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: conic-gradient(from 0deg, var(--gold), var(--cyan), var(--magenta), var(--gold));
+            border-radius: 50%;
+            animation: logo-spin 8s linear infinite;
+        }
+        
+        @keyframes logo-spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.1em;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.75rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           VISUALIZATION PANELS
+           ═══════════════════════════════════════════════════════════════ */
+        .panel {
+            background: var(--bg-dark);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .panel-title {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            z-index: 10;
+            background: rgba(5, 5, 8, 0.8);
+            padding: 0.3rem 0.6rem;
+            border: 1px solid var(--gold-dim);
+        }
+        
+        .panel canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           CONTROLS PANEL
+           ═══════════════════════════════════════════════════════════════ */
+        .controls {
+            background: var(--bg-panel);
+            padding: 1rem;
+            overflow-y: auto;
+            border-left: 1px solid var(--gold-dim);
+        }
+        
+        .control-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--gold-dim);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.7rem;
+            margin-bottom: 0.4rem;
+            background: linear-gradient(135deg, var(--gold), #c9a050);
+            color: #000;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(135deg, var(--cyan), #00a5b5);
+        }
+        
+        .btn.tertiary {
+            background: linear-gradient(135deg, var(--magenta), #cc00cc);
+            color: white;
+        }
+        
+        .slider-group {
+            margin-bottom: 0.8rem;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .slider-label { color: var(--text-dim); }
+        .slider-value { 
+            color: var(--cyan); 
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 245, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--gold);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--gold);
+        }
+        
+        /* Field Values Display */
+        .field-values {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--gold-dim);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.7rem;
+        }
+        
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .field-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .field-name {
+            color: var(--text-dim);
+        }
+        
+        .field-val {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+        
+        .field-val.high { color: var(--green); }
+        .field-val.mid { color: var(--gold); }
+        .field-val.low { color: var(--red); }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           PIPELINE VISUALIZATION
+           ═══════════════════════════════════════════════════════════════ */
+        .pipeline {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--gold-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0 2rem;
+        }
+        
+        .pipeline-stage {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gold-dim);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+        }
+        
+        .pipeline-stage.active {
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+        }
+        
+        .pipeline-stage .icon {
+            font-size: 1rem;
+        }
+        
+        .pipeline-arrow {
+            color: var(--gold);
+            font-size: 1.2rem;
+            animation: arrow-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes arrow-pulse {
+            0%, 100% { opacity: 0.3; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(3px); }
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════════════════════════ */
+        .footer {
+            background: var(--bg-deep);
+            border-top: 1px solid var(--gold-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+        
+        .footer-brand {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--gold-dim);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           GLOW EFFECTS
+           ═══════════════════════════════════════════════════════════════ */
+        .glow-gold { filter: drop-shadow(0 0 10px var(--gold)); }
+        .glow-cyan { filter: drop-shadow(0 0 10px var(--cyan)); }
+        .glow-magenta { filter: drop-shadow(0 0 10px var(--magenta)); }
+    </style>
+</head>
+<body>
+    <div class="curveview-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h1>CURVEVIEW ENGINE</h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>WAVE FIELD ACTIVE</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--cyan);"></div>
+                    <span>Ψ-SYNC: <span id="psi-status">LOCKED</span></span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--magenta);"></div>
+                    <span>κ-CURVE: <span id="kappa-status">ACTIVE</span></span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- WAVE FIELD PANEL -->
+        <div class="panel wavefield">
+            <div class="panel-title">① Wave Field Emitter</div>
+            <canvas id="wavefieldCanvas"></canvas>
+        </div>
+        
+        <!-- HEX RETINA PANEL -->
+        <div class="panel hexretina">
+            <div class="panel-title">② Hex Retina Sampling</div>
+            <canvas id="hexretinaCanvas"></canvas>
+        </div>
+        
+        <!-- PERCEPTION PANEL -->
+        <div class="panel perception">
+            <div class="panel-title">③ Perceived Image</div>
+            <canvas id="perceptionCanvas"></canvas>
+        </div>
+        
+        <!-- CONTROLS -->
+        <div class="controls">
+            <div class="control-section">
+                <div class="section-title">⚛ Engine Control</div>
+                <button class="btn" onclick="startEngine()">▶ START</button>
+                <button class="btn secondary" onclick="injectGlyph()">☥ INJECT GLYPH</button>
+                <button class="btn tertiary" onclick="toggleCurveCorrection()">κ CURVE TOGGLE</button>
+            </div>
+            
+            <div class="control-section">
+                <div class="section-title">Wave Parameters</div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Wave Frequency</span>
+                        <span class="slider-value" id="freqVal">1.0</span>
+                    </div>
+                    <input type="range" min="0.1" max="5" step="0.1" value="1" 
+                           onchange="updateFrequency(this.value)">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Phase Offset (Φ)</span>
+                        <span class="slider-value" id="phaseVal">0.00</span>
+                    </div>
+                    <input type="range" min="0" max="6.28" step="0.01" value="0" 
+                           onchange="updatePhaseOffset(this.value)">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Amplitude</span>
+                        <span class="slider-value" id="ampVal">1.0</span>
+                    </div>
+                    <input type="range" min="0.1" max="2" step="0.1" value="1" 
+                           onchange="updateAmplitude(this.value)">
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <div class="section-title">Retina Parameters</div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Retina Curvature (R)</span>
+                        <span class="slider-value" id="retinaRVal">12</span>
+                    </div>
+                    <input type="range" min="8" max="20" step="0.5" value="12" 
+                           onchange="updateRetinaR(this.value)">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Hex Density</span>
+                        <span class="slider-value" id="hexDensityVal">37</span>
+                    </div>
+                    <input type="range" min="7" max="61" step="6" value="37" 
+                           onchange="updateHexDensity(this.value)">
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <div class="section-title">Ma'at Field State</div>
+                <div class="field-values">
+                    <div class="field-row">
+                        <span class="field-name">ΔΦ (Chaos)</span>
+                        <span class="field-val mid" id="deltaPhi">0.000</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-name">Ψ (Coherence)</span>
+                        <span class="field-val high" id="psiVal">1.000</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-name">κ (Curvature)</span>
+                        <span class="field-val mid" id="kappaVal">0.000</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-name">KA</span>
+                        <span class="field-val mid" id="kaVal">0.500</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-name">BA</span>
+                        <span class="field-val mid" id="baVal">0.500</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-name">AKH (Meaning)</span>
+                        <span class="field-val high" id="akhVal">0.500</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <div class="section-title">Actions</div>
+                <button class="btn" onclick="maatPulse()">☥ MA'AT PULSE</button>
+                <button class="btn secondary" onclick="injectChaos()">⚡ INJECT CHAOS</button>
+                <button class="btn" onclick="resetEngine()">↻ RESET</button>
+            </div>
+        </div>
+        
+        <!-- PIPELINE -->
+        <div class="pipeline">
+            <div class="pipeline-stage active" id="stage1">
+                <span class="icon">📡</span>
+                <span>Glyph Input</span>
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-stage" id="stage2">
+                <span class="icon">〰️</span>
+                <span>Wave Gen</span>
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-stage" id="stage3">
+                <span class="icon">Ψ</span>
+                <span>Phase Sync</span>
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-stage" id="stage4">
+                <span class="icon">κ</span>
+                <span>Curve Correct</span>
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-stage" id="stage5">
+                <span class="icon">⬡</span>
+                <span>Hex Sample</span>
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-stage" id="stage6">
+                <span class="icon">👁</span>
+                <span>Perception</span>
+            </div>
+        </div>
+        
+        <!-- FOOTER -->
+        <footer class="footer">
+            <span class="footer-brand">CURVEVIEW ENGINE v1.0 — Direct Retinal Wave Projection</span>
+            <span>Ma'at Field Theory Implementation • December 2025</span>
+        </footer>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONSTANTS
+        // ═══════════════════════════════════════════════════════════════
+        const PI = Math.PI;
+        const PHI = (1 + Math.sqrt(5)) / 2; // Golden ratio
+        const TAU = PI * 2;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // FIELD STATE (11D Ma'at Motor)
+        // ═══════════════════════════════════════════════════════════════
+        const FieldState = {
+            // Hexagonal field vectors
+            H: new Array(6).fill(0.5),
+            Hprime: new Array(6).fill(0.5),
+            
+            // Core field values
+            deltaPhi: 0,
+            deltaPhiMax: 0,
+            psi: 1,
+            kappa: 0,
+            
+            // Egyptian operators
+            KA: 0.5,
+            BA: 0.5,
+            AKH: 0.5,
+            
+            // Time
+            t: 0,
+            
+            // Wave parameters
+            waveFrequency: 1.0,
+            waveAmplitude: 1.0,
+            phaseOffset: 0,
+            
+            // Retina parameters
+            retinaR: 12,        // mm
+            hexDensity: 37,     // receptors in grid
+            curveCorrection: true,
+            
+            // Active glyph
+            activeGlyph: null,
+            glyphPhase: 0
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CANVAS SETUP
+        // ═══════════════════════════════════════════════════════════════
+        const wavefieldCanvas = document.getElementById('wavefieldCanvas');
+        const hexretinaCanvas = document.getElementById('hexretinaCanvas');
+        const perceptionCanvas = document.getElementById('perceptionCanvas');
+        
+        const ctxWave = wavefieldCanvas.getContext('2d');
+        const ctxHex = hexretinaCanvas.getContext('2d');
+        const ctxPerc = perceptionCanvas.getContext('2d');
+        
+        let isRunning = false;
+        let animationId = null;
+        
+        function resizeCanvases() {
+            const panels = document.querySelectorAll('.panel');
+            
+            [wavefieldCanvas, hexretinaCanvas, perceptionCanvas].forEach((canvas, i) => {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // GLYPH DEFINITIONS
+        // ═══════════════════════════════════════════════════════════════
+        const GLYPHS = {
+            ankh: {
+                name: 'Ankh (Life)',
+                generate: (x, y, t) => {
+                    // Ankh shape as wave pattern
+                    const cx = 0.5, cy = 0.4;
+                    const dx = x - cx, dy = y - cy;
+                    const r = Math.sqrt(dx*dx + dy*dy);
+                    const theta = Math.atan2(dy, dx);
+                    
+                    // Loop at top
+                    const loopR = 0.15;
+                    const loopDist = Math.abs(r - loopR);
+                    const loop = Math.exp(-loopDist * 20) * (y < 0.5 ? 1 : 0);
+                    
+                    // Vertical stem
+                    const stem = Math.exp(-Math.abs(dx) * 30) * (y > 0.35 ? 1 : 0);
+                    
+                    // Horizontal arms
+                    const arms = Math.exp(-Math.abs(dy - 0.1) * 30) * 
+                                (Math.abs(dx) < 0.15 ? 1 : 0);
+                    
+                    return (loop + stem * 0.8 + arms * 0.6) * 
+                           Math.sin(t * 0.05 + theta * 3);
+                }
+            },
+            djed: {
+                name: 'Djed (Stability)',
+                generate: (x, y, t) => {
+                    const cx = 0.5;
+                    const dx = Math.abs(x - cx);
+                    
+                    // Pillar
+                    const pillar = Math.exp(-dx * 25);
+                    
+                    // Horizontal bars
+                    const bars = [0.2, 0.35, 0.5, 0.65].reduce((sum, barY) => {
+                        return sum + Math.exp(-Math.abs(y - barY) * 40) * 
+                               (dx < 0.12 + (1 - barY) * 0.08 ? 1 : 0);
+                    }, 0);
+                    
+                    return (pillar * 0.5 + bars * 0.8) * 
+                           Math.cos(t * 0.03 + y * PI * 2);
+                }
+            },
+            eye: {
+                name: 'Eye of Horus',
+                generate: (x, y, t) => {
+                    const cx = 0.5, cy = 0.5;
+                    const dx = x - cx, dy = y - cy;
+                    const r = Math.sqrt(dx*dx + dy*dy);
+                    const theta = Math.atan2(dy, dx);
+                    
+                    // Outer eye shape
+                    const eyeShape = Math.exp(-Math.pow(r - 0.25, 2) * 50);
+                    
+                    // Pupil
+                    const pupil = Math.exp(-r * 15);
+                    
+                    // Spiral detail
+                    const spiral = Math.sin(theta * 6 + r * 20 - t * 0.1);
+                    
+                    return (eyeShape * 0.6 + pupil + spiral * 0.2 * eyeShape) *
+                           Math.sin(t * 0.04);
+                }
+            },
+            wave: {
+                name: 'Pure Wave',
+                generate: (x, y, t) => {
+                    const freq = FieldState.waveFrequency;
+                    const phase = FieldState.phaseOffset;
+                    return Math.sin(x * PI * 4 * freq + t * 0.1 + phase) *
+                           Math.cos(y * PI * 4 * freq + t * 0.08);
+                }
+            },
+            hexfield: {
+                name: 'Hexagonal Field',
+                generate: (x, y, t) => {
+                    // Convert to hex coordinates
+                    const hx = x * 2 - 1;
+                    const hy = y * 2 - 1;
+                    
+                    let sum = 0;
+                    for (let i = 0; i < 6; i++) {
+                        const angle = i * PI / 3;
+                        const px = Math.cos(angle);
+                        const py = Math.sin(angle);
+                        sum += Math.sin((hx * px + hy * py) * PI * 3 + 
+                                       t * 0.05 + i * PI / 3);
+                    }
+                    return sum / 6;
+                }
+            }
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // MA'AT MOTOR FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateMirror() {
+            FieldState.Hprime = [...FieldState.H].reverse();
+        }
+        
+        function computeDeltaPhi() {
+            let sum = 0;
+            let max = 0;
+            
+            for (let i = 0; i < FieldState.H.length; i++) {
+                const d = Math.abs(FieldState.H[i] - FieldState.Hprime[i]);
+                sum += d;
+                if (d > max) max = d;
+            }
+            
+            FieldState.deltaPhi = sum / FieldState.H.length;
+            FieldState.deltaPhiMax = max;
+        }
+        
+        function computePsi() {
+            FieldState.psi = Math.max(0, 1 - FieldState.deltaPhi);
+        }
+        
+        function computeKappa() {
+            FieldState.kappa = PI * (1 - FieldState.psi);
+        }
+        
+        function updateKABAAKH() {
+            const t = FieldState.t * 0.01;
+            FieldState.KA = 0.5 + 0.3 * Math.sin(t) * FieldState.psi;
+            FieldState.BA = 0.5 + 0.3 * Math.cos(t * 1.5) * FieldState.psi;
+            
+            const alignment = 1 - Math.abs(FieldState.KA - FieldState.BA);
+            FieldState.AKH = alignment * FieldState.psi * 0.8 + 0.2;
+        }
+        
+        function maatPulse() {
+            FieldState.H = FieldState.H.map(h => h + (0.5 - h) * 0.25);
+            highlightPipeline(3);
+        }
+        
+        function injectChaos() {
+            FieldState.H = FieldState.H.map(h => {
+                const chaos = (Math.random() - 0.5) * 0.4;
+                return Math.max(0, Math.min(1, h + chaos));
+            });
+        }
+        
+        function resetEngine() {
+            FieldState.H = new Array(6).fill(0.5);
+            FieldState.Hprime = new Array(6).fill(0.5);
+            FieldState.deltaPhi = 0;
+            FieldState.psi = 1;
+            FieldState.kappa = 0;
+            FieldState.t = 0;
+            FieldState.activeGlyph = null;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CURVEVIEW CORE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        /**
+         * Calculate retina curve at position (x, y)
+         * Retina is approximated as a spherical cap
+         */
+        function retinaCurve(x, y) {
+            const R = FieldState.retinaR;
+            const nx = (x - 0.5) * 2; // normalize to -1..1
+            const ny = (y - 0.5) * 2;
+            const rSq = nx * nx + ny * ny;
+            
+            if (rSq >= 1) return 0;
+            
+            return Math.sqrt(1 - rSq) * R;
+        }
+        
+        /**
+         * Generate wave from glyph at position
+         */
+        function glyphToWave(glyph, x, y, t) {
+            if (!glyph || !GLYPHS[glyph]) {
+                // Default standing wave
+                return Math.sin(x * PI * 4 + t * 0.1) * 
+                       Math.cos(y * PI * 4 + t * 0.08);
+            }
+            return GLYPHS[glyph].generate(x, y, t);
+        }
+        
+        /**
+         * Phase synchronization using Ψ
+         */
+        function phaseSync(wave, x, y) {
+            const psi = FieldState.psi;
+            const phase = PHI * psi + FieldState.phaseOffset;
+            
+            // Complex multiplication for phase shift
+            const real = wave * Math.cos(phase);
+            const imag = wave * Math.sin(phase);
+            
+            return { real, imag, magnitude: Math.sqrt(real*real + imag*imag) };
+        }
+        
+        /**
+         * Apply curve correction using κ
+         */
+        function curveCorrect(synced, x, y) {
+            if (!FieldState.curveCorrection) {
+                return synced;
+            }
+            
+            const kappa = FieldState.kappa;
+            const curve = retinaCurve(x, y);
+            const correction = Math.exp(-kappa * curve * 0.1);
+            
+            return {
+                real: synced.real * correction,
+                imag: synced.imag * correction,
+                magnitude: synced.magnitude * correction
+            };
+        }
+        
+        /**
+         * Generate hexagonal grid positions
+         */
+        function generateHexGrid(density) {
+            const positions = [];
+            const rows = Math.floor(Math.sqrt(density));
+            const cols = Math.ceil(density / rows);
+            
+            for (let row = 0; row < rows; row++) {
+                const offset = (row % 2) * 0.5;
+                for (let col = 0; col < cols; col++) {
+                    const x = (col + offset + 0.5) / cols;
+                    const y = (row + 0.5) / rows;
+                    
+                    if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+                        positions.push({ x, y, index: positions.length });
+                    }
+                }
+            }
+            
+            return positions;
+        }
+        
+        /**
+         * Sample wave field at hex positions
+         */
+        function hexSample(waveField, hexPositions) {
+            return hexPositions.map(pos => {
+                const wave = glyphToWave(FieldState.activeGlyph, pos.x, pos.y, FieldState.t);
+                const synced = phaseSync(wave, pos.x, pos.y);
+                const curved = curveCorrect(synced, pos.x, pos.y);
+                
+                return {
+                    ...pos,
+                    value: curved.magnitude,
+                    phase: Math.atan2(curved.imag, curved.real)
+                };
+            });
+        }
+        
+        /**
+         * Reconstruct perception from hex samples
+         */
+        function reconstructPerception(hexSamples, width, height) {
+            const perception = new Float32Array(width * height);
+            
+            // Simple nearest-neighbor interpolation
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const nx = x / width;
+                    const ny = y / height;
+                    
+                    // Find nearest hex sample
+                    let nearest = hexSamples[0];
+                    let minDist = Infinity;
+                    
+                    for (const sample of hexSamples) {
+                        const dx = sample.x - nx;
+                        const dy = sample.y - ny;
+                        const dist = dx*dx + dy*dy;
+                        
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearest = sample;
+                        }
+                    }
+                    
+                    // Interpolate with distance falloff
+                    const falloff = Math.exp(-minDist * 50);
+                    perception[y * width + x] = nearest.value * falloff;
+                }
+            }
+            
+            return perception;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // RENDERING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function renderWavefield() {
+            const w = wavefieldCanvas.width;
+            const h = wavefieldCanvas.height;
+            const imageData = ctxWave.createImageData(w, h);
+            
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const nx = x / w;
+                    const ny = y / h;
+                    
+                    const wave = glyphToWave(FieldState.activeGlyph, nx, ny, FieldState.t);
+                    const intensity = (wave + 1) / 2; // normalize to 0-1
+                    
+                    const i = (y * w + x) * 4;
+                    
+                    // Cyan-magenta gradient based on wave value
+                    imageData.data[i] = intensity * 100;                    // R
+                    imageData.data[i + 1] = intensity * 200 + 55;           // G
+                    imageData.data[i + 2] = 255 - intensity * 55;           // B
+                    imageData.data[i + 3] = 255;                            // A
+                }
+            }
+            
+            ctxWave.putImageData(imageData, 0, 0);
+            
+            // Draw curve correction overlay
+            if (FieldState.curveCorrection) {
+                ctxWave.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+                ctxWave.lineWidth = 1;
+                
+                // Draw curvature lines
+                for (let r = 0.1; r <= 0.5; r += 0.1) {
+                    ctxWave.beginPath();
+                    ctxWave.arc(w/2, h/2, r * Math.min(w, h), 0, TAU);
+                    ctxWave.stroke();
+                }
+            }
+        }
+        
+        function renderHexRetina() {
+            const w = hexretinaCanvas.width;
+            const h = hexretinaCanvas.height;
+            
+            ctxHex.fillStyle = '#050508';
+            ctxHex.fillRect(0, 0, w, h);
+            
+            // Generate hex grid
+            const hexPositions = generateHexGrid(FieldState.hexDensity);
+            const hexSamples = hexSample(null, hexPositions);
+            
+            // Draw retina curve background
+            const gradient = ctxHex.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2);
+            gradient.addColorStop(0, 'rgba(212, 175, 55, 0.1)');
+            gradient.addColorStop(0.7, 'rgba(0, 245, 255, 0.05)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctxHex.fillStyle = gradient;
+            ctxHex.fillRect(0, 0, w, h);
+            
+            // Draw hex receptors
+            const hexRadius = Math.min(w, h) / (Math.sqrt(FieldState.hexDensity) * 2.5);
+            
+            hexSamples.forEach(sample => {
+                const x = sample.x * w;
+                const y = sample.y * h;
+                
+                // Color based on value and phase
+                const hue = (sample.phase / TAU) * 360;
+                const lightness = 30 + sample.value * 40;
+                
+                ctxHex.fillStyle = `hsl(${hue}, 80%, ${lightness}%)`;
+                ctxHex.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+                ctxHex.lineWidth = 1;
+                
+                // Draw hexagon
+                ctxHex.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = i * PI / 3 - PI / 6;
+                    const hx = x + Math.cos(angle) * hexRadius;
+                    const hy = y + Math.sin(angle) * hexRadius;
+                    if (i === 0) ctxHex.moveTo(hx, hy);
+                    else ctxHex.lineTo(hx, hy);
+                }
+                ctxHex.closePath();
+                ctxHex.fill();
+                ctxHex.stroke();
+            });
+            
+            // Draw H vector indicators
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const vectorRadius = Math.min(w, h) * 0.35;
+            
+            ctxHex.strokeStyle = 'rgba(0, 255, 136, 0.8)';
+            ctxHex.lineWidth = 2;
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 - PI / 2;
+                const length = vectorRadius * FieldState.H[i];
+                const x = centerX + Math.cos(angle) * length;
+                const y = centerY + Math.sin(angle) * length;
+                
+                ctxHex.beginPath();
+                ctxHex.moveTo(centerX, centerY);
+                ctxHex.lineTo(x, y);
+                ctxHex.stroke();
+                
+                // Draw point
+                ctxHex.fillStyle = '#00ff88';
+                ctxHex.beginPath();
+                ctxHex.arc(x, y, 4, 0, TAU);
+                ctxHex.fill();
+            }
+            
+            // Draw H' (mirror) vectors
+            ctxHex.strokeStyle = 'rgba(255, 0, 255, 0.5)';
+            ctxHex.lineWidth = 1;
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 - PI / 2;
+                const length = vectorRadius * FieldState.Hprime[i];
+                const x = centerX + Math.cos(angle) * length;
+                const y = centerY + Math.sin(angle) * length;
+                
+                ctxHex.beginPath();
+                ctxHex.moveTo(centerX, centerY);
+                ctxHex.lineTo(x, y);
+                ctxHex.stroke();
+            }
+        }
+        
+        function renderPerception() {
+            const w = perceptionCanvas.width;
+            const h = perceptionCanvas.height;
+            
+            // Generate hex samples
+            const hexPositions = generateHexGrid(FieldState.hexDensity);
+            const hexSamples = hexSample(null, hexPositions);
+            
+            // Reconstruct perception
+            const perception = reconstructPerception(hexSamples, w, h);
+            
+            // Create image
+            const imageData = ctxPerc.createImageData(w, h);
+            
+            for (let i = 0; i < perception.length; i++) {
+                const value = perception[i];
+                const intensity = Math.max(0, Math.min(1, (value + 1) / 2));
+                
+                const idx = i * 4;
+                
+                // Golden-cyan perception color
+                const r = intensity * 212;
+                const g = intensity * 175 + (1 - intensity) * 100;
+                const b = intensity * 55 + (1 - intensity) * 200;
+                
+                imageData.data[idx] = r;
+                imageData.data[idx + 1] = g;
+                imageData.data[idx + 2] = b;
+                imageData.data[idx + 3] = 255;
+            }
+            
+            ctxPerc.putImageData(imageData, 0, 0);
+            
+            // Add AKH glow overlay
+            if (FieldState.AKH > 0.5) {
+                const glowStrength = (FieldState.AKH - 0.5) * 2;
+                const gradient = ctxPerc.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2);
+                gradient.addColorStop(0, `rgba(212, 175, 55, ${glowStrength * 0.3})`);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctxPerc.fillStyle = gradient;
+                ctxPerc.fillRect(0, 0, w, h);
+            }
+            
+            // Draw coherence indicator
+            const coherenceRadius = 30 * FieldState.psi;
+            ctxPerc.strokeStyle = `rgba(0, 255, 136, ${FieldState.psi})`;
+            ctxPerc.lineWidth = 2;
+            ctxPerc.beginPath();
+            ctxPerc.arc(w - 40, h - 40, coherenceRadius, 0, TAU);
+            ctxPerc.stroke();
+            
+            ctxPerc.fillStyle = '#00ff88';
+            ctxPerc.font = '10px Orbitron';
+            ctxPerc.textAlign = 'center';
+            ctxPerc.fillText('Ψ', w - 40, h - 36);
+        }
+        
+        function updateFieldDisplay() {
+            // Update field values display
+            document.getElementById('deltaPhi').textContent = FieldState.deltaPhi.toFixed(3);
+            document.getElementById('psiVal').textContent = FieldState.psi.toFixed(3);
+            document.getElementById('kappaVal').textContent = FieldState.kappa.toFixed(3);
+            document.getElementById('kaVal').textContent = FieldState.KA.toFixed(3);
+            document.getElementById('baVal').textContent = FieldState.BA.toFixed(3);
+            document.getElementById('akhVal').textContent = FieldState.AKH.toFixed(3);
+            
+            // Update colors based on values
+            const dpEl = document.getElementById('deltaPhi');
+            dpEl.className = 'field-val ' + (FieldState.deltaPhi < 0.2 ? 'high' : 
+                                             FieldState.deltaPhi < 0.5 ? 'mid' : 'low');
+            
+            const psiEl = document.getElementById('psiVal');
+            psiEl.className = 'field-val ' + (FieldState.psi > 0.7 ? 'high' : 
+                                              FieldState.psi > 0.4 ? 'mid' : 'low');
+            
+            const akhEl = document.getElementById('akhVal');
+            akhEl.className = 'field-val ' + (FieldState.AKH > 0.6 ? 'high' : 
+                                              FieldState.AKH > 0.4 ? 'mid' : 'low');
+            
+            // Update status bar
+            document.getElementById('psi-status').textContent = 
+                FieldState.psi > 0.7 ? 'LOCKED' : FieldState.psi > 0.4 ? 'SEEKING' : 'CHAOS';
+            document.getElementById('kappa-status').textContent = 
+                FieldState.curveCorrection ? 'ACTIVE' : 'DISABLED';
+        }
+        
+        function highlightPipeline(stage) {
+            document.querySelectorAll('.pipeline-stage').forEach((el, i) => {
+                el.classList.toggle('active', i < stage);
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ANIMATION LOOP
+        // ═══════════════════════════════════════════════════════════════
+        
+        function tick() {
+            FieldState.t++;
+            FieldState.glyphPhase += 0.02;
+            
+            // Natural field fluctuation
+            FieldState.H = FieldState.H.map(h => {
+                const noise = (Math.random() - 0.5) * 0.01;
+                return Math.max(0, Math.min(1, h + noise));
+            });
+            
+            // Run Ma'at motor cycle
+            updateMirror();
+            computeDeltaPhi();
+            computePsi();
+            computeKappa();
+            updateKABAAKH();
+        }
+        
+        function render() {
+            renderWavefield();
+            renderHexRetina();
+            renderPerception();
+            updateFieldDisplay();
+            
+            // Animate pipeline
+            const stage = Math.floor((FieldState.t % 60) / 10) + 1;
+            highlightPipeline(stage);
+        }
+        
+        function animate() {
+            if (isRunning) {
+                tick();
+            }
+            render();
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONTROL FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function startEngine() {
+            isRunning = !isRunning;
+            document.querySelector('.control-section .btn').textContent = 
+                isRunning ? '⏸ PAUSE' : '▶ START';
+        }
+        
+        function injectGlyph() {
+            const glyphNames = Object.keys(GLYPHS);
+            const currentIndex = glyphNames.indexOf(FieldState.activeGlyph);
+            const nextIndex = (currentIndex + 1) % glyphNames.length;
+            FieldState.activeGlyph = glyphNames[nextIndex];
+            
+            // Brief perturbation
+            FieldState.H = FieldState.H.map(h => h + (Math.random() - 0.5) * 0.1);
+        }
+        
+        function toggleCurveCorrection() {
+            FieldState.curveCorrection = !FieldState.curveCorrection;
+        }
+        
+        function updateFrequency(val) {
+            FieldState.waveFrequency = parseFloat(val);
+            document.getElementById('freqVal').textContent = val;
+        }
+        
+        function updatePhaseOffset(val) {
+            FieldState.phaseOffset = parseFloat(val);
+            document.getElementById('phaseVal').textContent = parseFloat(val).toFixed(2);
+        }
+        
+        function updateAmplitude(val) {
+            FieldState.waveAmplitude = parseFloat(val);
+            document.getElementById('ampVal').textContent = val;
+        }
+        
+        function updateRetinaR(val) {
+            FieldState.retinaR = parseFloat(val);
+            document.getElementById('retinaRVal').textContent = val;
+        }
+        
+        function updateHexDensity(val) {
+            FieldState.hexDensity = parseInt(val);
+            document.getElementById('hexDensityVal').textContent = val;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        window.addEventListener('load', () => {
+            resizeCanvases();
+            animate();
+            
+            // Set initial glyph
+            FieldState.activeGlyph = 'wave';
+        });
+        
+        window.addEventListener('resize', resizeCanvases);
+    </script>
+</body>
+</html>
