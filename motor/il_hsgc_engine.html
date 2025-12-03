@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>∞ IL-HSGC — Infinite-Loop Hexagonal Self-Organising Glyph Circuit</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --gold: #d4af37;
+            --cyan: #00f0ff;
+            --magenta: #ff00ff;
+            --emerald: #00ff88;
+            --crimson: #ff3366;
+            --void: #020208;
+            --deep: #08080c;
+            --surface: #0c0c14;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--void);
+            color: #e0e0f0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-areas:
+                "header header header"
+                "main main sidebar"
+                "footer footer footer";
+            grid-template-columns: 1fr 1fr 350px;
+            grid-template-rows: 55px 1fr 80px;
+            height: 100vh;
+            gap: 1px;
+            background: #1a1a2a;
+        }
+        
+        header {
+            grid-area: header;
+            background: linear-gradient(90deg, var(--deep), var(--surface), var(--deep));
+            border-bottom: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .infinity-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--gold), var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px var(--gold)); }
+            50% { filter: drop-shadow(0 0 20px var(--cyan)); }
+        }
+        
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--gold), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.1em;
+        }
+        
+        .status-indicators {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.7rem;
+        }
+        
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+        
+        .dot.gold { background: var(--gold); }
+        .dot.cyan { background: var(--cyan); }
+        .dot.magenta { background: var(--magenta); }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        main {
+            grid-area: main;
+            background: var(--void);
+            position: relative;
+        }
+        
+        #mainCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .overlay {
+            position: absolute;
+            background: rgba(8, 8, 12, 0.92);
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.65rem;
+        }
+        
+        .overlay-tl {
+            top: 1rem;
+            left: 1rem;
+        }
+        
+        .overlay-bl {
+            bottom: 1rem;
+            left: 1rem;
+        }
+        
+        .overlay-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding-bottom: 0.3rem;
+        }
+        
+        .formula {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--cyan);
+            margin: 0.3rem 0;
+            padding: 0.2rem 0.4rem;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 2px;
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background: var(--deep);
+            border-left: 1px solid var(--gold);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .loop-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .loop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.3rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            font-size: 0.65rem;
+            border-left: 3px solid var(--cyan);
+        }
+        
+        .loop-item.closing {
+            border-left-color: var(--gold);
+            animation: closing-pulse 0.5s ease-out;
+        }
+        
+        @keyframes closing-pulse {
+            0% { background: rgba(212, 175, 55, 0.3); }
+            100% { background: rgba(0, 0, 0, 0.3); }
+        }
+        
+        .loop-id { color: var(--cyan); font-family: 'Orbitron', sans-serif; }
+        .loop-energy { color: var(--emerald); font-family: 'Orbitron', sans-serif; }
+        .loop-node { color: var(--magenta); }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .metric {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.6rem;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 0.55rem;
+            color: #606080;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+        }
+        
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .metric-value.gold { color: var(--gold); }
+        .metric-value.cyan { color: var(--cyan); }
+        .metric-value.magenta { color: var(--magenta); }
+        .metric-value.emerald { color: var(--emerald); }
+        
+        .btn {
+            width: 100%;
+            padding: 0.6rem;
+            margin-bottom: 0.4rem;
+            background: linear-gradient(135deg, var(--gold), #b89830);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn.cyan { background: linear-gradient(135deg, var(--cyan), #00a0b0); }
+        .btn.magenta { background: linear-gradient(135deg, var(--magenta), #a000a0); color: #fff; }
+        
+        .slider-row {
+            margin-bottom: 0.6rem;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .slider-label { color: #808090; }
+        .slider-val { color: var(--cyan); font-family: 'Orbitron', sans-serif; }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 240, 255, 0.2);
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--gold);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        footer {
+            grid-area: footer;
+            background: var(--surface);
+            border-top: 1px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .ctrl-btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--gold), #b89830);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        .ctrl-btn.cyan { background: linear-gradient(135deg, var(--cyan), #00a0b0); }
+        .ctrl-btn.magenta { background: linear-gradient(135deg, var(--magenta), #a000a0); color: #fff; }
+        
+        .info {
+            font-size: 0.65rem;
+            color: #606080;
+        }
+        
+        .info strong {
+            color: var(--gold);
+            font-family: 'Orbitron', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <span class="infinity-icon">∞</span>
+                <h1>IL-HSGC ENGINE</h1>
+            </div>
+            <div class="status-indicators">
+                <div class="indicator">
+                    <div class="dot gold"></div>
+                    <span>LOOPS: <span id="loop-count">0</span></span>
+                </div>
+                <div class="indicator">
+                    <div class="dot cyan"></div>
+                    <span>CLOSURES: <span id="closure-count">0</span></span>
+                </div>
+                <div class="indicator">
+                    <div class="dot magenta"></div>
+                    <span>COHERENCE: <span id="coherence-val">100%</span></span>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <canvas id="mainCanvas"></canvas>
+            
+            <div class="overlay overlay-tl">
+                <div class="overlay-title">∞ Lemniscate Law</div>
+                <div class="formula">L(t) = ∞(Φ⃗(t), κ(t), S(t))</div>
+                <div class="formula">(x² + y²)² = a²(x² − y²)</div>
+                <div class="formula">a = f(κ, S, Φ⃗)</div>
+            </div>
+            
+            <div class="overlay overlay-bl">
+                <div class="overlay-title">⬡ Hex Closure Law</div>
+                <div class="formula">θ_n = n × π/3</div>
+                <div class="formula">L(t₁) = H(θ_n)</div>
+                <div class="formula">E = Φ⃗ · κ · S</div>
+            </div>
+        </main>
+        
+        <aside class="sidebar">
+            <div class="section">
+                <div class="section-title">Field State</div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-label">Φ⃗ (Phase)</div>
+                        <div class="metric-value cyan" id="m-phi">0.000</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">κ (Curve)</div>
+                        <div class="metric-value gold" id="m-kappa">0.000</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">S (Syntropy)</div>
+                        <div class="metric-value emerald" id="m-syntropy">1.000</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">E (Energy)</div>
+                        <div class="metric-value magenta" id="m-energy">0.000</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Parameters</div>
+                <div class="slider-row">
+                    <div class="slider-header">
+                        <span class="slider-label">Loop Speed</span>
+                        <span class="slider-val" id="speed-val">1.0</span>
+                    </div>
+                    <input type="range" min="0.1" max="3" step="0.1" value="1" id="speed-slider">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header">
+                        <span class="slider-label">Lemniscate Scale (a)</span>
+                        <span class="slider-val" id="scale-val">1.0</span>
+                    </div>
+                    <input type="range" min="0.5" max="2" step="0.1" value="1" id="scale-slider">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header">
+                        <span class="slider-label">Hex Attraction</span>
+                        <span class="slider-val" id="attraction-val">0.5</span>
+                    </div>
+                    <input type="range" min="0.1" max="1" step="0.05" value="0.5" id="attraction-slider">
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Actions</div>
+                <button class="btn" onclick="spawnLoop()">∞ SPAWN LOOP</button>
+                <button class="btn cyan" onclick="spawnMultiple(6)">⬡ SPAWN HEX SET</button>
+                <button class="btn magenta" onclick="perturbLoops()">⚡ PERTURB</button>
+                <button class="btn" onclick="resetAll()">↻ RESET</button>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Active Loops</div>
+                <div class="loop-list" id="loop-list">
+                    <!-- Loop items will be added here -->
+                </div>
+            </div>
+        </aside>
+        
+        <footer>
+            <div class="controls">
+                <button class="ctrl-btn" id="playBtn" onclick="togglePlay()">▶ START</button>
+                <button class="ctrl-btn cyan" onclick="maatPulse()">☥ MA'AT</button>
+            </div>
+            <div class="info">
+                IL-HSGC v1.0 | <strong>Self-Organising Topology</strong> | 
+                Closure Node: <strong id="last-node">--</strong> | 
+                Total Energy: <strong id="total-energy">0.000</strong>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONSTANTS
+        // ═══════════════════════════════════════════════════════════════
+        const PI = Math.PI;
+        const TAU = PI * 2;
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        
+        // Hex node angles: θ_n = n × π/3
+        const HEX_ANGLES = [0, 1, 2, 3, 4, 5].map(n => n * PI / 3);
+        
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        const State = {
+            loops: [],
+            closures: 0,
+            totalEnergy: 0,
+            
+            // Field parameters
+            phi: 0,
+            kappa: 0,
+            syntropy: 1,
+            
+            // Control
+            speed: 1,
+            scale: 1,
+            attraction: 0.5,
+            
+            running: false,
+            t: 0,
+            loopIdCounter: 0
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CANVAS
+        // ═══════════════════════════════════════════════════════════════
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resize() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // LEMNISCATE MATHEMATICS
+        // ═══════════════════════════════════════════════════════════════
+        
+        /**
+         * Lemniscate of Bernoulli parametric form
+         * x = a * cos(t) / (1 + sin²(t))
+         * y = a * sin(t) * cos(t) / (1 + sin²(t))
+         */
+        function lemniscatePoint(t, a) {
+            const sint = Math.sin(t);
+            const cost = Math.cos(t);
+            const denom = 1 + sint * sint;
+            
+            return {
+                x: a * cost / denom,
+                y: a * sint * cost / denom
+            };
+        }
+        
+        /**
+         * Calculate the 'a' parameter based on field state
+         * a = f(κ, S, Φ⃗)
+         */
+        function calculateA(kappa, syntropy, phi) {
+            const baseA = State.scale * 150;
+            return baseA * (1 + 0.3 * Math.sin(phi)) * syntropy * (1 - kappa / PI * 0.5);
+        }
+        
+        /**
+         * Find nearest hex node to a point
+         */
+        function nearestHexNode(x, y, cx, cy, radius) {
+            const angle = Math.atan2(y - cy, x - cx);
+            
+            let nearestNode = 0;
+            let minDiff = Infinity;
+            
+            for (let n = 0; n < 6; n++) {
+                const nodeAngle = HEX_ANGLES[n];
+                let diff = Math.abs(angle - nodeAngle);
+                if (diff > PI) diff = TAU - diff;
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nearestNode = n;
+                }
+            }
+            
+            return {
+                node: nearestNode,
+                angle: HEX_ANGLES[nearestNode],
+                x: cx + Math.cos(HEX_ANGLES[nearestNode]) * radius,
+                y: cy + Math.sin(HEX_ANGLES[nearestNode]) * radius,
+                distance: minDiff
+            };
+        }
+        
+        /**
+         * Calculate closure energy: E = Φ⃗ · κ · S
+         */
+        function closureEnergy(phi, kappa, syntropy) {
+            return Math.abs(phi * kappa * syntropy);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // GLYPH LOOP CLASS
+        // ═══════════════════════════════════════════════════════════════
+        
+        class GlyphLoop {
+            constructor(id, startAngle = 0) {
+                this.id = id;
+                this.t = startAngle;
+                this.phase = 0;
+                this.rotation = Math.random() * TAU;
+                this.offsetX = (Math.random() - 0.5) * 100;
+                this.offsetY = (Math.random() - 0.5) * 100;
+                
+                this.trail = [];
+                this.maxTrail = 100;
+                
+                this.closing = false;
+                this.closedNode = null;
+                this.energy = 0;
+                
+                this.color = `hsl(${Math.random() * 60 + 170}, 80%, 60%)`;
+            }
+            
+            update(dt, cx, cy, hexRadius) {
+                if (this.closing) return;
+                
+                // Update loop parameter
+                this.t += dt * State.speed * 0.02;
+                this.phase += dt * 0.01;
+                
+                // Calculate dynamic 'a' parameter
+                const a = calculateA(State.kappa, State.syntropy, State.phi + this.phase);
+                
+                // Get lemniscate position
+                const lem = lemniscatePoint(this.t, a);
+                
+                // Apply rotation and offset
+                const cos = Math.cos(this.rotation);
+                const sin = Math.sin(this.rotation);
+                
+                const x = cx + this.offsetX + lem.x * cos - lem.y * sin;
+                const y = cy + this.offsetY + lem.x * sin + lem.y * cos;
+                
+                // Store in trail
+                this.trail.push({ x, y });
+                if (this.trail.length > this.maxTrail) {
+                    this.trail.shift();
+                }
+                
+                // Check for hex attraction (closure condition)
+                const nearest = nearestHexNode(x, y, cx, cy, hexRadius);
+                
+                // Attraction force pulls toward hex node
+                if (nearest.distance < 0.3) {
+                    const attractionForce = State.attraction * (0.3 - nearest.distance) / 0.3;
+                    
+                    // Check if close enough to close
+                    const dist = Math.sqrt((x - nearest.x) ** 2 + (y - nearest.y) ** 2);
+                    
+                    if (dist < 20 && State.syntropy > 0.5) {
+                        this.close(nearest.node);
+                    }
+                }
+                
+                return { x, y };
+            }
+            
+            close(nodeIndex) {
+                this.closing = true;
+                this.closedNode = nodeIndex;
+                this.energy = closureEnergy(State.phi, State.kappa, State.syntropy);
+                
+                State.closures++;
+                State.totalEnergy += this.energy;
+                
+                // Log closure
+                console.log(`Loop ${this.id} closed on node ${nodeIndex} with energy ${this.energy.toFixed(4)}`);
+                
+                // Update UI
+                document.getElementById('last-node').textContent = `θ_${nodeIndex}`;
+                
+                // After closure, the loop transforms and restarts
+                setTimeout(() => {
+                    this.transform();
+                }, 500);
+            }
+            
+            transform() {
+                // Reset for next cycle
+                this.t = Math.random() * TAU;
+                this.rotation += PI / 3; // Rotate by one hex step
+                this.closing = false;
+                this.closedNode = null;
+                this.trail = [];
+                
+                // Energy affects next cycle
+                State.syntropy = Math.min(1, State.syntropy + this.energy * 0.1);
+            }
+            
+            draw(ctx) {
+                if (this.trail.length < 2) return;
+                
+                // Draw trail
+                ctx.beginPath();
+                ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                
+                for (let i = 1; i < this.trail.length; i++) {
+                    ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                }
+                
+                const gradient = ctx.createLinearGradient(
+                    this.trail[0].x, this.trail[0].y,
+                    this.trail[this.trail.length - 1].x, this.trail[this.trail.length - 1].y
+                );
+                gradient.addColorStop(0, 'rgba(0, 240, 255, 0)');
+                gradient.addColorStop(1, this.closing ? '#d4af37' : this.color);
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.closing ? 3 : 2;
+                ctx.stroke();
+                
+                // Draw head
+                const head = this.trail[this.trail.length - 1];
+                ctx.fillStyle = this.closing ? '#d4af37' : this.color;
+                ctx.beginPath();
+                ctx.arc(head.x, head.y, this.closing ? 8 : 5, 0, TAU);
+                ctx.fill();
+                
+                // Draw infinity symbol at head if closing
+                if (this.closing) {
+                    ctx.font = '16px Orbitron';
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('∞', head.x, head.y - 15);
+                }
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // RENDERING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function render() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const hexRadius = Math.min(w, h) * 0.35;
+            
+            // Clear
+            ctx.fillStyle = '#020208';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Draw background lemniscate guide
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let t = 0; t < TAU; t += 0.05) {
+                const p = lemniscatePoint(t, hexRadius * 0.8);
+                if (t === 0) ctx.moveTo(cx + p.x, cy + p.y);
+                else ctx.lineTo(cx + p.x, cy + p.y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Draw hex grid
+            drawHexGrid(ctx, cx, cy, hexRadius);
+            
+            // Draw hex nodes (closure points)
+            for (let n = 0; n < 6; n++) {
+                const angle = HEX_ANGLES[n];
+                const nx = cx + Math.cos(angle) * hexRadius;
+                const ny = cy + Math.sin(angle) * hexRadius;
+                
+                // Node glow
+                const gradient = ctx.createRadialGradient(nx, ny, 0, nx, ny, 25);
+                gradient.addColorStop(0, 'rgba(212, 175, 55, 0.5)');
+                gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(nx - 25, ny - 25, 50, 50);
+                
+                // Node point
+                ctx.fillStyle = '#d4af37';
+                ctx.beginPath();
+                ctx.arc(nx, ny, 8, 0, TAU);
+                ctx.fill();
+                
+                // Node label
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(`θ_${n}`, nx, ny - 15);
+            }
+            
+            // Draw central infinity
+            ctx.font = '48px serif';
+            ctx.fillStyle = `rgba(212, 175, 55, ${0.3 + State.syntropy * 0.5})`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('∞', cx, cy);
+            
+            // Draw loops
+            for (const loop of State.loops) {
+                loop.update(1, cx, cy, hexRadius);
+                loop.draw(ctx);
+            }
+            
+            // Update UI
+            updateUI();
+        }
+        
+        function drawHexGrid(ctx, cx, cy, radius) {
+            ctx.strokeStyle = 'rgba(255, 0, 255, 0.15)';
+            ctx.lineWidth = 1;
+            
+            // Main hexagon
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = HEX_ANGLES[i];
+                const x = cx + Math.cos(angle) * radius;
+                const y = cy + Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Inner hexagons
+            for (let r = 0.33; r < 1; r += 0.33) {
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = HEX_ANGLES[i];
+                    const x = cx + Math.cos(angle) * radius * r;
+                    const y = cy + Math.sin(angle) * radius * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // Radial lines
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.1)';
+            for (let i = 0; i < 6; i++) {
+                const angle = HEX_ANGLES[i];
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+                ctx.stroke();
+            }
+        }
+        
+        function updateUI() {
+            // Update metrics
+            document.getElementById('m-phi').textContent = State.phi.toFixed(3);
+            document.getElementById('m-kappa').textContent = State.kappa.toFixed(3);
+            document.getElementById('m-syntropy').textContent = State.syntropy.toFixed(3);
+            document.getElementById('m-energy').textContent = closureEnergy(State.phi, State.kappa, State.syntropy).toFixed(3);
+            
+            // Update header
+            document.getElementById('loop-count').textContent = State.loops.length;
+            document.getElementById('closure-count').textContent = State.closures;
+            document.getElementById('coherence-val').textContent = (State.syntropy * 100).toFixed(0) + '%';
+            document.getElementById('total-energy').textContent = State.totalEnergy.toFixed(3);
+            
+            // Update loop list
+            const listEl = document.getElementById('loop-list');
+            listEl.innerHTML = '';
+            
+            for (const loop of State.loops) {
+                const item = document.createElement('div');
+                item.className = 'loop-item' + (loop.closing ? ' closing' : '');
+                item.innerHTML = `
+                    <span class="loop-id">∞_${loop.id}</span>
+                    <span class="loop-energy">E: ${loop.energy.toFixed(3)}</span>
+                    <span class="loop-node">${loop.closedNode !== null ? 'θ_' + loop.closedNode : '...'}</span>
+                `;
+                listEl.appendChild(item);
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ANIMATION LOOP
+        // ═══════════════════════════════════════════════════════════════
+        
+        function tick() {
+            State.t++;
+            
+            // Update field parameters
+            State.phi += 0.01 * State.speed;
+            if (State.phi > TAU) State.phi -= TAU;
+            
+            // Kappa oscillates based on syntropy deficit
+            State.kappa = PI * (1 - State.syntropy) * (0.5 + 0.5 * Math.sin(State.t * 0.02));
+            
+            // Syntropy slowly decays unless loops close
+            State.syntropy = Math.max(0.1, State.syntropy - 0.0001);
+        }
+        
+        function animate() {
+            if (State.running) {
+                tick();
+            }
+            render();
+            requestAnimationFrame(animate);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONTROLS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function togglePlay() {
+            State.running = !State.running;
+            document.getElementById('playBtn').textContent = State.running ? '⏸ PAUSE' : '▶ START';
+        }
+        
+        function spawnLoop() {
+            const loop = new GlyphLoop(State.loopIdCounter++);
+            State.loops.push(loop);
+        }
+        
+        function spawnMultiple(count) {
+            for (let i = 0; i < count; i++) {
+                const loop = new GlyphLoop(State.loopIdCounter++, i * TAU / count);
+                State.loops.push(loop);
+            }
+        }
+        
+        function perturbLoops() {
+            for (const loop of State.loops) {
+                loop.rotation += (Math.random() - 0.5) * PI / 2;
+                loop.offsetX += (Math.random() - 0.5) * 50;
+                loop.offsetY += (Math.random() - 0.5) * 50;
+            }
+            State.syntropy = Math.max(0.1, State.syntropy - 0.2);
+        }
+        
+        function maatPulse() {
+            State.syntropy = Math.min(1, State.syntropy + 0.3);
+        }
+        
+        function resetAll() {
+            State.loops = [];
+            State.closures = 0;
+            State.totalEnergy = 0;
+            State.phi = 0;
+            State.kappa = 0;
+            State.syntropy = 1;
+            State.t = 0;
+            State.loopIdCounter = 0;
+        }
+        
+        // Slider handlers
+        document.getElementById('speed-slider').addEventListener('input', e => {
+            State.speed = parseFloat(e.target.value);
+            document.getElementById('speed-val').textContent = State.speed.toFixed(1);
+        });
+        
+        document.getElementById('scale-slider').addEventListener('input', e => {
+            State.scale = parseFloat(e.target.value);
+            document.getElementById('scale-val').textContent = State.scale.toFixed(1);
+        });
+        
+        document.getElementById('attraction-slider').addEventListener('input', e => {
+            State.attraction = parseFloat(e.target.value);
+            document.getElementById('attraction-val').textContent = State.attraction.toFixed(2);
+        });
+        
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        window.addEventListener('load', () => {
+            resize();
+            animate();
+        });
+        
+        window.addEventListener('resize', resize);
+    </script>
+</body>
+</html>
