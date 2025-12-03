@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ OSAI FIELDNET LAYER — Clip Address API Network</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
+        
+        /* ═══════════════════════════════════════════════════════════════
+           CLIP ADDRESS COLOR SYSTEM (ENERGY LAYERS)
+           ═══════════════════════════════════════════════════════════════ */
+        :root {
+            /* Primary Clip Colors */
+            --clip-cyan: #00f0ff;      /* FLUX layer - flow, coherence */
+            --clip-magenta: #ff00ff;   /* PHASE layer - deltaPhi, syntropy */
+            --clip-gold: #d4af37;      /* MA'AT layer - djed, akh, ka, ba */
+            --clip-void: #020208;      /* VOID layer - entropy, ground, reset */
+            --clip-emerald: #00ff88;   /* LIFE layer - organic, growth */
+            --clip-crimson: #ff3366;   /* CHAOS layer - disruption, change */
+            
+            /* Secondary / UI */
+            --bg-abyss: #030306;
+            --bg-deep: #08080c;
+            --bg-surface: #0c0c14;
+            --text-primary: #e0e0f0;
+            --text-dim: #606080;
+            
+            /* Glow intensities */
+            --glow-weak: 0 0 10px;
+            --glow-medium: 0 0 20px;
+            --glow-strong: 0 0 40px;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-abyss);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           MAIN LAYOUT
+           ═══════════════════════════════════════════════════════════════ */
+        .fieldnet-container {
+            display: grid;
+            grid-template-areas:
+                "header header header"
+                "globe hexfield api"
+                "status status status";
+            grid-template-columns: 1fr 1fr 380px;
+            grid-template-rows: 50px 1fr 100px;
+            height: 100vh;
+            gap: 1px;
+            background: #1a1a2a;
+        }
+        
+        .header { grid-area: header; }
+        .globe { grid-area: globe; }
+        .hexfield { grid-area: hexfield; }
+        .api-panel { grid-area: api; }
+        .status { grid-area: status; }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           HEADER
+           ═══════════════════════════════════════════════════════════════ */
+        .header {
+            background: linear-gradient(90deg, var(--bg-deep) 0%, var(--bg-surface) 50%, var(--bg-deep) 100%);
+            border-bottom: 2px solid var(--clip-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            position: relative;
+        }
+        
+        .brand-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 2px solid var(--clip-gold);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: hex-rotate 6s linear infinite;
+        }
+        
+        .brand-icon::after {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            background: conic-gradient(from 0deg, var(--clip-cyan), var(--clip-magenta), var(--clip-gold), var(--clip-cyan));
+            border-radius: 50%;
+            animation: core-spin 3s linear infinite reverse;
+        }
+        
+        @keyframes hex-rotate { to { transform: rotate(360deg); } }
+        @keyframes core-spin { to { transform: rotate(360deg); } }
+        
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--clip-gold), var(--clip-cyan), var(--clip-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.15em;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            font-size: 0.7rem;
+        }
+        
+        .conn-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .conn-dot.cyan { background: var(--clip-cyan); box-shadow: var(--glow-weak) var(--clip-cyan); }
+        .conn-dot.magenta { background: var(--clip-magenta); box-shadow: var(--glow-weak) var(--clip-magenta); }
+        .conn-dot.gold { background: var(--clip-gold); box-shadow: var(--glow-weak) var(--clip-gold); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           GLOBE PANEL (Earth Attractor)
+           ═══════════════════════════════════════════════════════════════ */
+        .globe {
+            background: var(--bg-abyss);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .globe canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .globe-overlay {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(3, 3, 6, 0.9);
+            border: 1px solid var(--clip-cyan);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.65rem;
+        }
+        
+        .globe-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--clip-cyan);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .geo-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.3rem 1rem;
+        }
+        
+        .geo-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .geo-label { color: var(--text-dim); }
+        .geo-value { 
+            font-family: 'Orbitron', sans-serif;
+            color: var(--clip-emerald);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           HEX FIELD PANEL
+           ═══════════════════════════════════════════════════════════════ */
+        .hexfield {
+            background: var(--bg-abyss);
+            position: relative;
+        }
+        
+        .hexfield canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hex-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(3, 3, 6, 0.9);
+            border: 1px solid var(--clip-magenta);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.65rem;
+        }
+        
+        .hex-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--clip-magenta);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           API PANEL (Clip Address Console)
+           ═══════════════════════════════════════════════════════════════ */
+        .api-panel {
+            background: var(--bg-deep);
+            border-left: 1px solid var(--clip-gold);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .api-header {
+            background: var(--bg-surface);
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .api-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--clip-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .clip-registry {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.8rem;
+        }
+        
+        .clip-section {
+            margin-bottom: 1rem;
+        }
+        
+        .clip-section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            padding: 0.3rem 0.5rem;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .clip-section-title.cyan {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--clip-cyan);
+            border-left: 3px solid var(--clip-cyan);
+        }
+        
+        .clip-section-title.magenta {
+            background: rgba(255, 0, 255, 0.1);
+            color: var(--clip-magenta);
+            border-left: 3px solid var(--clip-magenta);
+        }
+        
+        .clip-section-title.gold {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--clip-gold);
+            border-left: 3px solid var(--clip-gold);
+        }
+        
+        .clip-section-title.void {
+            background: rgba(255, 255, 255, 0.05);
+            color: #808090;
+            border-left: 3px solid #404050;
+        }
+        
+        .clip-address {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem 0.6rem;
+            margin-bottom: 0.3rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .clip-address:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateX(3px);
+        }
+        
+        .clip-address.active {
+            box-shadow: inset 0 0 0 1px var(--clip-gold);
+        }
+        
+        .clip-route {
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--text-dim);
+        }
+        
+        .clip-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+        
+        .clip-value.cyan { color: var(--clip-cyan); }
+        .clip-value.magenta { color: var(--clip-magenta); }
+        .clip-value.gold { color: var(--clip-gold); }
+        .clip-value.emerald { color: var(--clip-emerald); }
+        .clip-value.crimson { color: var(--clip-crimson); }
+        
+        /* API Console */
+        .api-console {
+            background: var(--bg-abyss);
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 0.8rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .console-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.55rem;
+            color: var(--clip-gold);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .console-log {
+            font-size: 0.6rem;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.2rem;
+            opacity: 0.8;
+        }
+        
+        .log-entry.fetch { color: var(--clip-cyan); }
+        .log-entry.response { color: var(--clip-emerald); }
+        .log-entry.error { color: var(--clip-crimson); }
+        .log-entry.event { color: var(--clip-magenta); }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           STATUS BAR
+           ═══════════════════════════════════════════════════════════════ */
+        .status {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--clip-gold);
+            display: flex;
+            align-items: stretch;
+            padding: 0;
+        }
+        
+        .status-section {
+            flex: 1;
+            padding: 0.8rem 1.2rem;
+            border-right: 1px solid rgba(212, 175, 55, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .status-section:last-child {
+            border-right: none;
+        }
+        
+        .status-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.4rem;
+        }
+        
+        .status-values {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .status-label {
+            font-size: 0.55rem;
+            color: var(--text-dim);
+        }
+        
+        .status-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .status-val.cyan { color: var(--clip-cyan); }
+        .status-val.magenta { color: var(--clip-magenta); }
+        .status-val.gold { color: var(--clip-gold); }
+        .status-val.emerald { color: var(--clip-emerald); }
+        
+        /* Control buttons */
+        .status-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--clip-gold), #b89830);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn.cyan { background: linear-gradient(135deg, var(--clip-cyan), #00b0c0); }
+        .btn.magenta { background: linear-gradient(135deg, var(--clip-magenta), #a000a0); color: #fff; }
+        .btn.crimson { background: linear-gradient(135deg, var(--clip-crimson), #a02040); color: #fff; }
+        
+        /* Network visualization bar */
+        .network-bar {
+            height: 4px;
+            background: var(--bg-abyss);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .network-flow {
+            height: 100%;
+            background: linear-gradient(90deg, var(--clip-cyan), var(--clip-magenta), var(--clip-gold));
+            border-radius: 2px;
+            animation: flow 2s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="fieldnet-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="brand">
+                <div class="brand-icon"></div>
+                <h1>OSAI FIELDNET LAYER</h1>
+            </div>
+            <div class="connection-status">
+                <div class="conn-item">
+                    <div class="conn-dot cyan"></div>
+                    <span>FLUX: <span id="flux-status">ACTIVE</span></span>
+                </div>
+                <div class="conn-item">
+                    <div class="conn-dot magenta"></div>
+                    <span>PHASE: <span id="phase-status">SYNCED</span></span>
+                </div>
+                <div class="conn-item">
+                    <div class="conn-dot gold"></div>
+                    <span>MA'AT: <span id="maat-status">BALANCED</span></span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- GLOBE PANEL -->
+        <div class="globe">
+            <canvas id="globeCanvas"></canvas>
+            <div class="globe-overlay">
+                <div class="globe-title">⊕ Earth Attractor</div>
+                <div class="geo-data">
+                    <div class="geo-row">
+                        <span class="geo-label">Lat</span>
+                        <span class="geo-value" id="geo-lat">--</span>
+                    </div>
+                    <div class="geo-row">
+                        <span class="geo-label">Lon</span>
+                        <span class="geo-value" id="geo-lon">--</span>
+                    </div>
+                    <div class="geo-row">
+                        <span class="geo-label">Vec</span>
+                        <span class="geo-value" id="geo-vec">--</span>
+                    </div>
+                    <div class="geo-row">
+                        <span class="geo-label">Curve</span>
+                        <span class="geo-value" id="geo-curve">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- HEX FIELD PANEL -->
+        <div class="hexfield">
+            <canvas id="hexCanvas"></canvas>
+            <div class="hex-overlay">
+                <div class="hex-title">⬡ Hex Field Mapping</div>
+                <div class="geo-data">
+                    <div class="geo-row">
+                        <span class="geo-label">H[k]</span>
+                        <span class="geo-value" id="hex-h">6 vectors</span>
+                    </div>
+                    <div class="geo-row">
+                        <span class="geo-label">Mode</span>
+                        <span class="geo-value" id="hex-mode">COHERENT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API PANEL -->
+        <div class="api-panel">
+            <div class="api-header">
+                <h2>⚡ Clip Address Registry</h2>
+            </div>
+            
+            <div class="clip-registry">
+                <!-- FLUX Layer (Cyan) -->
+                <div class="clip-section">
+                    <div class="clip-section-title cyan">
+                        <span>◉</span> FLUX Layer
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/flux/vector')">
+                        <span class="clip-route">/api/flux/vector</span>
+                        <span class="clip-value cyan" id="val-flux-vector">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/flux/coherence')">
+                        <span class="clip-route">/api/flux/coherence</span>
+                        <span class="clip-value cyan" id="val-flux-coherence">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/flux/curvature')">
+                        <span class="clip-route">/api/flux/curvature</span>
+                        <span class="clip-value cyan" id="val-flux-curvature">--</span>
+                    </div>
+                </div>
+                
+                <!-- PHASE Layer (Magenta) -->
+                <div class="clip-section">
+                    <div class="clip-section-title magenta">
+                        <span>◉</span> PHASE Layer
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/phase/deltaPhi')">
+                        <span class="clip-route">/api/phase/deltaPhi</span>
+                        <span class="clip-value magenta" id="val-phase-deltaPhi">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/phase/syntropy')">
+                        <span class="clip-route">/api/phase/syntropy</span>
+                        <span class="clip-value magenta" id="val-phase-syntropy">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/phase/tensor')">
+                        <span class="clip-route">/api/phase/tensor</span>
+                        <span class="clip-value magenta" id="val-phase-tensor">--</span>
+                    </div>
+                </div>
+                
+                <!-- MA'AT Layer (Gold) -->
+                <div class="clip-section">
+                    <div class="clip-section-title gold">
+                        <span>☥</span> MA'AT Layer
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/maat/djed')">
+                        <span class="clip-route">/api/maat/djed</span>
+                        <span class="clip-value gold" id="val-maat-djed">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/maat/akh')">
+                        <span class="clip-route">/api/maat/akh</span>
+                        <span class="clip-value gold" id="val-maat-akh">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/maat/ka')">
+                        <span class="clip-route">/api/maat/ka</span>
+                        <span class="clip-value gold" id="val-maat-ka">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/maat/ba')">
+                        <span class="clip-route">/api/maat/ba</span>
+                        <span class="clip-value gold" id="val-maat-ba">--</span>
+                    </div>
+                </div>
+                
+                <!-- VOID Layer (Black) -->
+                <div class="clip-section">
+                    <div class="clip-section-title void">
+                        <span>○</span> VOID Layer
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/void/entropy')">
+                        <span class="clip-route">/api/void/entropy</span>
+                        <span class="clip-value crimson" id="val-void-entropy">--</span>
+                    </div>
+                    <div class="clip-address" onclick="fetchClip('/api/void/ground')">
+                        <span class="clip-route">/api/void/ground</span>
+                        <span class="clip-value emerald" id="val-void-ground">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-console">
+                <div class="console-title">Network Log</div>
+                <div class="console-log" id="consoleLog">
+                    <div class="log-entry event">[INIT] OSAI FieldNet Layer v1.0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STATUS BAR -->
+        <div class="status">
+            <div class="status-section">
+                <div class="status-title">Field State</div>
+                <div class="status-values">
+                    <div class="status-item">
+                        <span class="status-label">ΔΦ</span>
+                        <span class="status-val magenta" id="s-dphi">0.000</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Ψ</span>
+                        <span class="status-val cyan" id="s-psi">1.000</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">κ</span>
+                        <span class="status-val gold" id="s-kappa">0.000</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">AKH</span>
+                        <span class="status-val emerald" id="s-akh">0.500</span>
+                    </div>
+                </div>
+                <div class="network-bar">
+                    <div class="network-flow" style="width: 100%;"></div>
+                </div>
+            </div>
+            
+            <div class="status-section">
+                <div class="status-title">Network</div>
+                <div class="status-values">
+                    <div class="status-item">
+                        <span class="status-label">Nodes</span>
+                        <span class="status-val cyan" id="s-nodes">1</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Sync</span>
+                        <span class="status-val emerald" id="s-sync">100%</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Loops</span>
+                        <span class="status-val gold" id="s-loops">6</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-section">
+                <div class="status-title">Controls</div>
+                <div class="status-controls">
+                    <button class="btn" id="btnStart" onclick="toggleEngine()">▶ START</button>
+                    <button class="btn cyan" onclick="maatPulse()">☥ PULSE</button>
+                    <button class="btn crimson" onclick="injectChaos()">⚡ CHAOS</button>
+                    <button class="btn" onclick="resetAll()">↻ RESET</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CLIP ADDRESS SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        
+        const CLIP_COLORS = {
+            '--clip-cyan': '#00f0ff',
+            '--clip-magenta': '#ff00ff',
+            '--clip-gold': '#d4af37',
+            '--clip-void': '#020208',
+            '--clip-emerald': '#00ff88',
+            '--clip-crimson': '#ff3366'
+        };
+        
+        const CLIP_ROUTES = {
+            // FLUX Layer (Cyan)
+            '/api/flux/vector': () => FieldState.H.map(h => h.toFixed(2)).join(','),
+            '/api/flux/coherence': () => FieldState.psi.toFixed(4),
+            '/api/flux/curvature': () => FieldState.kappa.toFixed(4),
+            
+            // PHASE Layer (Magenta)
+            '/api/phase/deltaPhi': () => FieldState.deltaPhi.toFixed(4),
+            '/api/phase/syntropy': () => (1 - FieldState.deltaPhi).toFixed(4),
+            '/api/phase/tensor': () => `[${FieldState.H.length}D]`,
+            
+            // MA'AT Layer (Gold)
+            '/api/maat/djed': () => ((FieldState.KA + FieldState.BA) / 2).toFixed(3),
+            '/api/maat/akh': () => FieldState.AKH.toFixed(4),
+            '/api/maat/ka': () => FieldState.KA.toFixed(4),
+            '/api/maat/ba': () => FieldState.BA.toFixed(4),
+            
+            // VOID Layer
+            '/api/void/entropy': () => FieldState.deltaPhi.toFixed(4),
+            '/api/void/ground': () => (1 - FieldState.kappa / Math.PI).toFixed(3)
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // FIELD STATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        const PI = Math.PI;
+        const TAU = PI * 2;
+        
+        const FieldState = {
+            // Hex vectors
+            H: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            Hprime: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            
+            // Core values
+            deltaPhi: 0,
+            psi: 1,
+            kappa: 0,
+            KA: 0.5,
+            BA: 0.5,
+            AKH: 0.5,
+            
+            // Geo
+            lat: null,
+            lon: null,
+            geoVector: [0, 0, 0],
+            
+            // Time
+            t: 0,
+            running: false
+        };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CANVAS SETUP
+        // ═══════════════════════════════════════════════════════════════
+        
+        const globeCanvas = document.getElementById('globeCanvas');
+        const hexCanvas = document.getElementById('hexCanvas');
+        const ctxGlobe = globeCanvas.getContext('2d');
+        const ctxHex = hexCanvas.getContext('2d');
+        
+        function resizeCanvases() {
+            globeCanvas.width = globeCanvas.parentElement.clientWidth;
+            globeCanvas.height = globeCanvas.parentElement.clientHeight;
+            hexCanvas.width = hexCanvas.parentElement.clientWidth;
+            hexCanvas.height = hexCanvas.parentElement.clientHeight;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // GEOLOCATION → SPHERE MAPPING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function initGeolocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    updateGeoPosition,
+                    geoError,
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                // Fallback: simulate position (Sharm El-Sheikh)
+                updateGeoPosition({
+                    coords: { latitude: 27.9158, longitude: 34.3300 }
+                });
+            }
+        }
+        
+        function updateGeoPosition(position) {
+            FieldState.lat = position.coords.latitude;
+            FieldState.lon = position.coords.longitude;
+            
+            // Convert to sphere vector
+            const latRad = FieldState.lat * PI / 180;
+            const lonRad = FieldState.lon * PI / 180;
+            
+            FieldState.geoVector = [
+                Math.cos(latRad) * Math.cos(lonRad),
+                Math.cos(latRad) * Math.sin(lonRad),
+                Math.sin(latRad)
+            ];
+            
+            // Update hex field based on geo
+            const geoInfluence = (FieldState.lat + 90) / 180; // Normalize to 0-1
+            FieldState.H = FieldState.H.map((h, i) => {
+                const angle = i * PI / 3;
+                return 0.5 + 0.3 * Math.sin(angle + lonRad);
+            });
+            
+            updateGeoDisplay();
+            log(`GEO: ${FieldState.lat.toFixed(4)}, ${FieldState.lon.toFixed(4)}`, 'event');
+        }
+        
+        function geoError(err) {
+            log(`GEO ERROR: ${err.message}`, 'error');
+            // Use default
+            updateGeoPosition({
+                coords: { latitude: 27.9158, longitude: 34.3300 }
+            });
+        }
+        
+        function updateGeoDisplay() {
+            if (FieldState.lat !== null) {
+                document.getElementById('geo-lat').textContent = FieldState.lat.toFixed(4);
+                document.getElementById('geo-lon').textContent = FieldState.lon.toFixed(4);
+                document.getElementById('geo-vec').textContent = 
+                    FieldState.geoVector.map(v => v.toFixed(2)).join(',');
+                
+                // Curvature at position (Earth radius factor)
+                const curve = 6371 * Math.cos(FieldState.lat * PI / 180);
+                document.getElementById('geo-curve').textContent = curve.toFixed(0) + 'km';
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // MA'AT MOTOR
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateMirror() {
+            FieldState.Hprime = [...FieldState.H].reverse();
+        }
+        
+        function computeDeltaPhi() {
+            let sum = 0;
+            for (let i = 0; i < 6; i++) {
+                sum += Math.abs(FieldState.H[i] - FieldState.Hprime[i]);
+            }
+            FieldState.deltaPhi = sum / 6;
+        }
+        
+        function computePsi() {
+            FieldState.psi = Math.max(0, 1 - FieldState.deltaPhi);
+        }
+        
+        function computeKappa() {
+            FieldState.kappa = PI * (1 - FieldState.psi);
+        }
+        
+        function updateKABAAKH() {
+            const t = FieldState.t * 0.01;
+            FieldState.KA = 0.5 + 0.3 * Math.sin(t) * FieldState.psi;
+            FieldState.BA = 0.5 + 0.3 * Math.cos(t * 1.5) * FieldState.psi;
+            
+            const alignment = 1 - Math.abs(FieldState.KA - FieldState.BA);
+            FieldState.AKH = alignment * FieldState.psi * 0.8 + 0.2;
+        }
+        
+        function tick() {
+            FieldState.t++;
+            
+            // Natural fluctuation
+            FieldState.H = FieldState.H.map(h => {
+                const noise = (Math.random() - 0.5) * 0.01;
+                return Math.max(0, Math.min(1, h + noise));
+            });
+            
+            updateMirror();
+            computeDeltaPhi();
+            computePsi();
+            computeKappa();
+            updateKABAAKH();
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // RENDERING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function renderGlobe() {
+            const w = globeCanvas.width;
+            const h = globeCanvas.height;
+            
+            // Safeguard: ensure valid canvas dimensions
+            if (w < 10 || h < 10) return;
+            
+            const cx = w / 2;
+            const cy = h / 2;
+            const r = Math.max(10, Math.min(w, h) * 0.35);
+            
+            // Clear
+            ctxGlobe.fillStyle = '#030306';
+            ctxGlobe.fillRect(0, 0, w, h);
+            
+            // Starfield
+            for (let i = 0; i < 100; i++) {
+                const sx = (Math.sin(i * 123.456 + FieldState.t * 0.001) + 1) * w / 2;
+                const sy = (Math.cos(i * 654.321 + FieldState.t * 0.0005) + 1) * h / 2;
+                ctxGlobe.fillStyle = `rgba(255, 255, 255, ${0.2 + Math.random() * 0.3})`;
+                ctxGlobe.fillRect(sx, sy, 1, 1);
+            }
+            
+            // Globe gradient
+            const gradient = ctxGlobe.createRadialGradient(cx - r*0.3, cy - r*0.3, 0, cx, cy, r);
+            gradient.addColorStop(0, 'rgba(0, 100, 150, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(0, 50, 100, 0.6)');
+            gradient.addColorStop(1, 'rgba(0, 20, 50, 0.4)');
+            
+            ctxGlobe.beginPath();
+            ctxGlobe.arc(cx, cy, r, 0, TAU);
+            ctxGlobe.fillStyle = gradient;
+            ctxGlobe.fill();
+            
+            // Globe outline with energy
+            ctxGlobe.strokeStyle = `rgba(0, 240, 255, ${0.3 + FieldState.psi * 0.5})`;
+            ctxGlobe.lineWidth = 2;
+            ctxGlobe.stroke();
+            
+            // Latitude lines
+            ctxGlobe.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+            ctxGlobe.lineWidth = 1;
+            for (let lat = -60; lat <= 60; lat += 30) {
+                const y = cy - r * Math.sin(lat * PI / 180);
+                const rx = Math.abs(r * Math.cos(lat * PI / 180));
+                const ry = Math.max(1, rx * 0.3); // Ensure minimum radius
+                if (rx > 0.1) {
+                    ctxGlobe.beginPath();
+                    ctxGlobe.ellipse(cx, y, rx, ry, 0, 0, TAU);
+                    ctxGlobe.stroke();
+                }
+            }
+            
+            // Longitude lines
+            for (let lon = 0; lon < 90; lon += 30) {
+                const rx = Math.abs(r * Math.cos(lon * PI / 180));
+                if (rx > 0.1) { // Only draw if radius is meaningful
+                    ctxGlobe.beginPath();
+                    ctxGlobe.ellipse(cx, cy, rx, r, 0, 0, TAU);
+                    ctxGlobe.stroke();
+                }
+            }
+            
+            // User position marker
+            if (FieldState.lat !== null) {
+                const latRad = FieldState.lat * PI / 180;
+                const lonRad = (FieldState.lon + FieldState.t * 0.1) * PI / 180; // Rotate with time
+                
+                const px = cx + r * Math.cos(latRad) * Math.sin(lonRad);
+                const py = cy - r * Math.sin(latRad);
+                
+                // Only draw if on visible side
+                if (Math.cos(lonRad) > -0.3) {
+                    // Glow
+                    const glow = ctxGlobe.createRadialGradient(px, py, 0, px, py, 20);
+                    glow.addColorStop(0, 'rgba(212, 175, 55, 0.8)');
+                    glow.addColorStop(1, 'rgba(212, 175, 55, 0)');
+                    ctxGlobe.fillStyle = glow;
+                    ctxGlobe.fillRect(px - 20, py - 20, 40, 40);
+                    
+                    // Point
+                    ctxGlobe.fillStyle = '#d4af37';
+                    ctxGlobe.beginPath();
+                    ctxGlobe.arc(px, py, 5, 0, TAU);
+                    ctxGlobe.fill();
+                }
+            }
+            
+            // Field lines from user to hex
+            ctxGlobe.strokeStyle = `rgba(255, 0, 255, ${FieldState.AKH * 0.5})`;
+            ctxGlobe.lineWidth = 1;
+            ctxGlobe.setLineDash([5, 5]);
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 + FieldState.t * 0.01;
+                const fx = cx + r * 0.8 * Math.cos(angle);
+                const fy = cy + r * 0.8 * Math.sin(angle);
+                ctxGlobe.beginPath();
+                ctxGlobe.moveTo(cx, cy);
+                ctxGlobe.lineTo(fx, fy);
+                ctxGlobe.stroke();
+            }
+            ctxGlobe.setLineDash([]);
+        }
+        
+        function renderHexField() {
+            const w = hexCanvas.width;
+            const h = hexCanvas.height;
+            
+            // Safeguard: ensure valid canvas dimensions
+            if (w < 10 || h < 10) return;
+            
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            // Clear
+            ctxHex.fillStyle = '#030306';
+            ctxHex.fillRect(0, 0, w, h);
+            
+            // Background hex grid
+            const hexSize = 30;
+            const hexH = hexSize * Math.sqrt(3);
+            
+            ctxHex.strokeStyle = 'rgba(255, 0, 255, 0.1)';
+            ctxHex.lineWidth = 1;
+            
+            for (let row = 0; row < h / hexH + 1; row++) {
+                for (let col = 0; col < w / (hexSize * 1.5) + 1; col++) {
+                    const x = col * hexSize * 1.5;
+                    const y = row * hexH + (col % 2) * hexH / 2;
+                    drawHex(ctxHex, x, y, hexSize * 0.9);
+                }
+            }
+            
+            // Main hex field
+            const mainRadius = Math.max(10, Math.min(w, h) * 0.35);
+            
+            // Draw H vectors
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 - PI / 2;
+                const length = mainRadius * FieldState.H[i];
+                const x = cx + Math.cos(angle) * length;
+                const y = cy + Math.sin(angle) * length;
+                
+                // Vector line
+                const gradient = ctxHex.createLinearGradient(cx, cy, x, y);
+                gradient.addColorStop(0, 'rgba(0, 240, 255, 0.3)');
+                gradient.addColorStop(1, 'rgba(0, 240, 255, 0.8)');
+                
+                ctxHex.strokeStyle = gradient;
+                ctxHex.lineWidth = 3;
+                ctxHex.beginPath();
+                ctxHex.moveTo(cx, cy);
+                ctxHex.lineTo(x, y);
+                ctxHex.stroke();
+                
+                // Vector endpoint
+                ctxHex.fillStyle = '#00f0ff';
+                ctxHex.beginPath();
+                ctxHex.arc(x, y, 6, 0, TAU);
+                ctxHex.fill();
+                
+                // Hex at endpoint
+                ctxHex.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+                ctxHex.lineWidth = 2;
+                drawHex(ctxHex, x, y, 15);
+            }
+            
+            // Draw H' (mirror) vectors
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 - PI / 2;
+                const length = mainRadius * FieldState.Hprime[i];
+                const x = cx + Math.cos(angle) * length;
+                const y = cy + Math.sin(angle) * length;
+                
+                ctxHex.strokeStyle = 'rgba(255, 0, 255, 0.4)';
+                ctxHex.lineWidth = 1;
+                ctxHex.setLineDash([3, 3]);
+                ctxHex.beginPath();
+                ctxHex.moveTo(cx, cy);
+                ctxHex.lineTo(x, y);
+                ctxHex.stroke();
+                ctxHex.setLineDash([]);
+                
+                ctxHex.fillStyle = '#ff00ff';
+                ctxHex.beginPath();
+                ctxHex.arc(x, y, 4, 0, TAU);
+                ctxHex.fill();
+            }
+            
+            // Central core (Psi indicator)
+            const coreRadius = Math.max(5, 20 + 30 * Math.max(0, FieldState.psi));
+            const coreGradient = ctxHex.createRadialGradient(cx, cy, 0, cx, cy, coreRadius);
+            coreGradient.addColorStop(0, `rgba(212, 175, 55, ${FieldState.AKH})`);
+            coreGradient.addColorStop(0.7, `rgba(212, 175, 55, ${FieldState.psi * 0.5})`);
+            coreGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+            
+            ctxHex.fillStyle = coreGradient;
+            ctxHex.beginPath();
+            ctxHex.arc(cx, cy, coreRadius, 0, TAU);
+            ctxHex.fill();
+            
+            // Core hex
+            ctxHex.strokeStyle = '#d4af37';
+            ctxHex.lineWidth = 2;
+            drawHex(ctxHex, cx, cy, 20 * FieldState.psi + 10);
+        }
+        
+        function drawHex(ctx, x, y, size) {
+            if (size < 0.1) return; // Skip if too small
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = i * PI / 3 - PI / 6;
+                const hx = x + Math.cos(angle) * size;
+                const hy = y + Math.sin(angle) * size;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CLIP ADDRESS API
+        // ═══════════════════════════════════════════════════════════════
+        
+        function fetchClip(route) {
+            log(`FETCH: ${route}`, 'fetch');
+            
+            if (CLIP_ROUTES[route]) {
+                const value = CLIP_ROUTES[route]();
+                log(`→ ${value}`, 'response');
+                
+                // Update display
+                const id = 'val-' + route.replace(/\//g, '-').substring(5);
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = value;
+                    el.parentElement.classList.add('active');
+                    setTimeout(() => el.parentElement.classList.remove('active'), 500);
+                }
+                
+                return { route, value, timestamp: Date.now() };
+            } else {
+                log(`ERROR: Unknown route ${route}`, 'error');
+                return null;
+            }
+        }
+        
+        function updateAllClipValues() {
+            Object.keys(CLIP_ROUTES).forEach(route => {
+                const value = CLIP_ROUTES[route]();
+                const id = 'val-' + route.replace(/\//g, '-').substring(5);
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // UI UPDATES
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateStatus() {
+            document.getElementById('s-dphi').textContent = FieldState.deltaPhi.toFixed(3);
+            document.getElementById('s-psi').textContent = FieldState.psi.toFixed(3);
+            document.getElementById('s-kappa').textContent = FieldState.kappa.toFixed(3);
+            document.getElementById('s-akh').textContent = FieldState.AKH.toFixed(3);
+            
+            // Update statuses
+            document.getElementById('flux-status').textContent = 
+                FieldState.psi > 0.7 ? 'ACTIVE' : 'SEEKING';
+            document.getElementById('phase-status').textContent = 
+                FieldState.deltaPhi < 0.3 ? 'SYNCED' : 'SHIFTING';
+            document.getElementById('maat-status').textContent = 
+                FieldState.AKH > 0.5 ? 'BALANCED' : 'ALIGNING';
+                
+            document.getElementById('hex-mode').textContent = 
+                FieldState.psi > 0.8 ? 'COHERENT' : 
+                FieldState.psi > 0.5 ? 'RESONANT' : 'CHAOTIC';
+        }
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('consoleLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            while (logDiv.children.length > 20) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONTROLS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function toggleEngine() {
+            FieldState.running = !FieldState.running;
+            document.getElementById('btnStart').textContent = 
+                FieldState.running ? '⏸ PAUSE' : '▶ START';
+            log(FieldState.running ? 'Engine started' : 'Engine paused', 'event');
+        }
+        
+        function maatPulse() {
+            FieldState.H = FieldState.H.map(h => h + (0.5 - h) * 0.3);
+            log('☥ Ma\'at pulse applied', 'event');
+        }
+        
+        function injectChaos() {
+            FieldState.H = FieldState.H.map(h => {
+                return Math.max(0, Math.min(1, h + (Math.random() - 0.5) * 0.5));
+            });
+            log('⚡ Chaos injected', 'error');
+        }
+        
+        function resetAll() {
+            FieldState.H = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+            FieldState.t = 0;
+            log('↻ System reset', 'event');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ANIMATION LOOP
+        // ═══════════════════════════════════════════════════════════════
+        
+        function animate() {
+            if (FieldState.running) {
+                tick();
+            }
+            
+            renderGlobe();
+            renderHexField();
+            updateStatus();
+            updateAllClipValues();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        window.addEventListener('load', () => {
+            resizeCanvases();
+            initGeolocation();
+            animate();
+            log('OSAI FieldNet Layer initialized', 'event');
+        });
+        
+        window.addEventListener('resize', resizeCanvases);
+    </script>
+</body>
+</html>
