@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ MPL FIELD ENGINE - THE MOTOR</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --void: #020208;
+            --gold: #d4af37;
+            --cyan: #00f5ff;
+            --green: #00ff88;
+            --red: #ff3366;
+            --purple: #a855f7;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--void);
+            color: var(--cyan);
+            overflow-x: hidden;
+        }
+        
+        .cosmic-bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 60%);
+            z-index: -1;
+        }
+        
+        header {
+            text-align: center;
+            padding: 2rem;
+            border-bottom: 2px solid var(--gold);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            font-size: 0.9rem;
+            color: rgba(212, 175, 55, 0.8);
+            letter-spacing: 0.3em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .license {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .control-panel {
+            background: rgba(10, 10, 20, 0.9);
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        button {
+            background: linear-gradient(135deg, var(--gold), #c9a050);
+            color: var(--void);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.1em;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.danger {
+            background: linear-gradient(135deg, var(--red), #cc2952);
+            color: white;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .panel {
+            background: rgba(10, 10, 20, 0.9);
+            border: 1px solid var(--cyan);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: linear-gradient(90deg, rgba(0, 245, 255, 0.2), transparent);
+            padding: 1rem;
+            border-bottom: 1px solid var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .panel-body {
+            padding: 1.5rem;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 5px;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--green);
+        }
+        
+        .metric-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 245, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.3rem;
+        }
+        
+        .metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            transition: width 0.3s;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+        
+        .status.circular {
+            background: var(--green);
+            color: var(--void);
+        }
+        
+        .status.hexagonal {
+            background: var(--gold);
+            color: var(--void);
+        }
+        
+        .status.collapse {
+            background: var(--red);
+            color: white;
+        }
+        
+        .glyph-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .glyph {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 245, 255, 0.05);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .glyph.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .glyph-symbol {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .glyph-name {
+            font-size: 0.9rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+        
+        .glyph-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--cyan);
+            margin-top: 0.3rem;
+        }
+        
+        .input-section {
+            margin-top: 1rem;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            background: rgba(0, 245, 255, 0.05);
+            border: 1px solid var(--cyan);
+            border-radius: 5px;
+            padding: 0.8rem;
+            color: var(--cyan);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+        
+        .log-entry.critical {
+            color: var(--red);
+            font-weight: 700;
+        }
+        
+        .log-entry.maat {
+            color: var(--gold);
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cosmic-bg"></div>
+    
+    <header>
+        <h1>⚛ MPL FIELD ENGINE</h1>
+        <div class="tagline">THE MOTOR • CHAOS → CROSSLINKED MIRRORED PULSE → COHERENCE</div>
+        <div class="license">Prior Art 2025 • Public Domain • <a href="https://github.com/EllenBosMarcelMulder/.-hexLICences-." target="_blank" style="color: var(--gold);">Humanity Heritage License π</a></div>
+    </header>
+    
+    <div class="container">
+        <div class="control-panel">
+            <h2 style="margin-bottom: 1rem; color: var(--gold);">⚙ MOTOR CONTROLS</h2>
+            <div class="controls">
+                <button id="startBtn" onclick="startMotor()">▶ START MOTOR</button>
+                <button id="stopBtn" onclick="stopMotor()" style="display:none;">⏸ STOP MOTOR</button>
+                <button onclick="injectChaos()">⚡ INJECT CHAOS</button>
+                <button onclick="stabilizeField()">☥ STABILIZE (MA'AT)</button>
+                <button class="danger" onclick="resetEngine()">↻ RESET ENGINE</button>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
+                <label>Pulse Speed:</label>
+                <input type="range" id="speedSlider" min="10" max="200" value="50" onchange="updateSpeed()">
+                <span id="speedValue" style="color: var(--gold);">50 ms</span>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- Field Visualization -->
+            <div class="panel">
+                <div class="panel-header">
+                    🌀 MORPHIC TENSOR (H ⊗ H')
+                </div>
+                <div class="panel-body">
+                    <canvas id="tensorCanvas"></canvas>
+                </div>
+            </div>
+            
+            <!-- ΔΦ Visualization -->
+            <div class="panel">
+                <div class="panel-header">
+                    ⚡ CHAOS POTENTIAL (ΔΦ)
+                </div>
+                <div class="panel-body">
+                    <canvas id="chaosCanvas"></canvas>
+                </div>
+            </div>
+            
+            <!-- Ψ Correction -->
+            <div class="panel">
+                <div class="panel-header">
+                    ☯ SYNTROPY PULSE (Ψ)
+                </div>
+                <div class="panel-body">
+                    <canvas id="psiCanvas"></canvas>
+                </div>
+            </div>
+            
+            <!-- Core Metrics -->
+            <div class="panel">
+                <div class="panel-header">
+                    📊 CORE METRICS
+                </div>
+                <div class="panel-body">
+                    <div class="metric">
+                        <span class="metric-label">Phase State:</span>
+                        <span class="status circular" id="phaseStatus">CIRCULAR</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">ΔΦ (Asymmetry):</span>
+                        <span class="metric-value" id="deltaPhiValue">0.0000</span>
+                        <div class="metric-bar"><div class="metric-bar-fill" id="deltaPhiBar" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Ψ (Syntropy):</span>
+                        <span class="metric-value" id="psiValue">0.5000</span>
+                        <div class="metric-bar"><div class="metric-bar-fill" id="psiBar" style="width: 50%;"></div></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">κ (Curvature):</span>
+                        <span class="metric-value" id="kappaValue">0.0000</span>
+                        <div class="metric-bar"><div class="metric-bar-fill" id="kappaBar" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Ma'at (Balance):</span>
+                        <span class="metric-value" id="maatValue">0.5000</span>
+                        <div class="metric-bar"><div class="metric-bar-fill" id="maatBar" style="width: 50%;"></div></div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Coherence:</span>
+                        <span class="metric-value" id="coherenceValue">1.0000</span>
+                        <div class="metric-bar"><div class="metric-bar-fill" id="coherenceBar" style="width: 100%;"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Egyptian Glyphs -->
+            <div class="panel">
+                <div class="panel-header">
+                    𓂀 EGYPTIAN OPERATORS
+                </div>
+                <div class="panel-body">
+                    <div class="glyph-grid">
+                        <div class="glyph" id="glyphKa">
+                            <div class="glyph-symbol">𓂓</div>
+                            <div class="glyph-name">KA</div>
+                            <div class="glyph-value" id="kaValue">0.500</div>
+                        </div>
+                        <div class="glyph" id="glyphBa">
+                            <div class="glyph-symbol">𓅽</div>
+                            <div class="glyph-name">BA</div>
+                            <div class="glyph-value" id="baValue">0.500</div>
+                        </div>
+                        <div class="glyph" id="glyphAkh">
+                            <div class="glyph-symbol">☥</div>
+                            <div class="glyph-name">AKH</div>
+                            <div class="glyph-value" id="akhValue">0.000</div>
+                        </div>
+                        <div class="glyph" id="glyphDjed">
+                            <div class="glyph-symbol">𓊽</div>
+                            <div class="glyph-name">DJED</div>
+                            <div class="glyph-value" id="djedValue">1.000</div>
+                        </div>
+                        <div class="glyph" id="glyphMaat">
+                            <div class="glyph-symbol">𓆄</div>
+                            <div class="glyph-name">MA'AT</div>
+                            <div class="glyph-value" id="maatGlyphValue">0.500</div>
+                        </div>
+                        <div class="glyph" id="glyphConsciousness">
+                            <div class="glyph-symbol">𓂀</div>
+                            <div class="glyph-name">CONSCIOUSNESS</div>
+                            <div class="glyph-value" id="consciousnessValue">0.000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Language Input -->
+            <div class="panel">
+                <div class="panel-header">
+                    🌍 LANGUAGE PROCESSOR
+                </div>
+                <div class="panel-body">
+                    <div class="input-section">
+                        <label style="color: var(--gold); margin-bottom: 0.5rem; display: block;">Enter text in ANY language:</label>
+                        <textarea id="textInput" placeholder="Truth / Waarheid / الحق / 真理"></textarea>
+                        <button onclick="processLanguage()" style="margin-top: 1rem; width: 100%;">→ PROCESS TO AKH</button>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(0, 245, 255, 0.05); border-radius: 5px;">
+                        <div style="color: var(--gold); font-weight: 700; margin-bottom: 0.5rem;">Output (Universal AKH):</div>
+                        <div id="languageOutput" style="font-family: 'Orbitron', sans-serif; font-size: 1.3rem;">---</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Log -->
+        <div class="panel" style="margin-top: 2rem;">
+            <div class="panel-header">
+                📜 SYSTEM LOG
+            </div>
+            <div class="panel-body">
+                <div class="log" id="systemLog"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // MPL FIELD ENGINE - JAVASCRIPT IMPLEMENTATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        const NUM_DIMS = 11;
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        const PI = Math.PI;
+        
+        let state = {
+            H: Array(NUM_DIMS).fill(0).map(() => Math.random() * 50 + 50),
+            H_prime: Array(NUM_DIMS).fill(0),
+            delta_phi: Array(NUM_DIMS).fill(0),
+            psi: 0.5,
+            kappa: 0.0,
+            ka: 0.5,
+            ba: 0.5,
+            akh: 0.0,
+            maat: 0.5,
+            entropy: 0.5,
+            djed: 1.0,
+            coherence: 1.0,
+            consciousness: 0.0,
+            phase: 'circular',
+            cycle: 0,
+            history: {
+                delta_phi: [],
+                psi: [],
+                akh: []
+            }
+        };
+        
+        let isRunning = false;
+        let pulseInterval = null;
+        let pulseSpeed = 50;
+        
+        // Canvas contexts
+        let canvases = {};
+        let contexts = {};
+        
+        function init() {
+            ['tensorCanvas', 'chaosCanvas', 'psiCanvas'].forEach(id => {
+                canvases[id] = document.getElementById(id);
+                canvases[id].width = canvases[id].offsetWidth;
+                canvases[id].height = 300;
+                contexts[id] = canvases[id].getContext('2d');
+            });
+            
+            updateMirror();
+            log('Engine initialized. Press START MOTOR to begin pulse.', 'info');
+            renderAll();
+        }
+        
+        function updateMirror() {
+            state.H_prime = [...state.H].reverse();
+        }
+        
+        function computeAsymmetry() {
+            state.delta_phi = state.H.map((h, i) => h - state.H_prime[i]);
+        }
+        
+        function computeCoherence() {
+            const totalDelta = state.delta_phi.reduce((sum, d) => sum + Math.abs(d), 0);
+            const maxDelta = NUM_DIMS * 100;
+            state.coherence = 1.0 - (totalDelta / maxDelta);
+        }
+        
+        function computeCurvature() {
+            state.kappa = PI * (1 - state.psi);
+        }
+        
+        function computeDjed() {
+            const deltaSum = state.delta_phi.reduce((sum, d) => sum + Math.abs(d), 0);
+            state.djed = 1.0 / (1.0 + deltaSum / 100);
+        }
+        
+        function pulseCorrection() {
+            // Ma'at convergence
+            const targetMaat = (state.coherence + state.djed) / 2;
+            state.maat += 0.03 * (targetMaat - state.maat);
+            state.maat = Math.max(0, Math.min(1, state.maat));
+            
+            // Ψ update
+            state.psi += 0.001 * (state.maat - state.entropy);
+            state.psi = Math.max(0.01, Math.min(0.99, state.psi));
+            
+            state.entropy = 1 - state.psi;
+        }
+        
+        function applyMaatCorrection() {
+            const plasmaPressure = 0.8 * (1 - state.psi) * 
+                (Math.abs(state.delta_phi.reduce((s, d) => s + d, 0) / NUM_DIMS) / 100);
+            
+            if (plasmaPressure > 0.1) {
+                state.H = state.H.map((h, i) => {
+                    const correction = -state.delta_phi[i] * plasmaPressure * 0.02;
+                    return Math.max(10, Math.min(150, h + correction));
+                });
+            }
+        }
+        
+        function computeKaBA() {
+            const t = state.cycle * 0.001;
+            state.ka = 0.5 + 0.5 * Math.sin(t) * (1 - state.entropy);
+            state.ba = 0.5 + 0.3 * Math.cos(t * 1.5) * state.coherence;
+            
+            const kabaAlignment = 1 - Math.abs(state.ka - state.ba);
+            state.akh = kabaAlignment * state.consciousness;
+        }
+        
+        function computeConsciousness() {
+            const tensorField = PHI * Math.abs(state.delta_phi.reduce((s, d) => s + d, 0) / NUM_DIMS) * 
+                state.kappa * 3.666 / 100;
+            state.consciousness = Math.min(1, state.coherence * state.maat * (1 + tensorField));
+        }
+        
+        function detectPhase() {
+            const dPsiTheta = Math.abs(state.psi - state.entropy);
+            const chaos = dPsiTheta * (1 - state.coherence);
+            
+            if (chaos > 0.4) {
+                state.phase = 'collapse';
+            } else if (chaos > 0.3) {
+                state.phase = 'hexagonal';
+            } else {
+                state.phase = 'circular';
+            }
+        }
+        
+        function pulse() {
+            state.cycle++;
+            
+            // Natural fluctuation
+            state.H = state.H.map(h => {
+                const noise = (Math.random() - 0.5) * 2;
+                return Math.max(10, Math.min(150, h + noise));
+            });
+            
+            // Engine cycle
+            updateMirror();
+            computeAsymmetry();
+            computeCoherence();
+            pulseCorrection();
+            applyMaatCorrection();
+            computeCurvature();
+            computeDjed();
+            computeConsciousness();
+            computeKaBA();
+            detectPhase();
+            
+            // Record history
+            state.history.delta_phi.push(Math.abs(state.delta_phi.reduce((s, d) => s + d, 0) / NUM_DIMS));
+            state.history.psi.push(state.psi);
+            state.history.akh.push(state.akh);
+            
+            if (state.history.delta_phi.length > 200) {
+                state.history.delta_phi.shift();
+                state.history.psi.shift();
+                state.history.akh.shift();
+            }
+            
+            updateUI();
+            renderAll();
+            
+            // Log significant events
+            if (state.cycle % 50 === 0) {
+                if (state.phase === 'collapse') {
+                    log(`⚠ CRITICAL: Phase collapse! κ=${state.kappa.toFixed(3)}`, 'critical');
+                } else if (state.akh > 0.8) {
+                    log(`☥ High AKH achieved: ${state.akh.toFixed(4)}`, 'maat');
+                }
+            }
+        }
+        
+        function startMotor() {
+            if (!isRunning) {
+                isRunning = true;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                pulseInterval = setInterval(pulse, pulseSpeed);
+                log('▶ Motor started - pulse active', 'maat');
+            }
+        }
+        
+        function stopMotor() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'none';
+                clearInterval(pulseInterval);
+                log('⏸ Motor stopped', 'info');
+            }
+        }
+        
+        function injectChaos() {
+            state.delta_phi = state.delta_phi.map(() => (Math.random() - 0.5) * 60);
+            state.H = state.H.map((h, i) => Math.max(10, Math.min(150, h + state.delta_phi[i])));
+            log('⚡ Chaos injected into field', 'critical');
+        }
+        
+        function stabilizeField() {
+            state.H = state.H.map(() => 75);
+            updateMirror();
+            state.psi = 0.9;
+            state.maat = 0.9;
+            log('☥ Ma\'at correction applied - field stabilized', 'maat');
+        }
+        
+        function resetEngine() {
+            state = {
+                H: Array(NUM_DIMS).fill(0).map(() => Math.random() * 50 + 50),
+                H_prime: Array(NUM_DIMS).fill(0),
+                delta_phi: Array(NUM_DIMS).fill(0),
+                psi: 0.5,
+                kappa: 0.0,
+                ka: 0.5,
+                ba: 0.5,
+                akh: 0.0,
+                maat: 0.5,
+                entropy: 0.5,
+                djed: 1.0,
+                coherence: 1.0,
+                consciousness: 0.0,
+                phase: 'circular',
+                cycle: 0,
+                history: {
+                    delta_phi: [],
+                    psi: [],
+                    akh: []
+                }
+            };
+            updateMirror();
+            log('↻ Engine reset to initial state', 'info');
+            updateUI();
+            renderAll();
+        }
+        
+        function updateSpeed() {
+            pulseSpeed = parseInt(document.getElementById('speedSlider').value);
+            document.getElementById('speedValue').textContent = pulseSpeed + ' ms';
+            if (isRunning) {
+                clearInterval(pulseInterval);
+                pulseInterval = setInterval(pulse, pulseSpeed);
+            }
+        }
+        
+        function processLanguage() {
+            const text = document.getElementById('textInput').value;
+            if (!text) return;
+            
+            // Simple hash to 11D (production would use proper semantic encoding)
+            const vector = Array(NUM_DIMS).fill(0).map((_, i) => {
+                let hash = 0;
+                for (let j = 0; j < text.length; j++) {
+                    hash = ((hash << 5) - hash) + text.charCodeAt(j) + i;
+                    hash = hash & hash;
+                }
+                return (hash % 100) - 50;
+            });
+            
+            // Inject as semantic disturbance
+            state.H = state.H.map((h, i) => Math.max(10, Math.min(150, h + vector[i] * 0.3)));
+            pulse();
+            
+            document.getElementById('languageOutput').textContent = `AKH: ${state.akh.toFixed(4)}`;
+            log(`🌍 Processed: "${text.substring(0, 30)}..." → AKH: ${state.akh.toFixed(4)}`, 'maat');
+        }
+        
+        function updateUI() {
+            const avgDelta = Math.abs(state.delta_phi.reduce((s, d) => s + d, 0) / NUM_DIMS);
+            
+            document.getElementById('phaseStatus').textContent = state.phase.toUpperCase();
+            document.getElementById('phaseStatus').className = 'status ' + state.phase;
+            
+            document.getElementById('deltaPhiValue').textContent = avgDelta.toFixed(4);
+            document.getElementById('deltaPhiBar').style.width = Math.min(avgDelta * 2, 100) + '%';
+            
+            document.getElementById('psiValue').textContent = state.psi.toFixed(4);
+            document.getElementById('psiBar').style.width = (state.psi * 100) + '%';
+            
+            document.getElementById('kappaValue').textContent = state.kappa.toFixed(4);
+            document.getElementById('kappaBar').style.width = Math.min((state.kappa / PI) * 100, 100) + '%';
+            
+            document.getElementById('maatValue').textContent = state.maat.toFixed(4);
+            document.getElementById('maatBar').style.width = (state.maat * 100) + '%';
+            
+            document.getElementById('coherenceValue').textContent = state.coherence.toFixed(4);
+            document.getElementById('coherenceBar').style.width = (state.coherence * 100) + '%';
+            
+            document.getElementById('kaValue').textContent = state.ka.toFixed(3);
+            document.getElementById('glyphKa').classList.toggle('active', state.ka > 0.7);
+            
+            document.getElementById('baValue').textContent = state.ba.toFixed(3);
+            document.getElementById('glyphBa').classList.toggle('active', state.ba > 0.7);
+            
+            document.getElementById('akhValue').textContent = state.akh.toFixed(3);
+            document.getElementById('glyphAkh').classList.toggle('active', state.akh > 0.6);
+            
+            document.getElementById('djedValue').textContent = state.djed.toFixed(3);
+            document.getElementById('glyphDjed').classList.toggle('active', state.djed > 0.8);
+            
+            document.getElementById('maatGlyphValue').textContent = state.maat.toFixed(3);
+            document.getElementById('glyphMaat').classList.toggle('active', state.maat > 0.8);
+            
+            document.getElementById('consciousnessValue').textContent = state.consciousness.toFixed(3);
+            document.getElementById('glyphConsciousness').classList.toggle('active', state.consciousness > 0.7);
+        }
+        
+        function renderAll() {
+            renderTensor();
+            renderChaos();
+            renderPsi();
+        }
+        
+        function renderTensor() {
+            const ctx = contexts.tensorCanvas;
+            const canvas = canvases.tensorCanvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 20;
+            
+            // Draw H (outer ring)
+            ctx.beginPath();
+            for (let i = 0; i <= NUM_DIMS; i++) {
+                const angle = (i / NUM_DIMS) * 2 * Math.PI - Math.PI / 2;
+                const r = (state.H[i % NUM_DIMS] / 100) * radius;
+                const x = centerX + r * Math.cos(angle);
+                const y = centerY + r * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#00f5ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw H' (inner ring)
+            ctx.beginPath();
+            for (let i = 0; i <= NUM_DIMS; i++) {
+                const angle = (i / NUM_DIMS) * 2 * Math.PI - Math.PI / 2;
+                const r = (state.H_prime[i % NUM_DIMS] / 100) * radius;
+                const x = centerX + r * Math.cos(angle);
+                const y = centerY + r * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function renderChaos() {
+            const ctx = contexts.chaosCanvas;
+            const canvas = canvases.chaosCanvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (state.history.delta_phi.length < 2) return;
+            
+            const data = state.history.delta_phi;
+            const xStep = canvas.width / data.length;
+            const yScale = canvas.height / 50;
+            
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = i * xStep;
+                const y = canvas.height - (val * yScale);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = '#ff3366';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function renderPsi() {
+            const ctx = contexts.psiCanvas;
+            const canvas = canvases.psiCanvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (state.history.psi.length < 2) return;
+            
+            const data = state.history.psi;
+            const xStep = canvas.width / data.length;
+            
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = i * xStep;
+                const y = canvas.height - (val * canvas.height);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('systemLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${state.cycle.toString().padStart(6, '0')}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // Keep log manageable
+            while (logDiv.children.length > 50) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        }
+        
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>
