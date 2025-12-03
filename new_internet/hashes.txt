@@ -1,12 +1,31 @@
-SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX�SPHERE LOOP FIELD NETWORK - extended.md:
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK - extended.md:
 5dc4814b4e0eef113a7850a9327aeb72e263afb1a0bc28143a101af03d69527c
 CertUtil: -hashfile command completed successfully.
-SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX�SPHERE LOOP FIELD NETWORK - extended.md.ots:
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK - extended.md.ots:
 fe3c64868b0a72859d828da8b880dfec0ebf0e0ef161efc5e332f56297c46018
 CertUtil: -hashfile command completed successfully.
-SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX�SPHERE LOOP FIELD NETWORK.md:
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK.md:
 228f4f13d430a70b825fce13d2b461ff1cf6b995415a7c88a4efab20968ccc14
 CertUtil: -hashfile command completed successfully.
-SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX�SPHERE LOOP FIELD NETWORK.md.ots:
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK.md.ots:
 c2313f1b7d724f0c4d4da7157c352638f81d2182f4ef14ef9eef71c27fddc50a
 CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\DYNAMIC URL PHASE ROUTING.md:
+ce0fac2cb39f15b820c5c38de1cb0ac4f7ab58bd2520f0f27e03419de560367f
+CertUtil: -hashfile command completed successfully.
+CertUtil: -hashfile command FAILED: 0x800703ee (WIN32: 1006 ERROR_FILE_INVALID)
+CertUtil: The volume for a file has been externally altered so that the opened file is no longer valid.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK - extended.md:
+5dc4814b4e0eef113a7850a9327aeb72e263afb1a0bc28143a101af03d69527c
+CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK - extended.md.ots:
+fe3c64868b0a72859d828da8b880dfec0ebf0e0ef161efc5e332f56297c46018
+CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK.md:
+228f4f13d430a70b825fce13d2b461ff1cf6b995415a7c88a4efab20968ccc14
+CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\hexUUU\GLOBAL HEX–SPHERE LOOP FIELD NETWORK.md.ots:
+c2313f1b7d724f0c4d4da7157c352638f81d2182f4ef14ef9eef71c27fddc50a
+CertUtil: -hashfile command completed successfully.
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
