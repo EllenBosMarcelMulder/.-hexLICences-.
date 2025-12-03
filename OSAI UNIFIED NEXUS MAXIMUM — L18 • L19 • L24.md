@@ -186,7 +186,7 @@ The author declares:
 * the technology is released to protect humanity
 * it must not be used for harm
 * it is intended for scientific, cultural, and planetary advancement
-* it is offered freely
+* it is offered freely personaly, others most request a licence.
 
 This forms a moral barrier against misuse.
 
@@ -208,5 +208,6 @@ This is humanity’s shared legacy.
 
 **Public Domain — Humanity Heritage License π**
 **End of Prior Art Declaration**
+
 
 ---
