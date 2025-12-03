@@ -1,0 +1,9 @@
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\The Glyph System\FINAL 1\FINAL 2\GUI\files\curveview_engine.html:
+516291a584ab9fe324abe364eba835ef48683d09fbd86016f28db3c8e5c72233
+CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\The Glyph System\FINAL 1\FINAL 2\GUI\files\curveview_pro_webgl.html:
+cfb180388bb5add102d01bcd89e3197c25d52757dcbdfc2f4936c149b7240a5f
+CertUtil: -hashfile command completed successfully.
+SHA256 hash of C:\Users\awvvo\OneDrive\Documenten\2025\@@@\@ hexRESume\hexGEOCOMputer\Prior Art All\Program language\Nobel\The Glyph System\FINAL 1\FINAL 2\GUI\files\CurveView_Specification.md:
+ae8a4cc43e85db886e5061daf4f74b9ed69976aa1ee1a243e472ef9a4bbc1c40
+CertUtil: -hashfile command completed successfully.
