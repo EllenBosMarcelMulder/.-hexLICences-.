@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma'at Glyph Field — Direct Manipulation Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --grid: #1a1a24;
+            --text: #6a6a7a;
+            --accent: #7b68ee;
+            --glyph-core: #ffd93d;
+            --glyph-ring: #00d4aa;
+            --edge: #3a3a4a;
+            --active: #ff6b6b;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        #field {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #info {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            font-size: 0.7rem;
+            color: var(--text);
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        #info h1 {
+            font-weight: 400;
+            font-size: 1rem;
+            color: #e0e0e8;
+            margin-bottom: 0.5rem;
+        }
+        
+        #metrics {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.65rem;
+            text-align: right;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .metric {
+            margin-bottom: 0.3rem;
+        }
+        
+        .metric-value {
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        #instructions {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            font-size: 0.6rem;
+            color: #4a4a5a;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .glyph-tooltip {
+            position: absolute;
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid var(--edge);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.6rem;
+            pointer-events: none;
+            z-index: 200;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="field">
+        <canvas id="edges"></canvas>
+        <canvas id="glyphs"></canvas>
+    </div>
+    
+    <div id="info">
+        <h1>Ma'at Glyph Field</h1>
+        <div>The glyph IS the control</div>
+    </div>
+    
+    <div id="metrics">
+        <div class="metric">ΔΦ_stat: <span class="metric-value" id="m-dphi">0.000</span></div>
+        <div class="metric">phase: <span class="metric-value" id="m-phase">0.000π</span></div>
+        <div class="metric">trend: <span class="metric-value" id="m-trend">0.000</span></div>
+        <div class="metric">coherence: <span class="metric-value" id="m-coherence">0.000</span></div>
+    </div>
+    
+    <div id="instructions">
+        drag glyph → move signal · scroll on glyph → change intensity · 
+        drag between → create edge · right-click → remove edge · 
+        space → pause · r → reset
+    </div>
+
+    <script>
+    const π = Math.PI;
+    
+    // === GLYPH CLASS ===
+    // A glyph is simultaneously: visual element, data node, control handle
+    class Glyph {
+        constructor(id, x, y) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            
+            // Signal state (this IS the g-space signal value)
+            this.signal = id === 0 ? 1.0 : 0.2;
+            
+            // Phase (local rotation)
+            this.phase = 0;
+            
+            // Visual properties derived from state
+            this.radius = 20;
+            this.hue = (id * 60) % 360;
+            
+            // Interaction state
+            this.dragging = false;
+            this.hover = false;
+            
+            // Connections (edges in the graph)
+            this.edges = new Set();
+            
+            // Target position (for motor coupling)
+            this.targetX = x;
+            this.targetY = y;
+        }
+        
+        // The glyph's visual radius is its signal
+        get displayRadius() {
+            return this.radius * (0.5 + this.signal * 0.8);
+        }
+        
+        // The glyph's color intensity is its signal
+        get color() {
+            const l = 40 + this.signal * 30;
+            const s = 60 + this.signal * 20;
+            return `hsl(${this.hue}, ${s}%, ${l}%)`;
+        }
+        
+        // The glyph's glow is its activity
+        get glowRadius() {
+            return this.displayRadius * (1.5 + Math.sin(this.phase) * 0.3);
+        }
+        
+        contains(px, py) {
+            const dx = px - this.x;
+            const dy = py - this.y;
+            return dx * dx + dy * dy < this.displayRadius * this.displayRadius * 1.5;
+        }
+        
+        // Moving the glyph changes its spatial state
+        moveTo(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        // Scrolling on the glyph changes its signal
+        adjustSignal(delta) {
+            this.signal = Math.max(0.05, Math.min(1.0, this.signal + delta * 0.1));
+        }
+    }
+    
+    // === FIELD ENGINE ===
+    // The field IS the g-space, edges ARE the graph, positions ARE the state
+    class GlyphField {
+        constructor(canvas, edgeCanvas) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d');
+            this.edgeCanvas = edgeCanvas;
+            this.edgeCtx = edgeCanvas.getContext('2d');
+            
+            this.glyphs = [];
+            this.edges = []; // [glyphA, glyphB]
+            
+            // Motor state
+            this.phi = 0;           // Global phase
+            this.phiGeo = 0;        // Geo wobble
+            this.dphiStat = 0;      // Total inconsistency
+            this.dphiStatPrev = 0;
+            this.trend = 0;
+            this.t = 0;
+            
+            // Motor parameters (π-normalized)
+            this.omega = π / 16;
+            this.kappa = π / 8;
+            this.lambda = π / 4;
+            this.dt = π / 64;
+            this.epsilon = π / 32;
+            this.gamma = π / 8;
+            
+            // Interaction
+            this.dragGlyph = null;
+            this.dragEdgeStart = null;
+            this.running = true;
+            
+            this.resize();
+            this.initGlyphs();
+            this.initEvents();
+            this.loop();
+        }
+        
+        resize() {
+            const dpr = window.devicePixelRatio || 1;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            this.canvas.width = w * dpr;
+            this.canvas.height = h * dpr;
+            this.canvas.style.width = w + 'px';
+            this.canvas.style.height = h + 'px';
+            this.ctx.scale(dpr, dpr);
+            
+            this.edgeCanvas.width = w * dpr;
+            this.edgeCanvas.height = h * dpr;
+            this.edgeCanvas.style.width = w + 'px';
+            this.edgeCanvas.style.height = h + 'px';
+            this.edgeCtx.scale(dpr, dpr);
+            
+            this.width = w;
+            this.height = h;
+            this.cx = w / 2;
+            this.cy = h / 2;
+        }
+        
+        initGlyphs() {
+            // Create hexagonal arrangement (center + 6)
+            const r = Math.min(this.width, this.height) * 0.25;
+            
+            // Center glyph (the attractor)
+            this.glyphs.push(new Glyph(0, this.cx, this.cy));
+            
+            // Ring of 6
+            for (let i = 0; i < 6; i++) {
+                const angle = i * π / 3 - π / 2;
+                const x = this.cx + r * Math.cos(angle);
+                const y = this.cy + r * Math.sin(angle);
+                this.glyphs.push(new Glyph(i + 1, x, y));
+            }
+            
+            // Initial edges (hexagonal graph)
+            for (let i = 1; i <= 6; i++) {
+                this.addEdge(0, i);  // Center to each
+                this.addEdge(i, (i % 6) + 1);  // Ring
+            }
+            
+            // Set targets (center is target for all)
+            this.glyphs[0].targetX = this.cx;
+            this.glyphs[0].targetY = this.cy;
+            for (let i = 1; i <= 6; i++) {
+                this.glyphs[i].targetX = this.cx;
+                this.glyphs[i].targetY = this.cy;
+            }
+        }
+        
+        addEdge(a, b) {
+            if (a === b) return;
+            // Check if edge exists
+            const exists = this.edges.some(([i, j]) => 
+                (i === a && j === b) || (i === b && j === a));
+            if (!exists) {
+                this.edges.push([a, b]);
+                this.glyphs[a].edges.add(b);
+                this.glyphs[b].edges.add(a);
+            }
+        }
+        
+        removeEdge(a, b) {
+            this.edges = this.edges.filter(([i, j]) => 
+                !((i === a && j === b) || (i === b && j === a)));
+            this.glyphs[a].edges.delete(b);
+            this.glyphs[b].edges.delete(a);
+        }
+        
+        initEvents() {
+            const canvas = this.canvas;
+            
+            canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+            canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+            canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+            canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+            canvas.addEventListener('wheel', (e) => this.onWheel(e));
+            
+            window.addEventListener('keydown', (e) => this.onKey(e));
+            window.addEventListener('resize', () => this.resize());
+        }
+        
+        onMouseDown(e) {
+            const x = e.clientX, y = e.clientY;
+            
+            // Check if clicking on a glyph
+            for (const g of this.glyphs) {
+                if (g.contains(x, y)) {
+                    if (e.shiftKey) {
+                        // Shift+click starts edge creation
+                        this.dragEdgeStart = g;
+                    } else {
+                        // Normal click starts drag
+                        this.dragGlyph = g;
+                        g.dragging = true;
+                    }
+                    return;
+                }
+            }
+        }
+        
+        onMouseMove(e) {
+            const x = e.clientX, y = e.clientY;
+            
+            // Update hover states
+            for (const g of this.glyphs) {
+                g.hover = g.contains(x, y);
+            }
+            
+            // Dragging a glyph = moving its state
+            if (this.dragGlyph) {
+                this.dragGlyph.moveTo(x, y);
+            }
+        }
+        
+        onMouseUp(e) {
+            const x = e.clientX, y = e.clientY;
+            
+            // If we were creating an edge
+            if (this.dragEdgeStart) {
+                for (const g of this.glyphs) {
+                    if (g !== this.dragEdgeStart && g.contains(x, y)) {
+                        this.addEdge(this.dragEdgeStart.id, g.id);
+                        break;
+                    }
+                }
+                this.dragEdgeStart = null;
+            }
+            
+            if (this.dragGlyph) {
+                this.dragGlyph.dragging = false;
+                this.dragGlyph = null;
+            }
+        }
+        
+        onRightClick(e) {
+            e.preventDefault();
+            const x = e.clientX, y = e.clientY;
+            
+            // Right-click on an edge to remove it
+            for (const [a, b] of this.edges) {
+                const ga = this.glyphs[a], gb = this.glyphs[b];
+                // Check if click is near edge
+                if (this.pointNearLine(x, y, ga.x, ga.y, gb.x, gb.y, 10)) {
+                    this.removeEdge(a, b);
+                    return;
+                }
+            }
+        }
+        
+        onWheel(e) {
+            e.preventDefault();
+            const x = e.clientX, y = e.clientY;
+            
+            // Scroll on a glyph = change its signal
+            for (const g of this.glyphs) {
+                if (g.contains(x, y)) {
+                    g.adjustSignal(-e.deltaY * 0.001);
+                    return;
+                }
+            }
+        }
+        
+        onKey(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                this.running = !this.running;
+            } else if (e.code === 'KeyR') {
+                this.reset();
+            }
+        }
+        
+        pointNearLine(px, py, x1, y1, x2, y2, threshold) {
+            const A = px - x1, B = py - y1;
+            const C = x2 - x1, D = y2 - y1;
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let t = lenSq !== 0 ? dot / lenSq : -1;
+            t = Math.max(0, Math.min(1, t));
+            const xx = x1 + t * C, yy = y1 + t * D;
+            const dx = px - xx, dy = py - yy;
+            return dx * dx + dy * dy < threshold * threshold;
+        }
+        
+        reset() {
+            this.glyphs = [];
+            this.edges = [];
+            this.phi = 0;
+            this.t = 0;
+            this.initGlyphs();
+        }
+        
+        // === MOTOR STEP ===
+        // The motor reads the glyph positions as state
+        // and updates their phases and signals
+        step() {
+            if (!this.running) return;
+            
+            // 1. Compute inconsistency from glyph positions
+            //    (how far are glyphs from their targets?)
+            let inconsistency = 0;
+            for (const g of this.glyphs) {
+                const dx = g.x - g.targetX;
+                const dy = g.y - g.targetY;
+                inconsistency += Math.sqrt(dx * dx + dy * dy) / 100;
+            }
+            
+            // Signal inconsistency (should concentrate at center)
+            const targetSignal = [1, 0, 0, 0, 0, 0, 0];
+            for (let i = 0; i < this.glyphs.length; i++) {
+                inconsistency += Math.abs(this.glyphs[i].signal - targetSignal[i]) * 0.5;
+            }
+            
+            this.dphiStat = inconsistency;
+            this.trend = (this.dphiStat - this.dphiStatPrev) / this.dt;
+            this.dphiStatPrev = this.dphiStat;
+            
+            // 2. Update global phase
+            const dphiDt = this.omega - this.kappa * Math.sin(this.phi) + this.lambda * this.trend;
+            this.phi += dphiDt * this.dt;
+            
+            // 3. Geo wobble
+            this.phiGeo = this.epsilon * Math.sin(0.001 * this.t);
+            const phase = this.phi + this.phiGeo;
+            
+            // 4. Update each glyph's local phase
+            for (const g of this.glyphs) {
+                g.phase += this.dt * (1 + g.signal);
+            }
+            
+            // 5. Signal diffusion along edges
+            //    (spectral rotation approximation)
+            const alpha = 0.1 + 0.05 * Math.sin(phase);
+            const newSignals = this.glyphs.map(g => g.signal * (1 - alpha * 0.5));
+            
+            for (const [a, b] of this.edges) {
+                const flow = alpha * 0.2 * (this.glyphs[a].signal - this.glyphs[b].signal);
+                newSignals[a] -= flow;
+                newSignals[b] += flow;
+            }
+            
+            // Gradient toward target (concentrate at center)
+            const gamma = this.gamma / (1 + this.dphiStat);
+            for (let i = 0; i < this.glyphs.length; i++) {
+                newSignals[i] -= gamma * (this.glyphs[i].signal - targetSignal[i]) * this.dt;
+                newSignals[i] = Math.max(0.05, newSignals[i]);
+            }
+            
+            // Normalize
+            const sum = newSignals.reduce((a, b) => a + b, 0);
+            for (let i = 0; i < this.glyphs.length; i++) {
+                this.glyphs[i].signal = newSignals[i] / sum;
+            }
+            
+            // 6. Glyph positions drift toward targets (if not being dragged)
+            const posGamma = 0.01;
+            for (const g of this.glyphs) {
+                if (!g.dragging) {
+                    const dx = g.targetX - g.x;
+                    const dy = g.targetY - g.y;
+                    // Rotated movement
+                    const c = Math.cos(phase * 0.1), s = Math.sin(phase * 0.1);
+                    g.x += posGamma * (c * dx - s * dy);
+                    g.y += posGamma * (s * dx + c * dy);
+                }
+            }
+            
+            this.t++;
+        }
+        
+        // === RENDER ===
+        render() {
+            const ctx = this.ctx;
+            const ectx = this.edgeCtx;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, this.width, this.height);
+            ectx.clearRect(0, 0, this.width, this.height);
+            
+            // Draw edges
+            for (const [a, b] of this.edges) {
+                const ga = this.glyphs[a], gb = this.glyphs[b];
+                
+                // Edge color based on signal flow
+                const flowIntensity = Math.abs(ga.signal - gb.signal);
+                const alpha = 0.2 + flowIntensity * 0.5;
+                
+                ectx.beginPath();
+                ectx.moveTo(ga.x, ga.y);
+                ectx.lineTo(gb.x, gb.y);
+                ectx.strokeStyle = `rgba(100, 100, 120, ${alpha})`;
+                ectx.lineWidth = 1 + flowIntensity * 3;
+                ectx.stroke();
+                
+                // Flow indicator (moving dot)
+                if (flowIntensity > 0.05) {
+                    const t = (this.t * 0.02) % 1;
+                    const dir = ga.signal > gb.signal ? 1 : 0;
+                    const tt = dir ? t : 1 - t;
+                    const mx = ga.x + (gb.x - ga.x) * tt;
+                    const my = ga.y + (gb.y - ga.y) * tt;
+                    
+                    ectx.beginPath();
+                    ectx.arc(mx, my, 3, 0, 2 * π);
+                    ectx.fillStyle = `rgba(123, 104, 238, ${flowIntensity})`;
+                    ectx.fill();
+                }
+            }
+            
+            // Draw edge being created
+            if (this.dragEdgeStart) {
+                const g = this.dragEdgeStart;
+                ectx.beginPath();
+                ectx.moveTo(g.x, g.y);
+                ectx.lineTo(this.lastMouseX || g.x, this.lastMouseY || g.y);
+                ectx.strokeStyle = 'rgba(255, 107, 107, 0.5)';
+                ectx.lineWidth = 2;
+                ectx.setLineDash([5, 5]);
+                ectx.stroke();
+                ectx.setLineDash([]);
+            }
+            
+            // Draw glyphs
+            for (const g of this.glyphs) {
+                // Glow
+                const glowGrad = ctx.createRadialGradient(
+                    g.x, g.y, 0, g.x, g.y, g.glowRadius
+                );
+                glowGrad.addColorStop(0, g.color.replace(')', `, ${g.signal * 0.4})`).replace('hsl', 'hsla'));
+                glowGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = glowGrad;
+                ctx.beginPath();
+                ctx.arc(g.x, g.y, g.glowRadius, 0, 2 * π);
+                ctx.fill();
+                
+                // Core
+                ctx.beginPath();
+                ctx.arc(g.x, g.y, g.displayRadius, 0, 2 * π);
+                ctx.fillStyle = g.color;
+                ctx.fill();
+                
+                // Phase indicator (rotating line)
+                const px = g.x + g.displayRadius * 0.7 * Math.cos(g.phase);
+                const py = g.y + g.displayRadius * 0.7 * Math.sin(g.phase);
+                ctx.beginPath();
+                ctx.moveTo(g.x, g.y);
+                ctx.lineTo(px, py);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Hover ring
+                if (g.hover || g.dragging) {
+                    ctx.beginPath();
+                    ctx.arc(g.x, g.y, g.displayRadius + 5, 0, 2 * π);
+                    ctx.strokeStyle = g.dragging ? '#ff6b6b' : '#7b68ee';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
+                // Label
+                ctx.fillStyle = '#e0e0e8';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(g.id.toString(), g.x, g.y);
+                
+                // Signal value below
+                ctx.fillStyle = '#6a6a7a';
+                ctx.font = '8px JetBrains Mono';
+                ctx.fillText(g.signal.toFixed(2), g.x, g.y + g.displayRadius + 12);
+            }
+            
+            // Update metrics display
+            document.getElementById('m-dphi').textContent = this.dphiStat.toFixed(3);
+            document.getElementById('m-phase').textContent = (this.phi / π).toFixed(3) + 'π';
+            document.getElementById('m-trend').textContent = this.trend.toFixed(4);
+            document.getElementById('m-coherence').textContent = this.glyphs[0].signal.toFixed(3);
+        }
+        
+        loop() {
+            this.step();
+            this.render();
+            requestAnimationFrame(() => this.loop());
+        }
+    }
+    
+    // Initialize
+    const field = new GlyphField(
+        document.getElementById('glyphs'),
+        document.getElementById('edges')
+    );
+    
+    // Track mouse for edge creation
+    document.addEventListener('mousemove', (e) => {
+        field.lastMouseX = e.clientX;
+        field.lastMouseY = e.clientY;
+    });
+    </script>
+</body>
+</html>
