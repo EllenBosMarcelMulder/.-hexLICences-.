@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ MA'AT FIELD ENGINE — CSS-DRIVEN PHYSICS</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           MA'AT CSS 1.0 — FIELD PROPERTIES
+           The first CSS specification where style = physics
+           ═══════════════════════════════════════════════════════════════ */
+        
+        /* Define typed custom properties (modern browsers) */
+        @property --psi {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 1;
+        }
+        
+        @property --dphi {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 0;
+        }
+        
+        @property --kappa {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 0;
+        }
+        
+        @property --akh {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 0.5;
+        }
+        
+        @property --ka {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 0.5;
+        }
+        
+        @property --ba {
+            syntax: "<number>";
+            inherits: true;
+            initial-value: 0.5;
+        }
+        
+        /* Root field state */
+        :root {
+            --psi: 1;
+            --dphi: 0;
+            --kappa: 0;
+            --akh: 0.5;
+            --ka: 0.5;
+            --ba: 0.5;
+            
+            /* Phase colors */
+            --phase-color: #00ff88;
+            --phase-glow: 20px;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           MA'AT FIELD RULES
+           CSS becomes physics
+           ═══════════════════════════════════════════════════════════════ */
+        
+        /* RULE 1: Stability ∝ Ψ → Transitions slow down at high coherence */
+        body {
+            transition: transform calc(0.1s + 0.9s * var(--psi)) ease-out;
+        }
+        
+        /* RULE 2: Instability → Body shake (ΔΦ > 0.1 triggers tremor) */
+        body {
+            transform: translate(
+                calc((var(--dphi) - 0.1) * 3px),
+                calc((var(--dphi) - 0.1) * -2px)
+            );
+        }
+        
+        /* RULE 3: Phase determines global glow */
+        body {
+            filter: drop-shadow(0 0 var(--phase-glow) var(--phase-color));
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           PHASE STATES (CSS as Field States)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        .phase-zero {
+            --phase-color: #00ff88;
+            --phase-glow: 20px;
+        }
+        
+        .phase-circular {
+            --phase-color: #00f5ff;
+            --phase-glow: 40px;
+        }
+        
+        .phase-hexagonal {
+            --phase-color: #d4af37;
+            --phase-glow: 60px;
+        }
+        
+        .phase-collapse {
+            --phase-color: #ff3366;
+            --phase-glow: 80px;
+            animation: collapse-pulse 0.5s infinite;
+        }
+        
+        @keyframes collapse-pulse {
+            0%, 100% { --phase-glow: 80px; }
+            50% { --phase-glow: 120px; }
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           BASIC STYLING
+           ═══════════════════════════════════════════════════════════════ */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #020208;
+            color: #00f5ff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);
+            border-bottom: 2px solid #d4af37;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #d4af37, #00f5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.3rem;
+        }
+        
+        .subtitle {
+            font-size: 0.8rem;
+            color: rgba(212, 175, 55, 0.7);
+            letter-spacing: 0.2em;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           MOTOR PANEL (CSS-Driven Field Visualization)
+           ═══════════════════════════════════════════════════════════════ */
+        .motor-panel {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.05), transparent);
+            position: relative;
+        }
+        
+        #motor {
+            max-width: 90%;
+            max-height: 90%;
+            /* Field transition speed ∝ Ψ */
+            transition: all calc(0.2s * var(--psi)) ease-out;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           SVG FIELD LAYERS (CSS Drives Physics)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        #hex-grid path {
+            fill: none;
+            stroke: rgba(0, 245, 255, 0.2);
+            stroke-width: 1;
+            /* Grid stability ∝ Ψ */
+            opacity: calc(0.2 + 0.3 * var(--psi));
+        }
+        
+        #vector-field circle {
+            fill: #00f5ff;
+            stroke: #00f5ff;
+            stroke-width: 2;
+            /* Vector brightness ∝ Ψ */
+            opacity: calc(0.6 + 0.4 * var(--psi));
+            /* Transition speed ∝ Ψ */
+            transition: all calc(0.3s * var(--psi)) ease-out;
+        }
+        
+        #mirror-field circle {
+            fill: #ff00ff;
+            stroke: #ff00ff;
+            stroke-width: 2;
+            opacity: calc(0.5 + 0.3 * var(--psi));
+            transition: all calc(0.3s * var(--psi)) ease-out;
+        }
+        
+        #crosslink-field line {
+            stroke: #ff3366;
+            /* Line width ∝ ΔΦ */
+            stroke-width: calc(1px + 5px * var(--dphi));
+            /* Opacity ∝ ΔΦ */
+            opacity: calc(0.2 + 0.8 * var(--dphi));
+            /* Chaos lines are jittery (fast transition) */
+            transition: all calc(0.1s * (1 - var(--dphi))) ease-out;
+        }
+        
+        #psi-core circle {
+            fill: #d4af37;
+            /* Core size ∝ Ψ */
+            r: calc(10px + 80px * var(--psi));
+            /* Core opacity ∝ Ψ */
+            opacity: calc(0.2 + 0.4 * var(--psi));
+            /* Smooth growth */
+            transition: all 0.5s ease-out;
+        }
+        
+        #akh-glow circle {
+            fill: url(#coreGlow);
+            /* Glow radius ∝ AKH */
+            r: calc(50px + 150px * var(--akh));
+            /* Glow intensity ∝ AKH */
+            opacity: calc(0.3 * var(--akh));
+            transition: all 0.8s ease-out;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           CONTROL PANEL
+           ═══════════════════════════════════════════════════════════════ */
+        .control-panel {
+            flex: 1;
+            background: rgba(8, 8, 20, 0.95);
+            border-left: 1px solid #d4af37;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .section {
+            background: rgba(0, 245, 255, 0.05);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: #d4af37;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.1em;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #d4af37, #c9a050);
+            color: #020208;
+            border: none;
+            padding: 0.6rem 1rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.05em;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.danger {
+            background: linear-gradient(135deg, #ff3366, #cc2952);
+            color: white;
+        }
+        
+        button.active {
+            background: linear-gradient(135deg, #00ff88, #00cc6e);
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 245, 255, 0.1);
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: rgba(212, 175, 55, 0.8);
+        }
+        
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: #00ff88;
+        }
+        
+        .phase-indicator {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+        
+        .phase-zero .phase-indicator {
+            background: #00ff88;
+            color: #020208;
+        }
+        
+        .phase-circular .phase-indicator {
+            background: #00f5ff;
+            color: #020208;
+        }
+        
+        .phase-hexagonal .phase-indicator {
+            background: #d4af37;
+            color: #020208;
+        }
+        
+        .phase-collapse .phase-indicator {
+            background: #ff3366;
+            color: white;
+        }
+        
+        .glyphs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .glyph {
+            text-align: center;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .glyph.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+        
+        .glyph-symbol {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .glyph-name {
+            font-size: 0.7rem;
+            color: #d4af37;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+        
+        .glyph-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: #00f5ff;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.8rem;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.3rem;
+            opacity: 0.7;
+        }
+        
+        .log-entry.critical {
+            color: #ff3366;
+            font-weight: 700;
+        }
+        
+        .log-entry.maat {
+            color: #d4af37;
+        }
+        
+        .css-indicator {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        
+        .css-indicator code {
+            color: #00ff88;
+            font-family: 'Space Mono', monospace;
+        }
+        
+        footer {
+            background: rgba(8, 8, 20, 0.95);
+            border-top: 1px solid #d4af37;
+            padding: 0.8rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        footer a {
+            color: #d4af37;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="phase-zero">
+    <header>
+        <h1>⚛ MA'AT FIELD ENGINE</h1>
+        <div class="subtitle">CSS-DRIVEN FIELD PHYSICS • STYLE = PHYSICS • MA'AT CSS 1.0</div>
+    </header>
+    
+    <div class="container">
+        <!-- LEFT PANEL: CSS-DRIVEN MOTOR -->
+        <div class="motor-panel">
+            <svg id="motor" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="coreGlow">
+                        <stop offset="0%" style="stop-color:#d4af37;stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:#d4af37;stop-opacity:0" />
+                    </radialGradient>
+                </defs>
+                
+                <g id="akh-glow"></g>
+                <g id="hex-grid"></g>
+                <g id="crosslink-field"></g>
+                <g id="mirror-field"></g>
+                <g id="vector-field"></g>
+                <g id="psi-core"></g>
+            </svg>
+        </div>
+        
+        <!-- RIGHT PANEL: CONTROLS -->
+        <div class="control-panel">
+            <div class="section">
+                <h2>⚙ MOTOR CONTROLS</h2>
+                <div class="controls">
+                    <button id="startBtn" onclick="startMotor()">▶ START</button>
+                    <button id="stopBtn" onclick="stopMotor()" style="display:none;">⏸ STOP</button>
+                    <button onclick="injectChaos()">⚡ CHAOS</button>
+                    <button onclick="maatPulse()">☥ MA'AT</button>
+                    <button class="danger" onclick="reset()">↻ RESET</button>
+                </div>
+                <div class="css-indicator">
+                    💡 <strong>CSS-Driven Physics Active</strong><br>
+                    Body shake ∝ ΔΦ | Transitions ∝ Ψ | Glow ∝ Phase
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📊 FIELD METRICS (CSS Variables)</h2>
+                <div class="metric">
+                    <span class="metric-label">Phase:</span>
+                    <span class="phase-indicator" id="phaseIndicator">ZERO</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">--dphi (Asymmetry):</span>
+                    <span class="metric-value" id="deltaPhiValue">0.0000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">--psi (Syntropy):</span>
+                    <span class="metric-value" id="psiValue">1.0000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">--kappa (Curvature):</span>
+                    <span class="metric-value" id="kappaValue">0.0000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">--akh (Coherence):</span>
+                    <span class="metric-value" id="akhValue">0.5000</span>
+                </div>
+                <div class="css-indicator">
+                    <code>:root { --psi: <span id="cssPsi">1</span>; --dphi: <span id="cssDphi">0</span>; }</code>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>𓂀 EGYPTIAN OPERATORS</h2>
+                <div class="glyphs">
+                    <div class="glyph" id="glyphKA">
+                        <div class="glyph-symbol">𓂓</div>
+                        <div class="glyph-name">--ka</div>
+                        <div class="glyph-value" id="kaValue">0.500</div>
+                    </div>
+                    <div class="glyph" id="glyphBA">
+                        <div class="glyph-symbol">𓅽</div>
+                        <div class="glyph-name">--ba</div>
+                        <div class="glyph-value" id="baValue">0.500</div>
+                    </div>
+                    <div class="glyph" id="glyphAKH">
+                        <div class="glyph-symbol">☥</div>
+                        <div class="glyph-name">--akh</div>
+                        <div class="glyph-value" id="akhValue">0.500</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📜 SYSTEM LOG</h2>
+                <div class="log" id="systemLog"></div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        ⚛ Ma'at Field Engine • CSS-Driven Physics • Ma'at CSS 1.0 • 
+        <a href="https://github.com/EllenBosMarcelMulder/.-hexLICences-." target="_blank">Humanity Heritage License π</a>
+    </footer>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // MA'AT CSS BRIDGE
+        // JavaScript ↔ CSS Custom Properties
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateCSSVariables() {
+            const root = document.documentElement;
+            root.style.setProperty('--psi', FieldState.psi);
+            root.style.setProperty('--dphi', FieldState.deltaPhi);
+            root.style.setProperty('--kappa', FieldState.kappa);
+            root.style.setProperty('--akh', FieldState.AKH);
+            root.style.setProperty('--ka', FieldState.KA);
+            root.style.setProperty('--ba', FieldState.BA);
+            
+            // Update body class for phase
+            document.body.className = 'phase-' + FieldState.phase.toLowerCase();
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // FIELD STATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        const FieldState = {
+            H: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            Hprime: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            
+            deltaPhi: 0,
+            deltaPhiMax: 0,
+            psi: 1,
+            kappa: 0,
+            
+            KA: 0.5,
+            BA: 0.5,
+            AKH: 0.5,
+            
+            phase: "ZERO",
+            t: 0
+        };
+        
+        let isRunning = false;
+        let motorInterval = null;
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        const PI = Math.PI;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // MOTOR FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateMirror() {
+            FieldState.Hprime = [...FieldState.H].reverse();
+        }
+        
+        function computeDeltaPhi() {
+            let sum = 0;
+            let max = 0;
+            
+            for (let i = 0; i < FieldState.H.length; i++) {
+                const d = Math.abs(FieldState.H[i] - FieldState.Hprime[i]);
+                sum += d;
+                if (d > max) max = d;
+            }
+            
+            FieldState.deltaPhi = sum / FieldState.H.length;
+            FieldState.deltaPhiMax = max;
+        }
+        
+        function computePsi() {
+            FieldState.psi = Math.max(0, 1 - FieldState.deltaPhi);
+        }
+        
+        function computeKappa() {
+            FieldState.kappa = PI * (1 - FieldState.psi);
+        }
+        
+        function updateKABAAKH() {
+            const t = FieldState.t * 0.01;
+            FieldState.KA = 0.5 + 0.3 * Math.sin(t) * FieldState.psi;
+            FieldState.BA = 0.5 + 0.3 * Math.cos(t * 1.5) * FieldState.psi;
+            
+            const alignment = 1 - Math.abs(FieldState.KA - FieldState.BA);
+            FieldState.AKH = alignment * FieldState.psi * 0.8 + 0.2;
+        }
+        
+        function maatPulse() {
+            FieldState.H = FieldState.H.map(h => h + (0.5 - h) * 0.25);
+            log('☥ Ma\'at pulse applied - CSS physics stabilizing', 'maat');
+        }
+        
+        function injectChaos() {
+            FieldState.H = FieldState.H.map(h => {
+                const chaos = (Math.random() - 0.5) * 0.4;
+                return Math.max(0, Math.min(1, h + chaos));
+            });
+            log('⚡ Chaos injected - CSS physics responding', 'critical');
+        }
+        
+        function detectPhase() {
+            if (FieldState.deltaPhi < 0.05) {
+                FieldState.phase = "ZERO";
+            } else if (FieldState.deltaPhi < 0.2) {
+                FieldState.phase = "CIRCULAR";
+            } else if (FieldState.deltaPhi < 0.4) {
+                FieldState.phase = "HEXAGONAL";
+            } else {
+                FieldState.phase = "COLLAPSE";
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // SVG RENDERER
+        // ═══════════════════════════════════════════════════════════════
+        
+        const CENTER_X = 400;
+        const CENTER_Y = 400;
+        const RADIUS = 250;
+        
+        function init() {
+            renderHexGrid();
+            renderAll();
+            updateUI();
+            updateCSSVariables();
+            log('Engine initialized with CSS-driven physics', 'maat');
+            log('CSS variables: --psi, --dphi, --kappa, --akh active', 'info');
+        }
+        
+        function renderHexGrid() {
+            const hexGrid = document.getElementById('hex-grid');
+            hexGrid.innerHTML = '';
+            
+            const points = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * 2 * Math.PI - Math.PI / 2;
+                const x = CENTER_X + RADIUS * Math.cos(angle);
+                const y = CENTER_Y + RADIUS * Math.sin(angle);
+                points.push(`${x},${y}`);
+            }
+            
+            const hexPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            hexPath.setAttribute('d', `M ${points.join(' L ')} Z`);
+            hexGrid.appendChild(hexPath);
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * 2 * Math.PI - Math.PI / 2;
+                const x = CENTER_X + RADIUS * Math.cos(angle);
+                const y = CENTER_Y + RADIUS * Math.sin(angle);
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', CENTER_X);
+                line.setAttribute('y1', CENTER_Y);
+                line.setAttribute('x2', x);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', 'rgba(0, 245, 255, 0.2)');
+                line.setAttribute('stroke-width', '1');
+                hexGrid.appendChild(line);
+            }
+        }
+        
+        function renderAll() {
+            renderH(FieldState.H);
+            renderHprime(FieldState.Hprime);
+            renderCrosslinks(FieldState.H, FieldState.Hprime);
+            renderPsiCore(FieldState.psi);
+            renderAkhGlow(FieldState.AKH);
+        }
+        
+        function renderH(H) {
+            const vectorField = document.getElementById('vector-field');
+            vectorField.innerHTML = '';
+            
+            for (let i = 0; i < H.length; i++) {
+                const angle = (i / H.length) * 2 * Math.PI - Math.PI / 2;
+                const r = H[i] * RADIUS;
+                const x = CENTER_X + r * Math.cos(angle);
+                const y = CENTER_Y + r * Math.sin(angle);
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '8');
+                vectorField.appendChild(circle);
+            }
+        }
+        
+        function renderHprime(Hprime) {
+            const mirrorField = document.getElementById('mirror-field');
+            mirrorField.innerHTML = '';
+            
+            for (let i = 0; i < Hprime.length; i++) {
+                const angle = (i / Hprime.length) * 2 * Math.PI - Math.PI / 2;
+                const r = Hprime[i] * RADIUS;
+                const x = CENTER_X + r * Math.cos(angle);
+                const y = CENTER_Y + r * Math.sin(angle);
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '6');
+                mirrorField.appendChild(circle);
+            }
+        }
+        
+        function renderCrosslinks(H, Hprime) {
+            const crosslinkField = document.getElementById('crosslink-field');
+            crosslinkField.innerHTML = '';
+            
+            for (let i = 0; i < H.length; i++) {
+                const angle = (i / H.length) * 2 * Math.PI - Math.PI / 2;
+                
+                const r1 = H[i] * RADIUS;
+                const x1 = CENTER_X + r1 * Math.cos(angle);
+                const y1 = CENTER_Y + r1 * Math.sin(angle);
+                
+                const r2 = Hprime[i] * RADIUS;
+                const x2 = CENTER_X + r2 * Math.cos(angle);
+                const y2 = CENTER_Y + r2 * Math.sin(angle);
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                crosslinkField.appendChild(line);
+            }
+        }
+        
+        function renderPsiCore(psi) {
+            const psiCore = document.getElementById('psi-core');
+            psiCore.innerHTML = '';
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', CENTER_X);
+            circle.setAttribute('cy', CENTER_Y);
+            circle.setAttribute('r', '50');  // CSS will override via calc()
+            psiCore.appendChild(circle);
+        }
+        
+        function renderAkhGlow(akh) {
+            const akhGlow = document.getElementById('akh-glow');
+            akhGlow.innerHTML = '';
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', CENTER_X);
+            circle.setAttribute('cy', CENTER_Y);
+            circle.setAttribute('r', '100');  // CSS will override via calc()
+            akhGlow.appendChild(circle);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // UPDATE LOOP
+        // ═══════════════════════════════════════════════════════════════
+        
+        function tick() {
+            FieldState.t++;
+            
+            FieldState.H = FieldState.H.map(h => {
+                const noise = (Math.random() - 0.5) * 0.02;
+                return Math.max(0, Math.min(1, h + noise));
+            });
+            
+            updateMirror();
+            computeDeltaPhi();
+            computePsi();
+            computeKappa();
+            updateKABAAKH();
+            detectPhase();
+            
+            // UPDATE CSS VARIABLES (this drives all CSS physics)
+            updateCSSVariables();
+            
+            renderAll();
+            updateUI();
+            
+            if (FieldState.t % 100 === 0) {
+                if (FieldState.phase === "COLLAPSE") {
+                    log(`⚠ COLLAPSE: CSS shake active, ΔΦ=${FieldState.deltaPhi.toFixed(3)}`, 'critical');
+                } else if (FieldState.phase === "ZERO") {
+                    log(`☥ Ma'at: CSS stable, Ψ=${FieldState.psi.toFixed(4)}`, 'maat');
+                }
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONTROLS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function startMotor() {
+            if (!isRunning) {
+                isRunning = true;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').classList.add('active');
+                motorInterval = setInterval(tick, 50);
+                log('▶ Motor started - CSS physics active', 'maat');
+            }
+        }
+        
+        function stopMotor() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'none';
+                clearInterval(motorInterval);
+                log('⏸ Motor stopped', 'info');
+            }
+        }
+        
+        function reset() {
+            stopMotor();
+            FieldState.H = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+            FieldState.Hprime = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+            FieldState.deltaPhi = 0;
+            FieldState.deltaPhiMax = 0;
+            FieldState.psi = 1;
+            FieldState.kappa = 0;
+            FieldState.KA = 0.5;
+            FieldState.BA = 0.5;
+            FieldState.AKH = 0.5;
+            FieldState.phase = "ZERO";
+            FieldState.t = 0;
+            updateCSSVariables();
+            renderAll();
+            updateUI();
+            log('↻ Reset to Zero State - CSS variables reset', 'info');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // UI UPDATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateUI() {
+            const elements = {
+                phaseIndicator: document.getElementById('phaseIndicator'),
+                deltaPhiValue: document.getElementById('deltaPhiValue'),
+                psiValue: document.getElementById('psiValue'),
+                kappaValue: document.getElementById('kappaValue'),
+                akhValue: document.getElementById('akhValue'),
+                cssPsi: document.getElementById('cssPsi'),
+                cssDphi: document.getElementById('cssDphi'),
+                kaValue: document.getElementById('kaValue'),
+                baValue: document.getElementById('baValue'),
+                glyphKA: document.getElementById('glyphKA'),
+                glyphBA: document.getElementById('glyphBA'),
+                glyphAKH: document.getElementById('glyphAKH')
+            };
+            
+            // Update only if elements exist
+            if (elements.phaseIndicator) {
+                elements.phaseIndicator.textContent = FieldState.phase;
+            }
+            
+            if (elements.deltaPhiValue) {
+                elements.deltaPhiValue.textContent = FieldState.deltaPhi.toFixed(4);
+            }
+            
+            if (elements.psiValue) {
+                elements.psiValue.textContent = FieldState.psi.toFixed(4);
+            }
+            
+            if (elements.kappaValue) {
+                elements.kappaValue.textContent = FieldState.kappa.toFixed(4);
+            }
+            
+            if (elements.akhValue) {
+                elements.akhValue.textContent = FieldState.AKH.toFixed(4);
+            }
+            
+            if (elements.cssPsi) {
+                elements.cssPsi.textContent = FieldState.psi.toFixed(2);
+            }
+            
+            if (elements.cssDphi) {
+                elements.cssDphi.textContent = FieldState.deltaPhi.toFixed(2);
+            }
+            
+            if (elements.kaValue) {
+                elements.kaValue.textContent = FieldState.KA.toFixed(3);
+            }
+            
+            if (elements.glyphKA) {
+                elements.glyphKA.classList.toggle('active', FieldState.KA > 0.7);
+            }
+            
+            if (elements.baValue) {
+                elements.baValue.textContent = FieldState.BA.toFixed(3);
+            }
+            
+            if (elements.glyphBA) {
+                elements.glyphBA.classList.toggle('active', FieldState.BA > 0.7);
+            }
+            
+            if (elements.glyphAKH) {
+                elements.glyphAKH.classList.toggle('active', FieldState.AKH > 0.7);
+            }
+        }
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('systemLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${FieldState.t.toString().padStart(5, '0')}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            while (logDiv.children.length > 30) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
