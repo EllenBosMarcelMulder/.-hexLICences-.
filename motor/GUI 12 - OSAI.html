@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ HexOSAI L60: Fase-Fusion Kern</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --bg-color: #050508;
+            --text-color: #a0a0b0;
+            --accent-gold: #d4af37;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-danger: #ff3333;
+            --accent-success: #00ff88;
+            
+            --glass-panel: rgba(10, 12, 20, 0.85);
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* De CORE WRAPPER voor L60 data-attributen */
+        #hexosai-core {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2; 
+        }
+
+        /* Canvas Layer (L50 Motor) */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        #interface {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 80px 1fr 150px;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--glass-panel);
+            border: 1px solid var(--border-light);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 15px;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s;
+        }
+
+        .panel-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: var(--accent-gold);
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ... (Overige UI stijlen ongewijzigd) ... */
+        
+        /* HEX TYPOGRAPHY L1 - GLYPH RENDERING KERNEL */
+        #glyph-container {
+            grid-column: 2 / 3; 
+            grid-row: 2 / 3;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: none;
+            z-index: 5; 
+            flex-wrap: wrap;
+        }
+
+        .hexNODeGLYph {
+            display: inline-block;
+            font-family: var(--glyph-font, 'Orbitron', sans-serif);
+            font-weight: 700;
+            font-size: var(--glyph-size, 28px);
+            color: var(--glyph-color, var(--accent-cyan));
+            letter-spacing: var(--glyph-spacing, 1px);
+            line-height: 1.0;
+            transform: rotate(var(--glyph-phase, 0deg))
+                       scale(var(--glyph-scale, 1));
+            border-bottom: var(--glyph-border, 2px solid rgba(255, 255, 255, 0.1));
+            padding: 0 5px; 
+            margin: 0 8px;
+            text-transform: uppercase;
+            transition: all 0.5s ease-out; /* Belangrijk voor soepelheid */
+            pointer-events: auto; 
+            cursor: pointer;
+            text-shadow: 0 0 8px var(--glyph-color);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* GLYPH-LANG 1.0: SEMANTISCHE REGELSET (Interpreter) */
+        /* ------------------------------------------------------------------ */
+
+        /* Regel: Implosie (Contractie) */
+        .hexNODeGLYph[data-node-phase="implosion"] {
+            --glyph-color: var(--accent-magenta);
+            --glyph-phase: -180deg; /* Gekoppeld aan reflectie/compressie */
+            --glyph-scale: 0.9;
+            text-shadow: 0 0 12px var(--accent-danger);
+            font-weight: 900; /* Dichtheid */
+        }
+
+        /* Regel: Expansie (Uitzending) */
+        .hexNODeGLYph[data-node-phase="explosion"] {
+            --glyph-color: var(--accent-cyan);
+            --glyph-phase: 180deg; /* Gekoppeld aan groei/uitstoot */
+            --glyph-scale: 1.1;
+            text-shadow: 0 0 12px var(--accent-cyan);
+            font-weight: 400; /* Lichtheid */
+        }
+
+        /* Globale L60 Regel: Ma'at (Wanneer de Fusion Engine de Harmonische Vorm kiest) */
+        #hexosai-core[data-final-phase="maat"] .hexNODeGLYph {
+            --glyph-color: var(--accent-gold);
+            --glyph-phase: 0deg;
+            --glyph-scale: 1.0;
+            text-shadow: 0 0 6px var(--accent-gold);
+            font-weight: 300; 
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        /* Globale L60 Regel: Puls (Synchronisatiepoging) */
+        #hexosai-core[data-final-phase="puls"] .hexNODeGLYph {
+            animation: pulse-sync 0.3s infinite alternate;
+        }
+
+        @keyframes pulse-sync {
+            from { opacity: 0.6; transform: scale(1.0); }
+            to { opacity: 1.0; transform: scale(1.1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="fieldCanvas"></canvas>
+
+    <div id="hexosai-core" data-final-phase="init">
+        <div id="interface">
+            <div class="panel" id="header-panel">
+                <div style="display: flex; align-items: center;">
+                    <div class="status-indicator status-active" id="kernel-led"></div>
+                    <h1>HEXOSAI L60/L1 KERNEL</h1>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 10px; color: #666;">OPERATIONELE FASE (L60)</div>
+                    <div style="color: var(--accent-gold);" id="current-phase-name">MA'AT - HARMONIE</div>
+                </div>
+            </div>
+
+            <div class="panel" id="metrics-panel">
+                <div class="panel-header">VELD TELEMETRIE (L50)</div>
+                
+                <div class="metric-row">
+                    <span>Systeem Coherentie (Ψ)</span>
+                    <span class="metric-val" id="val-psi">0.00</span>
+                </div>
+                <div class="bar-container"><div class="bar-fill" id="bar-psi" style="width: 0%; background: var(--accent-cyan);"></div></div>
+
+                <div class="metric-row">
+                    <span>Interne Spanning (ΔΦ)</span>
+                    <span class="metric-val" id="val-delta">0.00</span>
+                </div>
+                <div class="bar-container"><div class="bar-fill" id="bar-delta" style="width: 0%; background: var(--accent-danger);"></div></div>
+                
+                <div style="margin-top: 15px;" class="panel-header">FASE FUSION INFERENCE (L60)</div>
+
+                <div class="metric-row">
+                    <span>User Intent: **Expansion**</span>
+                    <span class="metric-val" id="val-intent-exp">0.00</span>
+                </div>
+                <div class="metric-row">
+                    <span>HyperAI: **Akh** (Spirit)</span>
+                    <span class="metric-val" id="val-ai-akh">0.00</span>
+                </div>
+                <div class="metric-row">
+                    <span>Fusion Output: **$S \to$ IMPLOSIE**</span>
+                    <span class="metric-val" id="val-fusion-output" style="color: var(--accent-danger);">0.00</span>
+                </div>
+
+                <div id="phase-display">
+                    <div class="phase-label">BESLISSINGSLUS</div>
+                    <div class="phase-name" id="l60-decision-text">INITIËREN...</div>
+                </div>
+            </div>
+            
+            <div id="glyph-container">
+                </div>
+
+            <div class="panel" id="controls-panel">
+                <div class="panel-header">FASE INTENTIE-INJECTOR</div>
+                
+                <button class="intent-button" data-intent="structure" onclick="fieldEngine.setIntent('structure')">
+                    🧱 Intent: Structuur
+                </button>
+                <button class="intent-button" data-intent="expansion" onclick="fieldEngine.setIntent('expansion')">
+                    🚀 Intent: Expansie
+                </button>
+                <button class="intent-button" data-intent="calm" onclick="fieldEngine.setIntent('calm')">
+                    🧘 Intent: Kalmte
+                </button>
+                <button class="intent-button danger" data-intent="reset" onclick="fieldEngine.setIntent('reset')">
+                    ⚡ Intent: Nulstelling
+                </button>
+                
+                <div style="margin-top: 20px;">
+                    <div class="panel-header">AUTOMATISERING</div>
+                    <div style="display: flex; gap: 10px; align-items: center; font-size: 11px;">
+                        <input type="checkbox" id="auto-balance" checked>
+                        <label for="auto-balance">Auto-Ma'at Correctie</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" id="log-panel">
+                <div class="panel-header">SYSTEEM LOGBOEK</div>
+                <div id="log-content">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================================
+        // WISKUNDIGE KERN & L50 MOTOR (Hex-Lang Fysica)
+        // ======================================================================
+        // (Vector en HexGrid definities ongewijzigd)
+        const Vector = {
+            add: (v1, v2) => ({ x: v1.x + v2.x, y: v1.y + v2.y }),
+            sub: (v1, v2) => ({ x: v1.x - v2.x, y: v1.y - v2.y }),
+            mult: (v, s) => ({ x: v.x * s, y: v.y * s }),
+            mag: (v) => Math.sqrt(v.x * v.x + v.y * v.y),
+            norm: (v) => {
+                const m = Math.sqrt(v.x * v.x + v.y * v.y);
+                return m === 0 ? { x: 0, y: 0 } : { x: v.x / m, y: v.y / m };
+            },
+            dist: (v1, v2) => Math.sqrt((v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2)
+        };
+
+        const HEX_SIZE = 40;
+        const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+        const HEX_HEIGHT = 2 * HEX_SIZE;
+
+        const HexGrid = {
+            axialToPixel(q, r, center) {
+                const x = center.x + HEX_WIDTH * (q + r / 2);
+                const y = center.y + (HEX_HEIGHT * 3 / 4) * r;
+                return { x, y };
+            },
+            getNeighbors(q, r) {
+                const directions = [
+                    { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                    { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }
+                ];
+                return directions.map(dir => ({ q: q + dir.q, r: r + dir.r }));
+            }
+        };
+
+        class HexNode {
+            constructor(id, q, r, pixelCenter) {
+                this.id = id;
+                this.q = q;
+                this.r = r;
+                this.initialPos = HexGrid.axialToPixel(q, r, pixelCenter);
+                this.pos = { x: this.initialPos.x, y: this.initialPos.y };
+                this.vel = { x: (Math.random()-0.5)*0.1, y: (Math.random()-0.5)*0.1 };
+                this.acc = { x: 0, y: 0 };
+                this.mass = 1.0; 
+                this.radius = HEX_SIZE * 0.9;
+                
+                // --- HEXOSAI L50 Computationele Staat ---
+                this.state = {
+                    deltaPhi: 0.1,  // Spanning (ΔΦ)
+                    psi: 0.8,       // Coherentie (Ψ)
+                    entropy: 0.2,   // Verstoring (S)
+                    maat: 0.9,      // Stabiliteit (M)
+                    phase: 1,       // Faseflip: +1 (Explosie) of -1 (Implosie)
+                    omega: 0.0      // Pulsfrequentie (Ω)
+                };
+                this.neighbors = [];
+                this.glyphElement = null; 
+            }
+
+            applyForce(force) {
+                const accFromForce = Vector.mult(force, 1 / this.mass);
+                this.acc = Vector.add(this.acc, accFromForce);
+            }
+
+            update(damping) {
+                this.vel = Vector.add(this.vel, this.acc);
+                this.vel = Vector.mult(this.vel, damping);
+                this.pos.x += this.vel.x;
+                this.pos.y += this.vel.y;
+                this.acc = { x: 0, y: 0 }; 
+                this.state.deltaPhi = Vector.mag(this.vel) * 8; 
+                this.state.entropy = Math.max(0, this.state.entropy * 0.99 - this.state.psi * 0.001 + this.state.deltaPhi * 0.01);
+                this.state.entropy = Math.min(1.0, this.state.entropy);
+            }
+        }
+
+
+        // ======================================================================
+        // L60 - FASE-FUSION KERNEL (Drie-Weg Compiler)
+        // ======================================================================
+        const L60_FUSION_KERNEL = {
+            
+            // L60 STATE
+            state: {
+                userIntent: { structure: 0.0, expansion: 0.0, calm: 0.0, activeIntent: 'none' },
+                semanticVector: { Akh: 0.0, Ka: 0.0, Ba: 0.0 }, // Spirit, Energy, Form
+                finalPhase: 'MAAT',
+                phaseTimer: 0 
+            },
+            
+            lastMousePos: { x: 0, y: 0 },
+            mouseVelocity: 0,
+            
+            // ... (captureUserIntent en updateHyperAISemantics ongewijzigd) ...
+
+            captureUserIntent(mouse) {
+                const maxVel = 20; 
+                const currentVel = Vector.dist(mouse, this.lastMousePos) * 0.2; 
+                this.mouseVelocity = this.mouseVelocity * 0.9 + currentVel * 0.1; 
+                this.lastMousePos = { x: mouse.x, y: mouse.y };
+                
+                const normalizedVel = Math.min(1.0, this.mouseVelocity / maxVel);
+                this.state.userIntent.expansion = normalizedVel;
+                this.state.userIntent.calm = 1.0 - normalizedVel;
+
+                if (this.state.userIntent.activeIntent !== 'none') {
+                    const decay = 0.98;
+                    this.state.userIntent.structure = Math.max(0, this.state.userIntent.structure * decay);
+                    if (this.state.userIntent.structure < 0.05) {
+                        this.state.userIntent.activeIntent = 'none';
+                        document.querySelectorAll('.intent-button').forEach(btn => btn.classList.remove('active'));
+                    }
+                }
+            },
+            
+            setIntent(intentType) {
+                this.state.userIntent.structure = 0.0;
+                this.state.userIntent.expansion = 0.0;
+                this.state.userIntent.calm = 0.0;
+                
+                if (intentType === 'structure' || intentType === 'reset') {
+                    this.state.userIntent.structure = 1.0;
+                } else {
+                    this.state.userIntent[intentType] = 1.0;
+                }
+                
+                this.state.userIntent.activeIntent = intentType;
+                
+                document.querySelectorAll('.intent-button').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.querySelector(`.intent-button[data-intent="${intentType}"]`);
+                if(activeBtn) activeBtn.classList.add('active');
+            },
+            
+            updateHyperAISemantics(metrics) {
+                const intent = this.state.userIntent;
+
+                let Akh = metrics.psi * intent.calm * 1.5;
+                Akh = Math.min(1.0, Akh);
+                
+                let Ka = intent.expansion * metrics.delta * 2.0;
+                Ka = Math.min(1.0, Ka);
+
+                let Ba = intent.structure * metrics.maat * 1.5;
+                Ba = Math.min(1.0, Ba);
+                
+                this.state.semanticVector = { Akh, Ka, Ba };
+            },
+
+
+            // --- 3. BESLISSINGS FASE: Fase-Fusion Engine (De Compiler) ---
+            runPhaseFusionEngine(metrics) {
+                const s = this.state;
+                let decision = 'MAAT'; 
+
+                s.phaseTimer = Math.max(0, s.phaseTimer - 1); 
+
+                // Prioriteit 1: Reset/Implosie (Hoogste noodzaak)
+                if (metrics.entropy > 0.8 || s.userIntent.activeIntent === 'reset') {
+                    decision = 'IMPLOSIE';
+                    s.phaseTimer = 60; 
+                } 
+                // Prioriteit 2: Puls (Energie dissipatie/synchronisatie)
+                else if (metrics.delta > 0.6 && s.semanticVector.Akh > 0.5) { 
+                    decision = 'PULS';
+                    s.phaseTimer = 30;
+                }
+                // Prioriteit 3: Expansie (Actieve groei)
+                else if (s.semanticVector.Ka > 0.7 && metrics.psi > 0.7) { 
+                    decision = 'EXPLOSIE';
+                }
+                // Prioriteit 4: Structuur/Vormbehoud
+                else if (s.semanticVector.Ba > 0.5 && metrics.maat > 0.7) {
+                    decision = 'STRUCTUUR';
+                }
+                // Default: Ma'at (Harmonische toestand)
+                else {
+                    decision = 'MAAT';
+                }
+                
+                // Voer de beslissing uit (Compilatie)
+                this.executePhaseDecision(decision, metrics);
+                this.state.finalPhase = decision;
+            },
+            
+            executePhaseDecision(decision, metrics) {
+                // Deel 1: Hex-Lang Commando's (JS - Fysica)
+                switch (decision) {
+                    case 'IMPLOSIE':
+                        metrics.psi = Math.max(0.0, metrics.psi - 0.01);
+                        metrics.entropy = Math.max(0.0, metrics.entropy * 0.95);
+                        fieldEngine.nodes.forEach(n => {
+                            n.state.phase = -1; // Forceer Implosie
+                            n.state.omega = 0.5;
+                            n.vel = Vector.mult(n.vel, 0.9); 
+                        });
+                        break;
+                    case 'EXPLOSIE':
+                        metrics.psi = Math.min(1.0, metrics.psi + 0.01);
+                        fieldEngine.nodes.forEach(n => {
+                            n.state.phase = 1; // Forceer Expansie
+                            n.state.omega = 1.0;
+                            n.applyForce({x: (Math.random()-0.5)*1.5, y: (Math.random()-0.5)*1.5});
+                        });
+                        break;
+                    case 'PULS':
+                        fieldEngine.triggerCoherencePulse();
+                        break;
+                    case 'STRUCTUUR':
+                        fieldEngine.nodes.forEach(n => {
+                            const gridCenter = n.initialPos;
+                            const distToGridCenter = Vector.dist(n.pos, gridCenter);
+                            const centerDir = Vector.norm(Vector.sub(gridCenter, n.pos));
+                            n.applyForce(Vector.mult(centerDir, distToGridCenter * 0.1)); 
+                        });
+                        break;
+                    case 'MAAT':
+                    default:
+                        // Geen specifieke Hex-Lang instructie
+                        break;
+                }
+                
+                // Deel 2: Glyph-Lang Commando (DOM/CSS - Semantiek)
+                const core = document.getElementById('hexosai-core');
+                // De L60 beslissing wordt als data-attribuut geschreven om de CSS-regels te activeren
+                core.dataset.finalPhase = decision.toLowerCase(); 
+
+                document.getElementById('current-phase-name').innerText = decision;
+                document.getElementById('l60-decision-text').innerText = decision;
+
+                if (fieldEngine.lastDecision !== decision) {
+                    fieldEngine.log(`L60 Fase-Switch: ${fieldEngine.lastDecision} → ${decision}`, decision === 'IMPLOSIE' ? 'crit' : decision === 'EXPLOSIE' ? 'opt' : 'sys');
+                    fieldEngine.lastDecision = decision;
+                }
+            }
+        };
+
+
+        // ======================================================================
+        // VELD MOTOR (Field Engine) - Verwerking
+        // ======================================================================
+        const fieldEngine = {
+            // ... (init, resize, spawnNodes ongewijzigd) ...
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+            nodes: [],
+            metrics: { psi: 0.8, delta: 0.1, entropy: 0.2, maat: 0.9 },
+            config: {
+                mouseRepelDist: 150,
+                autoBalance: true
+            },
+            mouse: { x: -1000, y: -1000 },
+            glyphContainer: null,
+            glyphLetters: ['A', 'K', 'H', 'K', 'A', 'B', 'A'], 
+            lastDecision: 'INIT',
+
+            init() {
+                this.canvas = document.getElementById('fieldCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.glyphContainer = document.getElementById('glyph-container');
+
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                window.addEventListener('mousemove', e => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+                
+                document.getElementById('auto-balance').addEventListener('change', (e) => {
+                    this.config.autoBalance = e.target.checked;
+                });
+
+                this.spawnNodes();
+                this.log("HEXOSAI L60 Dual-Language Kernel geactiveerd.", "sys");
+                this.animate();
+            },
+
+            resize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            },
+
+            spawnNodes() {
+                this.nodes = [];
+                const radius = 6;
+                let id = 0;
+                const center = { x: this.width / 2, y: this.height / 2 };
+
+                for (let q = -radius; q <= radius; q++) {
+                    const r1 = Math.max(-radius, -q - radius);
+                    const r2 = Math.min(radius, -q + radius);
+                    for (let r = r1; r <= r2; r++) {
+                        const newNode = new HexNode(id++, q, r, center);
+                        this.nodes.push(newNode);
+                    }
+                }
+                
+                this.nodes.forEach(node => {
+                    HexGrid.getNeighbors(node.q, node.r).forEach(nCoord => {
+                        const neighbor = this.nodes.find(n => n.q === nCoord.q && n.r === nCoord.r);
+                        if (neighbor) node.neighbors.push(neighbor);
+                    });
+                });
+                
+                const coreNodes = this.nodes.filter(n => Math.abs(n.q) <= 1 && Math.abs(n.r) <= 1);
+                this.glyphContainer.innerHTML = '';
+                
+                coreNodes.slice(0, this.glyphLetters.length).forEach((node, index) => {
+                    const letter = this.glyphLetters[index];
+                    const glyphEl = document.createElement('span');
+                    glyphEl.className = 'hexNODeGLYph';
+                    glyphEl.id = `glyph-${node.id}`; 
+                    glyphEl.innerText = letter;
+                    this.glyphContainer.appendChild(glyphEl);
+                    node.glyphElement = glyphEl; 
+                });
+            },
+
+            setIntent(intentType) {
+                L60_FUSION_KERNEL.setIntent(intentType);
+            },
+            
+            triggerCoherencePulse() {
+                this.log("Coherentie Puls uitgezonden (door L60 besluit)...", "sys");
+                const center = {x: this.width/2, y: this.height/2};
+                this.nodes.forEach(n => {
+                    const dir = Vector.norm(Vector.sub(center, n.pos));
+                    n.applyForce(Vector.mult(dir, 3)); 
+                    n.state.psi = 1.0;
+                    n.state.phase = 1;
+                    n.state.omega = 1.0;
+                });
+            },
+
+            updatePhysics() {
+                let totalTension = 0;
+                let totalPsi = 0;
+
+                for (const node of this.nodes) {
+                    // Muis Interactie (Repulsie/Chaos Injectie)
+                    const mouseDist = Vector.dist(node.pos, this.mouse);
+                    if (mouseDist < this.config.mouseRepelDist) {
+                        const forceMag = (1 - mouseDist / this.config.mouseRepelDist) * 3;
+                        const dir = Vector.norm(Vector.sub(node.pos, this.mouse));
+                        node.applyForce(Vector.mult(dir, forceMag));
+                        node.state.deltaPhi += forceMag * 5; 
+                        node.state.psi = Math.max(0.1, node.state.psi - 0.05); 
+                    }
+
+                    // Veldbehoud (Hex-Lang Fysica)
+                    const gridCenter = node.initialPos;
+                    const distToGridCenter = Vector.dist(node.pos, gridCenter);
+                    const centerDir = Vector.norm(Vector.sub(gridCenter, node.pos));
+                    if (L60_FUSION_KERNEL.state.finalPhase !== 'STRUCTUUR') {
+                        node.applyForce(Vector.mult(centerDir, distToGridCenter * 0.02)); 
+                    }
+
+                    // HEX-NAAR-HEX KOPPELING
+                    for (const neighbor of node.neighbors) {
+                        const coherenceShare = 0.05;
+                        node.state.psi += (neighbor.state.psi - node.state.psi) * coherenceShare;
+                        node.state.maat += (neighbor.state.maat - node.state.maat) * coherenceShare * 0.1;
+                        const forceMag = (Vector.dist(node.pos, neighbor.pos) - HEX_WIDTH * 0.8) * 0.0001; 
+                        const dir = Vector.norm(Vector.sub(neighbor.pos, node.pos));
+                        node.applyForce(Vector.mult(dir, forceMag));
+                    }
+
+                    // FASE-FLIP LOGICA (Motor reageert op ΔΦ)
+                    if (node.state.deltaPhi > 1.5 && node.state.phase === 1) {
+                        node.state.phase = -1;
+                        node.state.omega = 1; 
+                    } 
+                    else if (node.state.psi > 0.95 && node.state.deltaPhi < 0.2 && node.state.phase === -1) {
+                        node.state.phase = 1;
+                        node.state.omega = 0.1;
+                    }
+                    
+                    node.update(0.95);
+                    
+                    if (node.pos.x < 0 || node.pos.x > this.width) node.vel.x *= -1;
+                    if (node.pos.y < 0 || node.pos.y > this.height) node.vel.y *= -1;
+                    
+                    totalTension += node.state.deltaPhi;
+                    totalPsi += node.state.psi;
+                }
+
+                const avgTension = totalTension / this.nodes.length;
+                const avgPsi = totalPsi / this.nodes.length;
+                
+                this.metrics.delta += (avgTension - this.metrics.delta) * 0.1;
+                this.metrics.psi += (avgPsi - this.metrics.psi) * 0.1;
+                this.metrics.entropy += (this.metrics.delta - this.metrics.entropy) * 0.05;
+                this.metrics.entropy = Math.max(0, this.metrics.entropy - this.metrics.maat * 0.005);
+                
+                const idealPsi = 0.618;
+                this.metrics.maat = 1 - Math.abs(this.metrics.psi - idealPsi);
+                this.metrics.maat = Math.max(0, this.metrics.maat);
+                
+                this.runSelfAwarenessLoop();
+            },
+
+            runSelfAwarenessLoop() {
+                L60_FUSION_KERNEL.captureUserIntent(this.mouse);
+                L60_FUSION_KERNEL.updateHyperAISemantics(this.metrics);
+                L60_FUSION_KERNEL.runPhaseFusionEngine(this.metrics);
+            },
+
+            // L1 GLYPH KERNEL - Schrijft Hex-Lang output naar Glyph-Lang input
+            updateGlyphs() {
+                this.nodes.filter(n => n.glyphElement).forEach(node => {
+                    const s = node.state;
+                    const glyphEl = node.glyphElement;
+
+                    // 1. Schrijf de node-specifieke fase naar de Glyph-Lang interpreter (CSS)
+                    glyphEl.dataset.nodePhase = node.state.phase === 1 ? 'explosion' : 'implosion';
+
+                    // 2. CSS Variabelen voor sub-semantiek die niet onder de hoofdfase vallen
+                    glyphEl.style.setProperty('--glyph-size', (28 + s.deltaPhi * 30) + 'px');
+                    glyphEl.style.setProperty('--glyph-scale', (1 + s.omega * 0.8));
+                    
+                    const phaseHue = s.phase === 1 ? 20 : 200; 
+                    const saturation = 50 + s.deltaPhi * 50; 
+                    const lightness = 60 + s.psi * 20; 
+                    
+                    // Deze worden alleen gebruikt als ze niet door de Glyph-Lang regels worden overschreven
+                    glyphEl.style.setProperty('--glyph-color', `hsl(${phaseHue}, ${saturation.toFixed(0)}%, ${lightness.toFixed(0)}%)`);
+                    glyphEl.style.setProperty('--glyph-phase', (s.phase * s.deltaPhi * 120) + 'deg'); 
+                    
+                    s.omega = Math.max(0, s.omega * 0.9);
+                });
+            },
+
+            // ... (draw, drawHexagon, log ongewijzigd) ...
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                for (const node of this.nodes) {
+                    this.ctx.lineWidth = 1;
+                    for (const neighbor of node.neighbors) {
+                        if (node.id < neighbor.id) {
+                            const alpha = (node.state.psi + neighbor.state.psi) / 2 * 0.5;
+                            const tensionColor = Math.min(255, (node.state.deltaPhi + neighbor.state.deltaPhi) / 2 * 100);
+                            this.ctx.strokeStyle = `rgba(${tensionColor}, ${20 + tensionColor/2}, ${255 - tensionColor}, ${alpha})`;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(node.pos.x, node.pos.y);
+                            this.ctx.lineTo(neighbor.pos.x, neighbor.pos.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+                for (const node of this.nodes) { this.drawHexagon(node); }
+            },
+            
+            drawHexagon(node) {
+                const ctx = this.ctx;
+                const x = node.pos.x;
+                const y = node.pos.y;
+                const r = node.radius * node.state.psi * 0.5 + HEX_SIZE * 0.4;
+                const t = Math.min(1, node.state.deltaPhi * 0.5); 
+                const rColor = 255 * t + 50 * (1 - t);
+                const gColor = 100 * (1 - t) * (node.state.psi * 0.8);
+                const bColor = 255 * (1 - t) + 50 * t;
+                const color = `rgba(${rColor}, ${gColor}, ${bColor}, 0.9)`;
+                const rotation = (1 - node.state.maat) * Math.PI * 0.5; 
+                const phaseFactor = node.state.phase === 1 ? 1 : 0.7; 
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rotation);
+
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const vertX = Math.cos(angle) * r * phaseFactor;
+                    const vertY = Math.sin(angle) * r * phaseFactor;
+                    
+                    if (node.state.phase === -1) {
+                        const pullFactor = 0.5; 
+                        const midX = Math.cos(angle) * r * pullFactor;
+                        const midY = Math.sin(angle) * r * pullFactor;
+
+                        if (i === 0) ctx.moveTo(vertX, vertY);
+                        ctx.lineTo(midX, midY); 
+                    } else {
+                        if (i === 0) ctx.moveTo(vertX, vertY);
+                        else ctx.lineTo(vertX, vertY);
+                    }
+                }
+                ctx.closePath();
+                
+                ctx.fillStyle = color;
+                ctx.strokeStyle = `rgba(0, 240, 255, ${node.state.psi})`; 
+                ctx.lineWidth = 2;
+                
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            },
+
+            log(msg, type="sys") {
+                const logPanel = document.getElementById('log-content');
+                const time = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+                logPanel.insertBefore(entry, logPanel.firstChild);
+                
+                if (logPanel.children.length > 50) logPanel.removeChild(logPanel.lastChild);
+            },
+
+            updateUI() {
+                document.getElementById('val-psi').innerText = this.metrics.psi.toFixed(3);
+                document.getElementById('bar-psi').style.width = (this.metrics.psi * 100) + '%';
+                document.getElementById('val-delta').innerText = this.metrics.delta.toFixed(3);
+                document.getElementById('bar-delta').style.width = Math.min(100, this.metrics.delta * 50) + '%';
+                
+                const intent = L60_FUSION_KERNEL.state.userIntent;
+                const sem = L60_FUSION_KERNEL.state.semanticVector;
+                
+                document.getElementById('val-intent-exp').innerText = intent.expansion.toFixed(3);
+                document.getElementById('val-ai-akh').innerText = sem.Akh.toFixed(3);
+                document.getElementById('val-fusion-output').innerText = L60_FUSION_KERNEL.state.finalPhase;
+
+                const led = document.getElementById('kernel-led');
+                if (L60_FUSION_KERNEL.state.finalPhase === 'IMPLOSIE') led.className = "status-indicator status-crit";
+                else if (L60_FUSION_KERNEL.state.finalPhase === 'EXPLOSIE') led.className = "status-indicator status-active";
+                else led.className = "status-indicator status-process";
+            },
+
+            // --- MAIN LOOP ---
+            animate() {
+                this.updatePhysics();
+                this.updateGlyphs();
+                this.draw();
+                this.updateUI();
+                requestAnimationFrame(() => this.animate());
+            }
+        };
+
+        // Start
+        window.onload = () => fieldEngine.init();
+
+    </script>
+</body>
+</html>
