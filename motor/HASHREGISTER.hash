@@ -185,6 +185,10 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of hexOSAI GUI 20.html:
 fb7783d0ab29d931e17e1f73a24f0f3ac4285d500b3640601cd717ed12234d38
 CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 21.html ==== 
+SHA256 hash of hexOSAI GUI 21.html:
+b4f860ef65f91115f6384ef1944c9946be72c8d00d6910fe1136203bcccdee11
+CertUtil: -hashfile command completed successfully.
 ==== hexOSAI L60-L100 Self-Organising Field Engine GUI 14.html ==== 
 SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine GUI 14.html:
 314724fbcc753dde61f14a49939ffa2e8d7ff87cee0d7f2d430decc745211644
@@ -255,6 +259,10 @@ CertUtil: -hashfile command completed successfully.
 ==== System_Architecture_Diagram.md ==== 
 SHA256 hash of System_Architecture_Diagram.md:
 404483c3d8510b488a2d7d95ea026b68b724edcf2e5754ad1a073646b4071bd8
+CertUtil: -hashfile command completed successfully.
+==== The TriMotor 3 3 Operator Framework and Its Projection Into Hexagonal Computation.md ==== 
+SHA256 hash of The TriMotor 3 3 Operator Framework and Its Projection Into Hexagonal Computation.md:
+6c1d58dc809a774eef07602166cf9bc5f93edf03fab4d8dba4e9e6215c18728d
 CertUtil: -hashfile command completed successfully.
 ==== TriMotor Node Architecture & Curved-Space Computation.md ==== 
 SHA256 hash of TriMotor Node Architecture & Curved-Space Computation.md:
