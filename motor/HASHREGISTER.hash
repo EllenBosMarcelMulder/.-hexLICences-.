@@ -209,6 +209,10 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of hexOSAI GUI 23 v0.1 - intentional computing.md:
 d1559b0273ea48ac6aec1af66c8971977fc65204351e4fb581eee4a629543d1c
 CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 24.html ==== 
+SHA256 hash of hexOSAI GUI 24.html:
+cb9864d485fbcb9f4b68ad9f7af9cded0c7b9f754b8569045fa7888ebbfc107d
+CertUtil: -hashfile command completed successfully.
 ==== hexOSAI L60-L100 Self-Organising Field Engine GUI 14.html ==== 
 SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine GUI 14.html:
 314724fbcc753dde61f14a49939ffa2e8d7ff87cee0d7f2d430decc745211644
@@ -291,6 +295,10 @@ CertUtil: -hashfile command completed successfully.
 ==== The TriMotor 3 3 Operator Framework and Its Projection Into Hexagonal Computation.md ==== 
 SHA256 hash of The TriMotor 3 3 Operator Framework and Its Projection Into Hexagonal Computation.md:
 6c1d58dc809a774eef07602166cf9bc5f93edf03fab4d8dba4e9e6215c18728d
+CertUtil: -hashfile command completed successfully.
+==== Tri-VM Hexagon Intent Engine (VM ) & Glyph-Driven Browser Field OS extended.md ==== 
+SHA256 hash of Tri-VM Hexagon Intent Engine (VM ) & Glyph-Driven Browser Field OS extended.md:
+f512a37ef3aa4eac323e3d3ba978fd477295ce58496b3cf237188ffe9de39d3e
 CertUtil: -hashfile command completed successfully.
 ==== Tri-VM Hexagon Intent Engine (VM ) & Glyph-Driven Browser Field OS.md ==== 
 SHA256 hash of Tri-VM Hexagon Intent Engine (VM ) & Glyph-Driven Browser Field OS.md:
