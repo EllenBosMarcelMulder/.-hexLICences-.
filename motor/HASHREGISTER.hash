@@ -62,6 +62,10 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of files.zip.ots:
 9a3d02d4060fed4619ff918a3eca8ba81db4e95355a86df62d6076e197802d75
 CertUtil: -hashfile command completed successfully.
+==== Formele Prior-Art Verklaring IRSE.pdf ==== 
+SHA256 hash of Formele Prior-Art Verklaring IRSE.pdf:
+6654e06512c90229a5a56aaab4b3e3405f0c090a4219ff0703be9338715db60d
+CertUtil: -hashfile command completed successfully.
 ==== Gemini 1.html ==== 
 SHA256 hash of Gemini 1.html:
 5382ba411a9bc08dd8d01ba1f32eb58da661e09504eeb155b5c6e10947634dcd
@@ -296,7 +300,4 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of Universal Hexagonal Field Processor  Dynamic Glyph Kernel.md.ots:
 98080f36bf5365b26f5cdf8fb37c6aa1e2e730bf5896b0178953c2667bd347e5
 CertUtil: -hashfile command completed successfully.
-==== Universal Hexagonal Field Processor Dynamic Glyph Kernel.md.hash ==== 
-SHA256 hash of Universal Hexagonal Field Processor Dynamic Glyph Kernel.md.hash:
-131b72af6340c302fb2d1629e27295f867359a51315b5f334a461de3f31d4853
-CertUtil: -hashfile command completed successfully.
+==== Universal Hexagonal Field Processor Dynamic Glyph
