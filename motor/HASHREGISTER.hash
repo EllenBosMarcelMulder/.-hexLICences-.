@@ -110,6 +110,10 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of GUI 12 - OSAI.html.ots:
 3eb1331740837f01b2e81a37729514ecce88f164339c8b02e24d31a62354373d
 CertUtil: -hashfile command completed successfully.
+==== GUI 13 - OSAI.html ==== 
+SHA256 hash of GUI 13 - OSAI.html:
+0233bfafc52606727655efd68a63afbbdf888ba81b33fb1d726119a397bb026a
+CertUtil: -hashfile command completed successfully.
 ==== GUI 2.html ==== 
 SHA256 hash of GUI 2.html:
 63b2510d391808e82ea9dd1ae40ae8f1497ebac2956ff13248393941b80fec43
@@ -146,9 +150,21 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of GUI 9 - OSAI.html:
 b021b034d7d12320381e5e06465fe146a7bc309f6a319d119279efa908b7ccc7
 CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.hash ==== 
+SHA256 hash of HASHREGISTER.hash:
+9382e84033162535c80ab96c57c02a06fd8233c2a5a909088f5f5e6cc4f5f8fc
+CertUtil: -hashfile command completed successfully.
 ==== HASHREGISTER.tx ==== 
 CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
 CertUtil: The process cannot access the file because it is being used by another process.
+==== hexOSAI L60-L100 Self-Organising Field Engine GUI 14.html ==== 
+SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine GUI 14.html:
+314724fbcc753dde61f14a49939ffa2e8d7ff87cee0d7f2d430decc745211644
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI L60-L100 Self-Organising Field Engine.md ==== 
+SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine.md:
+87f265d2c21a992204cd6a7e03028e324c285bf01718632bf5ce2d8905692f71
+CertUtil: -hashfile command completed successfully.
 ==== hieroglyphic_field.html ==== 
 SHA256 hash of hieroglyphic_field.html:
 dd857096a00ec69065a693ef86659929d32909b46e6d11b10b1f669d80484630
