@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3GM Motor — Third Generation Mathematics Field Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:wght@400&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #2a2a3a;
+            --text: #8a8a9a;
+            --text-bright: #e0e0e8;
+            --gold: #ffd93d;
+            --core: #ff6b6b;
+            --planetary: #7b68ee;
+            --morphic: #00d4aa;
+            --operator: #4a9eff;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            font-size: 1.4rem;
+            color: var(--text-bright);
+        }
+        
+        .subtitle {
+            font-size: 0.65rem;
+            color: var(--text);
+            margin-top: 0.25rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        button {
+            font-family: inherit;
+            font-size: 0.65rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        
+        button.active {
+            background: var(--gold);
+            color: var(--bg);
+            border-color: var(--gold);
+        }
+        
+        main {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1rem;
+            padding: 1rem;
+            height: calc(100vh - 80px);
+        }
+        
+        .visualization {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .layer-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .layer {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem;
+            position: relative;
+        }
+        
+        .layer-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .layer-title .name { color: var(--text-bright); }
+        .layer-title .id { color: var(--text); }
+        
+        .l13 .layer-title .name { color: var(--core); }
+        .l19 .layer-title .name { color: var(--planetary); }
+        .l24 .layer-title .name { color: var(--morphic); }
+        .operators .layer-title .name { color: var(--operator); }
+        
+        canvas {
+            width: 100%;
+            height: calc(100% - 24px);
+            border-radius: 2px;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+        
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem;
+        }
+        
+        .panel-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .metric-group {
+            margin-bottom: 0.75rem;
+        }
+        
+        .metric-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .metric-label {
+            font-size: 0.55rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            margin-bottom: 0.15rem;
+        }
+        
+        .metric-name { color: var(--text); }
+        .metric-value { 
+            color: var(--gold); 
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .equation {
+            font-size: 0.55rem;
+            color: var(--text);
+            background: rgba(255,255,255,0.02);
+            padding: 0.4rem;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+        
+        .bar-container {
+            margin-bottom: 0.3rem;
+        }
+        
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.55rem;
+            margin-bottom: 0.1rem;
+        }
+        
+        .bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            transition: width 0.1s ease;
+        }
+        
+        .bar-fill.core { background: var(--core); }
+        .bar-fill.planetary { background: var(--planetary); }
+        .bar-fill.morphic { background: var(--morphic); }
+        .bar-fill.operator { background: var(--operator); }
+        .bar-fill.gold { background: var(--gold); }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>3GM Motor</h1>
+            <div class="subtitle">Third Generation Mathematics Field Engine — L13 → L19 → L24</div>
+        </div>
+        <div class="controls">
+            <button id="btn-run" class="active">Run</button>
+            <button id="btn-pause">Pause</button>
+            <button id="btn-reset">Reset</button>
+            <button id="btn-perturb">Perturb</button>
+        </div>
+    </header>
+    
+    <main>
+        <div class="visualization">
+            <div class="layer-row">
+                <div class="layer l13">
+                    <div class="layer-title">
+                        <span class="name">L13 — Causal Topology Kernel</span>
+                        <span class="id">Core</span>
+                    </div>
+                    <canvas id="canvas-l13"></canvas>
+                </div>
+                <div class="layer l19">
+                    <div class="layer-title">
+                        <span class="name">L19 — Planetary Phase Corrector</span>
+                        <span class="id">Egypt-OS</span>
+                    </div>
+                    <canvas id="canvas-l19"></canvas>
+                </div>
+            </div>
+            <div class="layer-row">
+                <div class="layer l24">
+                    <div class="layer-title">
+                        <span class="name">L24 — Morphic Casting Engine</span>
+                        <span class="id">Glyphs</span>
+                    </div>
+                    <canvas id="canvas-l24"></canvas>
+                </div>
+                <div class="layer operators">
+                    <div class="layer-title">
+                        <span class="name">Operator Chain</span>
+                        <span class="id">S→M→R→V→F→C</span>
+                    </div>
+                    <canvas id="canvas-ops"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">L13 — Core Fields</div>
+                <div class="metric-group">
+                    <div class="metric">
+                        <span class="metric-name">motherDNA</span>
+                        <span class="metric-value" id="m-dna">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">deltaPhi (δφ)</span>
+                        <span class="metric-value" id="m-dphi">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">curvature</span>
+                        <span class="metric-value" id="m-curve">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">variance</span>
+                        <span class="metric-value" id="m-var">0.220</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">syntropy</span>
+                        <span class="metric-value" id="m-syn">1.230</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">tensorField</span>
+                        <span class="metric-value" id="m-tensor">0.000</span>
+                    </div>
+                </div>
+                <div class="equation">motherDNA = V·sin(φ·δφ·π)·cos(δφ)·exp(-|φ−δφ|)</div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">Resonance</div>
+                <div class="metric">
+                    <span class="metric-name">ikPi</span>
+                    <span class="metric-value" id="m-ikpi">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-name">mePi</span>
+                    <span class="metric-value" id="m-mepi">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-name">phase</span>
+                    <span class="metric-value" id="m-phase">0.000π</span>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">L19 — Egypt-OS</div>
+                <div class="bar-container">
+                    <div class="bar-label">
+                        <span>KA</span>
+                        <span id="m-ka">0.000</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill planetary" id="bar-ka"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label">
+                        <span>BA</span>
+                        <span id="m-ba">0.000</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill planetary" id="bar-ba"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label">
+                        <span>AKH</span>
+                        <span id="m-akh">0.000</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill gold" id="bar-akh"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label">
+                        <span>DJED</span>
+                        <span id="m-djed">0.000</span>
+                    </div>
+                    <div class="bar"><div class="bar-fill morphic" id="bar-djed"></div></div>
+                </div>
+                <div class="equation">DJED = 1/(1+|AKH−KA|)</div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">L24 — Morphic</div>
+                <div class="metric">
+                    <span class="metric-name">coherence</span>
+                    <span class="metric-value" id="m-coh">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-name">center dominance</span>
+                    <span class="metric-value" id="m-center">0.000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-name">active glyphs</span>
+                    <span class="metric-value" id="m-active">0</span>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">Operators (S→C)</div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>S (Synthesis)</span><span id="m-op-s">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-s"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>M (Ma'at)</span><span id="m-op-m">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-m"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>R (Resonance)</span><span id="m-op-r">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-r"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>V (Variance)</span><span id="m-op-v">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-v"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>F (Flow)</span><span id="m-op-f">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-f"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>C (Coherence)</span><span id="m-op-c">0.00</span></div>
+                    <div class="bar"><div class="bar-fill operator" id="bar-c"></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // === CONSTANTS ===
+    const π = Math.PI;
+    const φ = (1 + Math.sqrt(5)) / 2;
+    const φ_inv = 1 / φ;
+    
+    // === L13 CORE ===
+    const L13 = {
+        deltaPhi: 0.618,
+        curvature: 0.382,
+        variance: 0.22,
+        syntropy: 1.23,
+        motherDNA: 0,
+        tensorField: 0,
+        ikPi: 0,
+        mePi: 0,
+        phase: 0,
+        K_total: 0,
+        
+        computeMotherDNA() {
+            const V = this.variance;
+            const δφ = this.deltaPhi;
+            this.motherDNA = V * Math.sin(φ * δφ * π) * Math.cos(δφ) * Math.exp(-Math.abs(φ - δφ));
+            return this.motherDNA;
+        },
+        
+        computeCurvature() {
+            this.curvature = Math.tanh(this.deltaPhi * φ_inv);
+            return this.curvature;
+        },
+        
+        computeDeltaPhi() {
+            const raw = (this.curvature * φ_inv) - (this.motherDNA * φ_inv);
+            const attractor = φ_inv;
+            this.deltaPhi = raw + 0.01 * (attractor - raw);
+            this.deltaPhi = Math.max(-2, Math.min(2, this.deltaPhi));
+            return this.deltaPhi;
+        },
+        
+        computeResonance() {
+            this.ikPi = Math.sin(φ * this.deltaPhi);
+            this.mePi = Math.cos(φ * this.curvature);
+        },
+        
+        computeSyntropy() {
+            this.syntropy = Math.exp(-this.K_total * φ_inv);
+        },
+        
+        computeTensorField() {
+            this.tensorField = φ * this.deltaPhi * this.curvature * this.motherDNA * this.ikPi * this.mePi;
+        },
+        
+        step(dt) {
+            this.computeMotherDNA();
+            this.computeCurvature();
+            this.computeResonance();
+            this.computeTensorField();
+            this.K_total = Math.abs(this.curvature) + Math.abs(this.deltaPhi) * 0.5;
+            this.computeSyntropy();
+            this.phase += dt * (1 + this.syntropy * 0.1);
+            this.computeDeltaPhi();
+        }
+    };
+    
+    // === L19 PLANETARY ===
+    const L19 = {
+        psi_1: 0, psi_2: 0, psi_3: 0, psi_5: 0,
+        KA: 0, BA: 0, AKH: 0, DJED: 0,
+        coherence: 1,
+        delta_theta: 0,
+        
+        computeKA() {
+            this.KA = Math.sqrt(Math.sin(this.psi_1)**2 + Math.sin(this.psi_2)**2);
+        },
+        
+        computeBA() {
+            this.BA = Math.sqrt(Math.sin(this.psi_3)**2 + Math.sin(this.psi_5)**2);
+        },
+        
+        computeAKH() {
+            this.AKH = this.KA * this.BA;
+        },
+        
+        computeDJED() {
+            this.DJED = 1 / (1 + Math.abs(this.AKH - this.KA));
+            this.coherence = this.DJED;
+        },
+        
+        receiveFromL13() {
+            this.psi_1 = L13.phase;
+            this.psi_2 = L13.phase + L13.deltaPhi;
+            this.psi_3 = L13.phase + L13.curvature;
+            this.psi_5 = L13.phase + L13.motherDNA;
+            this.delta_theta = L13.deltaPhi * φ_inv;
+        },
+        
+        step() {
+            this.receiveFromL13();
+            this.computeKA();
+            this.computeBA();
+            this.computeAKH();
+            this.computeDJED();
+        }
+    };
+    
+    // === OPERATORS ===
+    const operators = {
+        S: { value: 0, weight: π },
+        M: { value: 0, weight: π/2 },
+        R: { value: 0, weight: π/3 },
+        V: { value: 0, weight: π/4 },
+        F: { value: 0, weight: π/5 },
+        C: { value: 0, weight: π/6 },
+        
+        order: ['S', 'M', 'R', 'V', 'F', 'C'],
+        
+        apply(name, signal, phase) {
+            switch(name) {
+                case 'S': return Math.tanh(signal);
+                case 'M': return signal * (1 - Math.abs(signal - 1) * 0.1);
+                case 'R': return signal * (1 + 0.1 * Math.sin(signal * π));
+                case 'V': return signal * (1 + 0.05 * (signal - 1)**2);
+                case 'F': return signal * Math.cos(signal * π/4)**2 + 0.5;
+                case 'C': return signal / (1 + Math.abs(signal - 1));
+            }
+            return signal;
+        },
+        
+        process(signal, phase, curvature) {
+            let current = signal;
+            for (const name of this.order) {
+                const op = this[name];
+                current = this.apply(name, current, phase);
+                current *= 1 / (1 + curvature * op.weight);
+                op.value = current;
+            }
+        }
+    };
+    
+    // === L24 MORPHIC ===
+    const L24 = {
+        glyphValues: new Float64Array(7),
+        glyphPhases: new Float64Array(7),
+        coherenceMap: new Float64Array(7).fill(1),
+        positions: [],
+        threshold: 0.5,
+        
+        init() {
+            this.positions = [[0, 0]];
+            for (let i = 0; i < 6; i++) {
+                this.positions.push([Math.cos(i * π/3), Math.sin(i * π/3)]);
+            }
+        },
+        
+        receiveFromOperators() {
+            this.glyphValues[0] = operators.C.value * L13.motherDNA * L19.coherence;
+            
+            for (let i = 1; i < 7; i++) {
+                const [px, py] = this.positions[i];
+                const dist = Math.sqrt(px*px + py*py);
+                const atten = Math.exp(-dist * L13.curvature);
+                const phaseShift = i * π/3;
+                this.glyphValues[i] = operators.C.value * atten * Math.cos(L13.phase + phaseShift) * L19.DJED;
+            }
+            
+            for (let i = 0; i < 7; i++) {
+                this.glyphPhases[i] = L13.phase + i * L19.delta_theta;
+            }
+            
+            this.computeCoherence();
+        },
+        
+        computeCoherence() {
+            for (let i = 0; i < 7; i++) {
+                const neighbors = i === 0 ? [1,2,3,4,5,6] : [0, ((i-2+6)%6)+1, (i%6)+1];
+                const mean = neighbors.reduce((s, n) => s + this.glyphValues[n], 0) / neighbors.length;
+                this.coherenceMap[i] = L19.coherence / (1 + Math.abs(this.glyphValues[i] - mean));
+            }
+        },
+        
+        getCenterDominance() {
+            const total = this.glyphValues.reduce((a, b) => a + Math.abs(b), 0);
+            return total > 1e-8 ? Math.abs(this.glyphValues[0]) / total : 0;
+        },
+        
+        getTotalCoherence() {
+            return this.coherenceMap.reduce((a, b) => a + b, 0) / 7;
+        },
+        
+        getActiveCount() {
+            let count = 0;
+            for (let i = 0; i < 7; i++) {
+                if (Math.abs(this.glyphValues[i]) > this.threshold * L13.syntropy) count++;
+            }
+            return count;
+        }
+    };
+    
+    L24.init();
+    
+    // === MOTOR ===
+    const dt = π / 64;
+    let t = 0;
+    let running = true;
+    
+    function step() {
+        L13.step(dt);
+        
+        const signal = Math.abs(L13.motherDNA) + 0.1;
+        operators.process(signal, L13.phase, L13.curvature);
+        
+        L19.step();
+        L24.receiveFromOperators();
+        
+        // Feedback
+        const morphicCoh = L24.getTotalCoherence();
+        L13.variance += 0.001 * (morphicCoh - 0.5) * dt;
+        L13.variance = Math.max(0.05, Math.min(1.0, L13.variance));
+        L13.K_total = Math.abs(L13.curvature) + Math.abs(L13.deltaPhi) * 0.5 + (1 - morphicCoh) * 0.3;
+        
+        t++;
+    }
+    
+    // === CANVAS SETUP ===
+    const canvases = {
+        l13: document.getElementById('canvas-l13'),
+        l19: document.getElementById('canvas-l19'),
+        l24: document.getElementById('canvas-l24'),
+        ops: document.getElementById('canvas-ops')
+    };
+    
+    const contexts = {};
+    
+    function setupCanvases() {
+        for (const [name, canvas] of Object.entries(canvases)) {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            contexts[name] = { ctx, w: rect.width, h: rect.height };
+        }
+    }
+    
+    // === RENDERING ===
+    const history = {
+        motherDNA: [],
+        deltaPhi: [],
+        curvature: [],
+        phase: [],
+        maxLen: 200
+    };
+    
+    function renderL13() {
+        const { ctx, w, h } = contexts.l13;
+        const cx = w / 2, cy = h / 2;
+        
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Store history
+        history.motherDNA.push(L13.motherDNA);
+        history.deltaPhi.push(L13.deltaPhi);
+        history.curvature.push(L13.curvature);
+        if (history.motherDNA.length > history.maxLen) {
+            history.motherDNA.shift();
+            history.deltaPhi.shift();
+            history.curvature.shift();
+        }
+        
+        // Draw motherDNA wave
+        ctx.beginPath();
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < history.motherDNA.length; i++) {
+            const x = (i / history.maxLen) * w;
+            const y = cy - history.motherDNA[i] * cy * 2;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Draw deltaPhi wave
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffd93d';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < history.deltaPhi.length; i++) {
+            const x = (i / history.maxLen) * w;
+            const y = cy - history.deltaPhi[i] * cy * 0.5;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Draw curvature wave
+        ctx.beginPath();
+        ctx.strokeStyle = '#00d4aa';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < history.curvature.length; i++) {
+            const x = (i / history.maxLen) * w;
+            const y = cy - history.curvature[i] * cy;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Center line
+        ctx.strokeStyle = '#2a2a3a';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, cy);
+        ctx.lineTo(w, cy);
+        ctx.stroke();
+        
+        // Core pulse
+        const pulseR = 30 + Math.abs(L13.motherDNA) * 50;
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, pulseR);
+        glow.addColorStop(0, `rgba(255, 107, 107, ${0.3 + Math.abs(L13.motherDNA) * 0.5})`);
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, pulseR, 0, 2 * π);
+        ctx.fill();
+        
+        // Labels
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillText('motherDNA', 5, 12);
+        ctx.fillStyle = '#ffd93d';
+        ctx.fillText('δφ', 80, 12);
+        ctx.fillStyle = '#00d4aa';
+        ctx.fillText('curvature', 100, 12);
+    }
+    
+    function renderL19() {
+        const { ctx, w, h } = contexts.l19;
+        const cx = w / 2, cy = h / 2;
+        const r = Math.min(w, h) * 0.35;
+        
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Draw DJED pillar
+        const djedH = h * 0.7 * L19.DJED;
+        const djedW = 20;
+        ctx.fillStyle = `rgba(0, 212, 170, ${0.3 + L19.DJED * 0.5})`;
+        ctx.fillRect(cx - djedW/2, h - 10 - djedH, djedW, djedH);
+        
+        // KA-BA vectors
+        const kaAngle = L19.psi_1;
+        const baAngle = L19.psi_3;
+        
+        // KA vector
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * L19.KA * Math.cos(kaAngle), cy + r * L19.KA * Math.sin(kaAngle));
+        ctx.strokeStyle = '#7b68ee';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // BA vector
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * L19.BA * Math.cos(baAngle), cy + r * L19.BA * Math.sin(baAngle));
+        ctx.strokeStyle = '#9b59b6';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // AKH (intersection point)
+        const akhX = cx + r * L19.AKH * Math.cos((kaAngle + baAngle) / 2);
+        const akhY = cy + r * L19.AKH * Math.sin((kaAngle + baAngle) / 2);
+        
+        const akhGlow = ctx.createRadialGradient(akhX, akhY, 0, akhX, akhY, 30);
+        akhGlow.addColorStop(0, `rgba(255, 217, 61, ${L19.AKH})`);
+        akhGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = akhGlow;
+        ctx.beginPath();
+        ctx.arc(akhX, akhY, 30, 0, 2 * π);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(akhX, akhY, 8, 0, 2 * π);
+        ctx.fillStyle = '#ffd93d';
+        ctx.fill();
+        
+        // Labels
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillStyle = '#7b68ee';
+        ctx.fillText('KA', cx + 40, cy - 10);
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillText('BA', cx - 50, cy + 20);
+        ctx.fillStyle = '#ffd93d';
+        ctx.fillText('AKH', akhX + 15, akhY);
+    }
+    
+    function renderL24() {
+        const { ctx, w, h } = contexts.l24;
+        const cx = w / 2, cy = h / 2;
+        const r = Math.min(w, h) * 0.35;
+        
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Draw edges
+        ctx.strokeStyle = '#2a2a3a';
+        ctx.lineWidth = 1;
+        for (let i = 1; i <= 6; i++) {
+            // Center to ring
+            const [px, py] = L24.positions[i];
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + px * r, cy + py * r);
+            ctx.stroke();
+            
+            // Ring connections
+            const [nx, ny] = L24.positions[(i % 6) + 1];
+            ctx.beginPath();
+            ctx.moveTo(cx + px * r, cy + py * r);
+            ctx.lineTo(cx + nx * r, cy + ny * r);
+            ctx.stroke();
+        }
+        
+        // Draw glyphs
+        for (let i = 0; i < 7; i++) {
+            const [px, py] = L24.positions[i];
+            const x = cx + px * r;
+            const y = cy + py * r;
+            
+            const val = Math.abs(L24.glyphValues[i]);
+            const coh = L24.coherenceMap[i];
+            const nodeR = 12 + val * 25;
+            
+            // Glow
+            const glow = ctx.createRadialGradient(x, y, 0, x, y, nodeR * 1.5);
+            glow.addColorStop(0, `rgba(0, 212, 170, ${val * 0.6})`);
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(x, y, nodeR * 1.5, 0, 2 * π);
+            ctx.fill();
+            
+            // Node
+            ctx.beginPath();
+            ctx.arc(x, y, nodeR, 0, 2 * π);
+            ctx.fillStyle = `rgba(0, 212, 170, ${0.3 + coh * 0.7})`;
+            ctx.fill();
+            
+            // Phase indicator
+            const phaseX = x + nodeR * 0.6 * Math.cos(L24.glyphPhases[i]);
+            const phaseY = y + nodeR * 0.6 * Math.sin(L24.glyphPhases[i]);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(phaseX, phaseY);
+            ctx.strokeStyle = '#e0e0e8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // ID
+            ctx.fillStyle = '#e0e0e8';
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(i.toString(), x, y + 4);
+        }
+    }
+    
+    function renderOperators() {
+        const { ctx, w, h } = contexts.ops;
+        
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, w, h);
+        
+        const barH = 25;
+        const gap = 8;
+        const startY = 20;
+        const maxW = w - 80;
+        
+        operators.order.forEach((name, i) => {
+            const y = startY + i * (barH + gap);
+            const val = operators[name].value;
+            const barW = Math.min(maxW, val * maxW * 2);
+            
+            // Bar background
+            ctx.fillStyle = '#1a1a24';
+            ctx.fillRect(40, y, maxW, barH);
+            
+            // Bar fill
+            const gradient = ctx.createLinearGradient(40, y, 40 + barW, y);
+            gradient.addColorStop(0, '#4a9eff');
+            gradient.addColorStop(1, `rgba(74, 158, 255, ${0.3 + val * 0.7})`);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(40, y, barW, barH);
+            
+            // Label
+            ctx.fillStyle = '#4a9eff';
+            ctx.font = '11px JetBrains Mono';
+            ctx.textAlign = 'right';
+            ctx.fillText(name, 32, y + barH/2 + 4);
+            
+            // Value
+            ctx.fillStyle = '#e0e0e8';
+            ctx.textAlign = 'left';
+            ctx.fillText(val.toFixed(3), 45 + maxW, y + barH/2 + 4);
+        });
+        
+        // Flow arrow
+        ctx.strokeStyle = '#3a3a4a';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(20, startY - 5);
+        ctx.lineTo(20, startY + 6 * (barH + gap) - gap + 5);
+        ctx.stroke();
+        
+        // Arrow head
+        ctx.beginPath();
+        ctx.moveTo(20, startY + 6 * (barH + gap) - gap + 5);
+        ctx.lineTo(15, startY + 6 * (barH + gap) - gap - 5);
+        ctx.lineTo(25, startY + 6 * (barH + gap) - gap - 5);
+        ctx.closePath();
+        ctx.fillStyle = '#3a3a4a';
+        ctx.fill();
+    }
+    
+    function updateMetrics() {
+        // L13
+        document.getElementById('m-dna').textContent = L13.motherDNA.toFixed(6);
+        document.getElementById('m-dphi').textContent = L13.deltaPhi.toFixed(6);
+        document.getElementById('m-curve').textContent = L13.curvature.toFixed(6);
+        document.getElementById('m-var').textContent = L13.variance.toFixed(6);
+        document.getElementById('m-syn').textContent = L13.syntropy.toFixed(6);
+        document.getElementById('m-tensor').textContent = L13.tensorField.toFixed(6);
+        document.getElementById('m-ikpi').textContent = L13.ikPi.toFixed(6);
+        document.getElementById('m-mepi').textContent = L13.mePi.toFixed(6);
+        document.getElementById('m-phase').textContent = (L13.phase / π).toFixed(3) + 'π';
+        
+        // L19
+        document.getElementById('m-ka').textContent = L19.KA.toFixed(3);
+        document.getElementById('m-ba').textContent = L19.BA.toFixed(3);
+        document.getElementById('m-akh').textContent = L19.AKH.toFixed(3);
+        document.getElementById('m-djed').textContent = L19.DJED.toFixed(3);
+        document.getElementById('bar-ka').style.width = (L19.KA * 100) + '%';
+        document.getElementById('bar-ba').style.width = (L19.BA * 100) + '%';
+        document.getElementById('bar-akh').style.width = (L19.AKH * 100) + '%';
+        document.getElementById('bar-djed').style.width = (L19.DJED * 100) + '%';
+        
+        // L24
+        document.getElementById('m-coh').textContent = L24.getTotalCoherence().toFixed(3);
+        document.getElementById('m-center').textContent = L24.getCenterDominance().toFixed(3);
+        document.getElementById('m-active').textContent = L24.getActiveCount();
+        
+        // Operators
+        for (const name of operators.order) {
+            document.getElementById(`m-op-${name.toLowerCase()}`).textContent = operators[name].value.toFixed(3);
+            document.getElementById(`bar-${name.toLowerCase()}`).style.width = (operators[name].value * 100) + '%';
+        }
+    }
+    
+    function render() {
+        renderL13();
+        renderL19();
+        renderL24();
+        renderOperators();
+        updateMetrics();
+    }
+    
+    function loop() {
+        if (running) {
+            step();
+        }
+        render();
+        requestAnimationFrame(loop);
+    }
+    
+    // === CONTROLS ===
+    document.getElementById('btn-run').addEventListener('click', () => {
+        running = true;
+        document.getElementById('btn-run').classList.add('active');
+        document.getElementById('btn-pause').classList.remove('active');
+    });
+    
+    document.getElementById('btn-pause').addEventListener('click', () => {
+        running = false;
+        document.getElementById('btn-pause').classList.add('active');
+        document.getElementById('btn-run').classList.remove('active');
+    });
+    
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        L13.deltaPhi = 0.618;
+        L13.curvature = 0.382;
+        L13.variance = 0.22;
+        L13.syntropy = 1.23;
+        L13.phase = 0;
+        t = 0;
+        history.motherDNA = [];
+        history.deltaPhi = [];
+        history.curvature = [];
+    });
+    
+    document.getElementById('btn-perturb').addEventListener('click', () => {
+        L13.deltaPhi += (Math.random() - 0.5) * 0.5;
+        L13.curvature += (Math.random() - 0.5) * 0.3;
+        L13.variance += (Math.random() - 0.5) * 0.1;
+    });
+    
+    // === INIT ===
+    window.addEventListener('resize', setupCanvases);
+    setupCanvases();
+    loop();
+    </script>
+</body>
+</html>
