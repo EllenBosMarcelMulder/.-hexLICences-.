@@ -151,12 +151,40 @@ SHA256 hash of GUI 9 - OSAI.html:
 b021b034d7d12320381e5e06465fe146a7bc309f6a319d119279efa908b7ccc7
 CertUtil: -hashfile command completed successfully.
 ==== HASHREGISTER.hash ==== 
-SHA256 hash of HASHREGISTER.hash:
-9382e84033162535c80ab96c57c02a06fd8233c2a5a909088f5f5e6cc4f5f8fc
-CertUtil: -hashfile command completed successfully.
-==== HASHREGISTER.tx ==== 
 CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
 CertUtil: The process cannot access the file because it is being used by another process.
+==== hexBIOMOTor GUI 16.py ==== 
+SHA256 hash of hexBIOMOTor GUI 16.py:
+d031c723f051d38d7b68b1344525ccf18c93af9924e497c1933fc3ca4017afb8
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 15.html ==== 
+SHA256 hash of hexOSAI GUI 15.html:
+a1bd16e6897d6beb35be922fe72b7748fa6fb4dd57fda95116a1d4304e403b70
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 16.html ==== 
+SHA256 hash of hexOSAI GUI 16.html:
+2434c3d999ee95a8df2373c8ce4a49d0f0d86e1b340277ac7fbc18e8a1dee06b
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 16.html.ots ==== 
+SHA256 hash of hexOSAI GUI 16.html.ots:
+d0a7c3640ef0802f6d9229540fc189192dac5036dc87d4158641205f48c578f7
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 17.html ==== 
+SHA256 hash of hexOSAI GUI 17.html:
+1ed6a123d16b2587dbddc49c89c480b6a7ad2e5a4ef72255aae1a3e576090d4f
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 18.html ==== 
+SHA256 hash of hexOSAI GUI 18.html:
+df936a8b57ea06f4ec05c0cae7dd74d5c4f0fbdc7ac0e89679af06c93b4b2c85
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 19.html ==== 
+SHA256 hash of hexOSAI GUI 19.html:
+f7dcf31ac0d6fc20c2bd96f152004e6c3f2d90de4c37d66b07510abe9528e35e
+CertUtil: -hashfile command completed successfully.
+==== hexOSAI GUI 20.html ==== 
+SHA256 hash of hexOSAI GUI 20.html:
+fb7783d0ab29d931e17e1f73a24f0f3ac4285d500b3640601cd717ed12234d38
+CertUtil: -hashfile command completed successfully.
 ==== hexOSAI L60-L100 Self-Organising Field Engine GUI 14.html ==== 
 SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine GUI 14.html:
 314724fbcc753dde61f14a49939ffa2e8d7ff87cee0d7f2d430decc745211644
@@ -164,6 +192,14 @@ CertUtil: -hashfile command completed successfully.
 ==== hexOSAI L60-L100 Self-Organising Field Engine.md ==== 
 SHA256 hash of hexOSAI L60 L100 Self-Organising Field Engine.md:
 87f265d2c21a992204cd6a7e03028e324c285bf01718632bf5ce2d8905692f71
+CertUtil: -hashfile command completed successfully.
+==== hexosai_constellation_1764859189221.json ==== 
+SHA256 hash of hexosai_constellation_1764859189221.json:
+e2bc29abeb01720a5000e570dc3f5bbcf6c0368ea60664da07fd2da8bfa9a13c
+CertUtil: -hashfile command completed successfully.
+==== hexosai_constellation_1764859815509.json ==== 
+SHA256 hash of hexosai_constellation_1764859815509.json:
+082f708e182c95e55b0ec499ee8370a5cd50ba16d1cad279bbb741baf4102581
 CertUtil: -hashfile command completed successfully.
 ==== hieroglyphic_field.html ==== 
 SHA256 hash of hieroglyphic_field.html:
@@ -192,6 +228,14 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of Phase-Modulated Computational Geometry Dynamic Fase-Flip Logic Self-Aware Field Execution.md.hash:
 3472967f55023c99c404886dcc218f5203a63cbe3e31bcbef1628201362a6df7
 CertUtil: -hashfile command completed successfully.
+==== PRIOR ART  GOVERNANCE DOCUMENT.md ==== 
+SHA256 hash of PRIOR ART  GOVERNANCE DOCUMENT.md:
+2543964de494b7519adb777c4407d361d8ca693e72729be78081a705c33f3e4c
+CertUtil: -hashfile command completed successfully.
+==== PRIOR ART  GOVERNANCE DOCUMENT.md.ots ==== 
+SHA256 hash of PRIOR ART  GOVERNANCE DOCUMENT.md.ots:
+9081b5a91e2eafdc5f2b795ede45aa834d6c8fb9b5c7724d434e79bdb2f13726
+CertUtil: -hashfile command completed successfully.
 ==== Self-Aware Hexagonal Computational Substrate Dynamic Phase-Modulation Architecture.md ==== 
 SHA256 hash of Self-Aware Hexagonal Computational Substrate Dynamic Phase-Modulation Architecture.md:
 dad05510b16f895643946b737c0065ee96630865524e4afeccb26f231d7f119b
@@ -211,6 +255,14 @@ CertUtil: -hashfile command completed successfully.
 ==== System_Architecture_Diagram.md ==== 
 SHA256 hash of System_Architecture_Diagram.md:
 404483c3d8510b488a2d7d95ea026b68b724edcf2e5754ad1a073646b4071bd8
+CertUtil: -hashfile command completed successfully.
+==== TriMotor Node Architecture & Curved-Space Computation.md ==== 
+SHA256 hash of TriMotor Node Architecture & Curved-Space Computation.md:
+e0e571a4de97e6259073f041e99ce78da5db932df4bf4bef18f997cf3d652fff
+CertUtil: -hashfile command completed successfully.
+==== Trio motor.py ==== 
+SHA256 hash of Trio motor.py:
+ba76145738377ff634b9569c1757533b467aee80d67b09fc96519b801cca817c
 CertUtil: -hashfile command completed successfully.
 ==== Universal Hexagonal Field Processor  Dynamic Glyph Kernel.md ==== 
 SHA256 hash of Universal Hexagonal Field Processor  Dynamic Glyph Kernel.md:
