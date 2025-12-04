@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3GM Motor — Implosion Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:wght@400&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #2a2a3a;
+            --text: #8a8a9a;
+            --text-bright: #e0e0e8;
+            --gold: #ffd93d;
+            --core: #ff6b6b;
+            --planetary: #7b68ee;
+            --morphic: #00d4aa;
+            --operator: #4a9eff;
+            --implode: #ff2d55;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            font-size: 1.2rem;
+            color: var(--text-bright);
+        }
+        
+        .subtitle {
+            font-size: 0.6rem;
+            color: var(--text);
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.6rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--morphic);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.imploding {
+            background: var(--implode);
+            animation: implode-pulse 0.2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes implode-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.5); opacity: 0.3; }
+        }
+        
+        main {
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            height: calc(100vh - 56px);
+        }
+        
+        .field-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .sidebar {
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            padding: 1rem;
+            overflow-y: auto;
+            font-size: 0.6rem;
+        }
+        
+        .panel {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .panel:last-child {
+            border-bottom: none;
+        }
+        
+        .panel-title {
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.55rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.2rem;
+        }
+        
+        .metric-value {
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .bar {
+            height: 4px;
+            background: var(--border);
+            margin-bottom: 0.3rem;
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            transition: width 0.05s ease;
+        }
+        
+        .bar-fill.core { background: var(--core); }
+        .bar-fill.planetary { background: var(--planetary); }
+        .bar-fill.morphic { background: var(--morphic); }
+        .bar-fill.operator { background: var(--operator); }
+        .bar-fill.gold { background: var(--gold); }
+        .bar-fill.implode { background: var(--implode); }
+        
+        .collapse-warning {
+            background: rgba(255, 45, 85, 0.1);
+            border: 1px solid var(--implode);
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 2px;
+            color: var(--implode);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .collapse-warning.active {
+            opacity: 1;
+        }
+        
+        .equation {
+            font-size: 0.5rem;
+            color: #5a5a6a;
+            font-style: italic;
+            margin-top: 0.3rem;
+        }
+        
+        .tension-meter {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(10, 10, 15, 0.9);
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.6rem;
+            z-index: 50;
+        }
+        
+        .tension-bar {
+            width: 150px;
+            height: 8px;
+            background: var(--border);
+            margin-top: 0.3rem;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .tension-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--morphic), var(--gold), var(--implode));
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>3GM Implosion Engine</h1>
+            <div class="subtitle">L13 → L19 → L24 · Click hexagon to apply tension</div>
+        </div>
+        <div class="status">
+            <span id="status-text">Running</span>
+            <div class="status-indicator" id="status-dot"></div>
+        </div>
+    </header>
+    
+    <main>
+        <div class="field-container">
+            <canvas id="canvas-bg"></canvas>
+            <canvas id="canvas-main"></canvas>
+            <canvas id="canvas-ui"></canvas>
+            
+            <div class="tension-meter">
+                <div>Collapse Tension: <span id="tension-value">0.00</span></div>
+                <div class="tension-bar">
+                    <div class="tension-fill" id="tension-fill"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title" style="color: var(--core)">L13 — Core</div>
+                <div class="metric">
+                    <span>motherDNA</span>
+                    <span class="metric-value" id="m-dna">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill core" id="bar-dna"></div></div>
+                <div class="metric">
+                    <span>deltaPhi (δφ)</span>
+                    <span class="metric-value" id="m-dphi">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill gold" id="bar-dphi"></div></div>
+                <div class="metric">
+                    <span>curvature</span>
+                    <span class="metric-value" id="m-curve">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill morphic" id="bar-curve"></div></div>
+                <div class="metric">
+                    <span>tensorField</span>
+                    <span class="metric-value" id="m-tensor">0.000</span>
+                </div>
+                <div class="equation">motherDNA = V·sin(φ·δφ·π)·cos(δφ)·exp(-|φ−δφ|)</div>
+                <div class="collapse-warning" id="collapse-warn">⚠ COLLAPSE IMMINENT</div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title" style="color: var(--planetary)">L19 — Egypt-OS</div>
+                <div class="metric">
+                    <span>KA</span>
+                    <span class="metric-value" id="m-ka">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill planetary" id="bar-ka"></div></div>
+                <div class="metric">
+                    <span>BA</span>
+                    <span class="metric-value" id="m-ba">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill planetary" id="bar-ba"></div></div>
+                <div class="metric">
+                    <span>AKH</span>
+                    <span class="metric-value" id="m-akh">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill gold" id="bar-akh"></div></div>
+                <div class="metric">
+                    <span>DJED</span>
+                    <span class="metric-value" id="m-djed">0.000</span>
+                </div>
+                <div class="bar"><div class="bar-fill morphic" id="bar-djed"></div></div>
+                <div class="equation">DJED = 1/(1+|AKH−KA|)</div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title" style="color: var(--operator)">Operators</div>
+                <div class="metric"><span>S</span><span class="metric-value" id="m-s">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-s"></div></div>
+                <div class="metric"><span>M</span><span class="metric-value" id="m-m">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-m"></div></div>
+                <div class="metric"><span>R</span><span class="metric-value" id="m-r">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-r"></div></div>
+                <div class="metric"><span>V</span><span class="metric-value" id="m-v">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-v"></div></div>
+                <div class="metric"><span>F</span><span class="metric-value" id="m-f">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-f"></div></div>
+                <div class="metric"><span>C</span><span class="metric-value" id="m-c">0.00</span></div>
+                <div class="bar"><div class="bar-fill operator" id="bar-c"></div></div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title" style="color: var(--morphic)">L24 — Morphic</div>
+                <div class="metric">
+                    <span>coherence</span>
+                    <span class="metric-value" id="m-coh">0.000</span>
+                </div>
+                <div class="metric">
+                    <span>center</span>
+                    <span class="metric-value" id="m-center">0.000</span>
+                </div>
+                <div class="metric">
+                    <span>implosions</span>
+                    <span class="metric-value" id="m-implode">0</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    const π = Math.PI;
+    const φ = (1 + Math.sqrt(5)) / 2;
+    const φ_inv = 1 / φ;
+    
+    // === L13 CORE ===
+    const L13 = {
+        deltaPhi: 0.618,
+        curvature: 0.382,
+        variance: 0.22,
+        syntropy: 1.23,
+        motherDNA: 0,
+        tensorField: 0,
+        ikPi: 0,
+        mePi: 0,
+        phase: 0,
+        K_total: 0,
+        
+        // Implosion state
+        imploding: false,
+        implodePhase: 0,
+        implodeCount: 0,
+        
+        computeMotherDNA() {
+            const V = this.variance;
+            const δφ = this.deltaPhi;
+            this.motherDNA = V * Math.sin(φ * δφ * π) * Math.cos(δφ) * Math.exp(-Math.abs(φ - δφ));
+            return this.motherDNA;
+        },
+        
+        computeCurvature() {
+            this.curvature = Math.tanh(this.deltaPhi * φ_inv);
+            return this.curvature;
+        },
+        
+        computeDeltaPhi() {
+            const raw = (this.curvature * φ_inv) - (this.motherDNA * φ_inv);
+            const attractor = φ_inv;
+            this.deltaPhi = raw + 0.01 * (attractor - raw);
+            this.deltaPhi = Math.max(-2, Math.min(2, this.deltaPhi));
+            return this.deltaPhi;
+        },
+        
+        computeResonance() {
+            this.ikPi = Math.sin(φ * this.deltaPhi);
+            this.mePi = Math.cos(φ * this.curvature);
+        },
+        
+        computeSyntropy() {
+            this.syntropy = Math.exp(-this.K_total * φ_inv);
+        },
+        
+        computeTensorField() {
+            this.tensorField = φ * this.deltaPhi * this.curvature * this.motherDNA * this.ikPi * this.mePi;
+        },
+        
+        checkCollapse() {
+            // Collapse condition: (φ * deltaPhi) < (motherDNA * deltaPhi)
+            const collapseCondition = (φ * this.deltaPhi) < (this.motherDNA * this.deltaPhi);
+            return collapseCondition && Math.abs(this.deltaPhi) > 0.01;
+        },
+        
+        executeCollapse() {
+            this.imploding = true;
+            this.implodePhase = 0;
+            this.implodeCount++;
+            
+            // Immediate collapse transforms
+            this.curvature *= -0.9;
+            this.deltaPhi *= -0.9;
+            this.motherDNA *= 0.1;
+            this.tensorField = 0;
+        },
+        
+        regenerate() {
+            // Post-implosion regeneration
+            this.motherDNA = 0.01;
+            this.deltaPhi = 0.01;
+            this.curvature = 0.01;
+            this.phase = 0;
+            this.imploding = false;
+        },
+        
+        step(dt) {
+            if (this.imploding) {
+                this.implodePhase += dt * 5;
+                if (this.implodePhase >= 1) {
+                    this.regenerate();
+                }
+                return;
+            }
+            
+            this.computeMotherDNA();
+            this.computeCurvature();
+            this.computeResonance();
+            this.computeTensorField();
+            this.K_total = Math.abs(this.curvature) + Math.abs(this.deltaPhi) * 0.5;
+            this.computeSyntropy();
+            this.phase += dt * (1 + this.syntropy * 0.1);
+            this.computeDeltaPhi();
+            
+            if (this.checkCollapse()) {
+                this.executeCollapse();
+            }
+        }
+    };
+    
+    // === L19 PLANETARY ===
+    const L19 = {
+        psi_1: 0, psi_2: 0, psi_3: 0, psi_5: 0,
+        KA: 0, BA: 0, AKH: 0, DJED: 0,
+        coherence: 1,
+        delta_theta: 0,
+        
+        computeKA() {
+            this.KA = Math.sqrt(Math.sin(this.psi_1)**2 + Math.sin(this.psi_2)**2);
+        },
+        
+        computeBA() {
+            this.BA = Math.sqrt(Math.sin(this.psi_3)**2 + Math.sin(this.psi_5)**2);
+        },
+        
+        computeAKH() {
+            this.AKH = this.KA * this.BA;
+        },
+        
+        computeDJED() {
+            if (L13.imploding) {
+                this.DJED = 1;
+            } else {
+                this.DJED = 1 / (1 + Math.abs(this.AKH - this.KA));
+            }
+            this.coherence = this.DJED;
+        },
+        
+        receiveFromL13() {
+            this.psi_1 = L13.phase;
+            this.psi_2 = L13.phase + L13.deltaPhi;
+            this.psi_3 = L13.phase + L13.curvature;
+            this.psi_5 = L13.phase + L13.motherDNA;
+            this.delta_theta = L13.deltaPhi * φ_inv;
+        },
+        
+        step() {
+            this.receiveFromL13();
+            this.computeKA();
+            this.computeBA();
+            this.computeAKH();
+            this.computeDJED();
+        }
+    };
+    
+    // === OPERATORS ===
+    const operators = {
+        S: { value: 0, weight: π },
+        M: { value: 0, weight: π/2 },
+        R: { value: 0, weight: π/3 },
+        V: { value: 0, weight: π/4 },
+        F: { value: 0, weight: π/5 },
+        C: { value: 0, weight: π/6 },
+        order: ['S', 'M', 'R', 'V', 'F', 'C'],
+        
+        apply(name, signal, phase) {
+            switch(name) {
+                case 'S': return Math.tanh(signal);
+                case 'M': return signal * (1 - Math.abs(signal - 1) * 0.1);
+                case 'R': return signal * (1 + 0.1 * Math.sin(signal * π));
+                case 'V': return signal * (1 + 0.05 * (signal - 1)**2);
+                case 'F': return signal * Math.cos(signal * π/4)**2 + 0.5;
+                case 'C': return signal / (1 + Math.abs(signal - 1));
+            }
+            return signal;
+        },
+        
+        process(signal, phase, curvature) {
+            if (L13.imploding) {
+                for (const name of this.order) {
+                    this[name].value *= 0.8;
+                }
+                return;
+            }
+            
+            let current = signal;
+            for (const name of this.order) {
+                const op = this[name];
+                current = this.apply(name, current, phase);
+                current *= 1 / (1 + curvature * op.weight);
+                op.value = current;
+            }
+        }
+    };
+    
+    // === L24 MORPHIC ===
+    const L24 = {
+        glyphValues: new Float64Array(7),
+        glyphPhases: new Float64Array(7),
+        glyphTension: new Float64Array(7),
+        coherenceMap: new Float64Array(7).fill(1),
+        positions: [],
+        basePositions: [],
+        threshold: 0.5,
+        
+        init() {
+            this.positions = [[0, 0]];
+            this.basePositions = [[0, 0]];
+            for (let i = 0; i < 6; i++) {
+                const pos = [Math.cos(i * π/3), Math.sin(i * π/3)];
+                this.positions.push([...pos]);
+                this.basePositions.push([...pos]);
+            }
+        },
+        
+        applyTension(index, amount) {
+            this.glyphTension[index] += amount;
+            L13.deltaPhi += amount * 0.1;
+            L13.curvature += amount * 0.05;
+        },
+        
+        update() {
+            if (L13.imploding) {
+                const collapse = 1 - L13.implodePhase;
+                for (let i = 0; i < 7; i++) {
+                    this.glyphValues[i] *= 0.7;
+                    this.positions[i][0] = this.basePositions[i][0] * collapse;
+                    this.positions[i][1] = this.basePositions[i][1] * collapse;
+                }
+                return;
+            }
+            
+            // Reset positions
+            for (let i = 0; i < 7; i++) {
+                this.positions[i][0] = this.basePositions[i][0];
+                this.positions[i][1] = this.basePositions[i][1];
+            }
+            
+            this.glyphValues[0] = operators.C.value * Math.abs(L13.motherDNA) * L19.coherence;
+            
+            for (let i = 1; i < 7; i++) {
+                const [px, py] = this.basePositions[i];
+                const dist = Math.sqrt(px*px + py*py);
+                const atten = Math.exp(-dist * Math.abs(L13.curvature));
+                const phaseShift = i * π/3;
+                this.glyphValues[i] = operators.C.value * atten * Math.cos(L13.phase + phaseShift) * L19.DJED;
+                
+                // Tension pulls toward center
+                const tensionPull = this.glyphTension[i] * 0.1;
+                this.positions[i][0] *= (1 - tensionPull);
+                this.positions[i][1] *= (1 - tensionPull);
+                
+                // Decay tension
+                this.glyphTension[i] *= 0.98;
+            }
+            
+            for (let i = 0; i < 7; i++) {
+                this.glyphPhases[i] = L13.phase + i * L19.delta_theta;
+            }
+            
+            this.computeCoherence();
+        },
+        
+        computeCoherence() {
+            for (let i = 0; i < 7; i++) {
+                const neighbors = i === 0 ? [1,2,3,4,5,6] : [0, ((i-2+6)%6)+1, (i%6)+1];
+                const mean = neighbors.reduce((s, n) => s + this.glyphValues[n], 0) / neighbors.length;
+                this.coherenceMap[i] = L19.coherence / (1 + Math.abs(this.glyphValues[i] - mean));
+            }
+        },
+        
+        getCenterDominance() {
+            const total = this.glyphValues.reduce((a, b) => a + Math.abs(b), 0);
+            return total > 1e-8 ? Math.abs(this.glyphValues[0]) / total : 0;
+        },
+        
+        getTotalCoherence() {
+            return this.coherenceMap.reduce((a, b) => a + b, 0) / 7;
+        },
+        
+        findWeakestLink() {
+            let minCoh = Infinity;
+            let weakest = 0;
+            for (let i = 1; i < 7; i++) {
+                if (this.coherenceMap[i] < minCoh) {
+                    minCoh = this.coherenceMap[i];
+                    weakest = i;
+                }
+            }
+            return weakest;
+        }
+    };
+    
+    L24.init();
+    
+    // === MOTOR ===
+    const dt = π / 64;
+    let t = 0;
+    
+    function step() {
+        L13.step(dt);
+        const signal = Math.abs(L13.motherDNA) + 0.1;
+        operators.process(signal, L13.phase, L13.curvature);
+        L19.step();
+        L24.update();
+        
+        if (!L13.imploding) {
+            const morphicCoh = L24.getTotalCoherence();
+            L13.variance += 0.001 * (morphicCoh - 0.5) * dt;
+            L13.variance = Math.max(0.05, Math.min(1.0, L13.variance));
+            L13.K_total = Math.abs(L13.curvature) + Math.abs(L13.deltaPhi) * 0.5 + (1 - morphicCoh) * 0.3;
+        }
+        
+        t++;
+    }
+    
+    // === CANVAS SETUP ===
+    const canvasBg = document.getElementById('canvas-bg');
+    const canvasMain = document.getElementById('canvas-main');
+    const canvasUi = document.getElementById('canvas-ui');
+    let ctxBg, ctxMain, ctxUi;
+    let width, height, cx, cy, fieldRadius;
+    
+    function resize() {
+        const container = document.querySelector('.field-container');
+        const rect = container.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        
+        width = rect.width;
+        height = rect.height;
+        cx = width / 2;
+        cy = height / 2;
+        fieldRadius = Math.min(width, height) * 0.35;
+        
+        [canvasBg, canvasMain, canvasUi].forEach(canvas => {
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        });
+        
+        ctxBg = canvasBg.getContext('2d');
+        ctxMain = canvasMain.getContext('2d');
+        ctxUi = canvasUi.getContext('2d');
+        
+        ctxBg.scale(dpr, dpr);
+        ctxMain.scale(dpr, dpr);
+        ctxUi.scale(dpr, dpr);
+        
+        renderBackground();
+    }
+    
+    function renderBackground() {
+        ctxBg.fillStyle = '#0a0a0f';
+        ctxBg.fillRect(0, 0, width, height);
+        
+        // Grid
+        ctxBg.strokeStyle = '#151520';
+        ctxBg.lineWidth = 1;
+        const gridSize = 40;
+        for (let x = 0; x < width; x += gridSize) {
+            ctxBg.beginPath();
+            ctxBg.moveTo(x, 0);
+            ctxBg.lineTo(x, height);
+            ctxBg.stroke();
+        }
+        for (let y = 0; y < height; y += gridSize) {
+            ctxBg.beginPath();
+            ctxBg.moveTo(0, y);
+            ctxBg.lineTo(width, y);
+            ctxBg.stroke();
+        }
+    }
+    
+    function render() {
+        ctxMain.clearRect(0, 0, width, height);
+        
+        const implodeFactor = L13.imploding ? (1 - L13.implodePhase) : 1;
+        const pulseScale = L13.imploding ? implodeFactor : 1;
+        
+        // === L19 VECTORS (KA/BA) ===
+        const vectorR = fieldRadius * 0.8 * pulseScale;
+        
+        // KA vector
+        const kaAngle = L19.psi_1;
+        const kaLen = L19.KA * vectorR;
+        ctxMain.beginPath();
+        ctxMain.moveTo(cx, cy);
+        ctxMain.lineTo(cx + kaLen * Math.cos(kaAngle), cy + kaLen * Math.sin(kaAngle));
+        ctxMain.strokeStyle = `rgba(123, 104, 238, ${0.3 + L19.KA * 0.5})`;
+        ctxMain.lineWidth = 2 + L19.KA * 2;
+        ctxMain.stroke();
+        
+        // BA vector
+        const baAngle = L19.psi_3;
+        const baLen = L19.BA * vectorR;
+        ctxMain.beginPath();
+        ctxMain.moveTo(cx, cy);
+        ctxMain.lineTo(cx + baLen * Math.cos(baAngle), cy + baLen * Math.sin(baAngle));
+        ctxMain.strokeStyle = `rgba(155, 89, 182, ${0.3 + L19.BA * 0.5})`;
+        ctxMain.lineWidth = 2 + L19.BA * 2;
+        ctxMain.stroke();
+        
+        // AKH point
+        const akhAngle = (kaAngle + baAngle) / 2;
+        const akhDist = L19.AKH * vectorR;
+        const akhX = cx + akhDist * Math.cos(akhAngle);
+        const akhY = cy + akhDist * Math.sin(akhAngle);
+        
+        const akhGlow = ctxMain.createRadialGradient(akhX, akhY, 0, akhX, akhY, 25 * pulseScale);
+        akhGlow.addColorStop(0, `rgba(255, 217, 61, ${L19.AKH * 0.8})`);
+        akhGlow.addColorStop(1, 'transparent');
+        ctxMain.fillStyle = akhGlow;
+        ctxMain.beginPath();
+        ctxMain.arc(akhX, akhY, 25 * pulseScale, 0, 2 * π);
+        ctxMain.fill();
+        
+        // === DJED PILLAR ===
+        const djedH = height * 0.4 * L19.DJED * pulseScale;
+        const djedW = 15;
+        const djedX = cx - djedW / 2;
+        const djedY = cy + fieldRadius * 0.6;
+        
+        const djedGrad = ctxMain.createLinearGradient(djedX, djedY, djedX, djedY - djedH);
+        djedGrad.addColorStop(0, `rgba(0, 212, 170, 0.1)`);
+        djedGrad.addColorStop(1, `rgba(0, 212, 170, ${0.3 + L19.DJED * 0.5})`);
+        ctxMain.fillStyle = djedGrad;
+        ctxMain.fillRect(djedX, djedY - djedH, djedW, djedH);
+        
+        // === HEXAGONAL EDGES ===
+        ctxMain.strokeStyle = L13.imploding ? 
+            `rgba(255, 45, 85, ${0.3 + (1 - implodeFactor) * 0.5})` : 
+            '#2a2a3a';
+        ctxMain.lineWidth = 1;
+        
+        for (let i = 1; i <= 6; i++) {
+            const [px, py] = L24.positions[i];
+            const x = cx + px * fieldRadius;
+            const y = cy + py * fieldRadius;
+            
+            // Center to ring
+            ctxMain.beginPath();
+            ctxMain.moveTo(cx, cy);
+            ctxMain.lineTo(x, y);
+            ctxMain.stroke();
+            
+            // Ring connections
+            const [nx, ny] = L24.positions[(i % 6) + 1];
+            ctxMain.beginPath();
+            ctxMain.moveTo(x, y);
+            ctxMain.lineTo(cx + nx * fieldRadius, cy + ny * fieldRadius);
+            ctxMain.stroke();
+        }
+        
+        // === TENSION FLOW LINES ===
+        for (let i = 1; i <= 6; i++) {
+            const tension = L24.glyphTension[i];
+            if (tension > 0.01) {
+                const [px, py] = L24.basePositions[i];
+                const [cpx, cpy] = L24.positions[i];
+                
+                ctxMain.beginPath();
+                ctxMain.moveTo(cx + cpx * fieldRadius, cy + cpy * fieldRadius);
+                ctxMain.lineTo(cx, cy);
+                ctxMain.strokeStyle = `rgba(255, 45, 85, ${tension * 0.5})`;
+                ctxMain.lineWidth = tension * 5;
+                ctxMain.stroke();
+            }
+        }
+        
+        // === GLYPHS ===
+        for (let i = 0; i < 7; i++) {
+            const [px, py] = L24.positions[i];
+            const x = cx + px * fieldRadius;
+            const y = cy + py * fieldRadius;
+            
+            const val = Math.abs(L24.glyphValues[i]);
+            const coh = L24.coherenceMap[i];
+            const tension = L24.glyphTension[i];
+            
+            const baseR = i === 0 ? 25 : 18;
+            const nodeR = (baseR + val * 20) * pulseScale;
+            
+            // Determine if this is weakest link
+            const isWeakest = i === L24.findWeakestLink() && i !== 0;
+            
+            // Glow
+            const glowColor = L13.imploding ? 
+                `rgba(255, 45, 85, ${0.5 * implodeFactor})` :
+                isWeakest ?
+                `rgba(255, 45, 85, ${0.3 + tension * 0.5})` :
+                `rgba(0, 212, 170, ${val * 0.5})`;
+            
+            const glow = ctxMain.createRadialGradient(x, y, 0, x, y, nodeR * 2);
+            glow.addColorStop(0, glowColor);
+            glow.addColorStop(1, 'transparent');
+            ctxMain.fillStyle = glow;
+            ctxMain.beginPath();
+            ctxMain.arc(x, y, nodeR * 2, 0, 2 * π);
+            ctxMain.fill();
+            
+            // Node body
+            const nodeColor = L13.imploding ?
+                `rgba(255, 45, 85, ${implodeFactor})` :
+                isWeakest ?
+                `rgba(255, 107, 107, ${0.5 + coh * 0.5})` :
+                i === 0 ?
+                `rgba(255, 217, 61, ${0.5 + coh * 0.5})` :
+                `rgba(0, 212, 170, ${0.3 + coh * 0.7})`;
+            
+            ctxMain.beginPath();
+            ctxMain.arc(x, y, nodeR, 0, 2 * π);
+            ctxMain.fillStyle = nodeColor;
+            ctxMain.fill();
+            
+            // Phase indicator
+            if (!L13.imploding) {
+                const phaseX = x + nodeR * 0.6 * Math.cos(L24.glyphPhases[i]);
+                const phaseY = y + nodeR * 0.6 * Math.sin(L24.glyphPhases[i]);
+                ctxMain.beginPath();
+                ctxMain.moveTo(x, y);
+                ctxMain.lineTo(phaseX, phaseY);
+                ctxMain.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctxMain.lineWidth = 2;
+                ctxMain.stroke();
+            }
+            
+            // Tension ring on weakest
+            if (isWeakest && tension > 0.01) {
+                ctxMain.beginPath();
+                ctxMain.arc(x, y, nodeR + 5 + tension * 10, 0, 2 * π);
+                ctxMain.strokeStyle = `rgba(255, 45, 85, ${tension})`;
+                ctxMain.lineWidth = 2;
+                ctxMain.stroke();
+            }
+        }
+        
+        // === IMPLOSION SHOCKWAVE ===
+        if (L13.imploding) {
+            const shockR = fieldRadius * 1.5 * L13.implodePhase;
+            ctxMain.beginPath();
+            ctxMain.arc(cx, cy, shockR, 0, 2 * π);
+            ctxMain.strokeStyle = `rgba(255, 45, 85, ${1 - L13.implodePhase})`;
+            ctxMain.lineWidth = 3;
+            ctxMain.stroke();
+        }
+        
+        // === CORE PULSE ===
+        const coreR = (30 + Math.abs(L13.motherDNA) * 40) * pulseScale;
+        const coreGlow = ctxMain.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+        coreGlow.addColorStop(0, L13.imploding ? 
+            `rgba(255, 45, 85, ${implodeFactor})` :
+            `rgba(255, 107, 107, ${0.4 + Math.abs(L13.motherDNA) * 0.4})`);
+        coreGlow.addColorStop(1, 'transparent');
+        ctxMain.fillStyle = coreGlow;
+        ctxMain.beginPath();
+        ctxMain.arc(cx, cy, coreR, 0, 2 * π);
+        ctxMain.fill();
+    }
+    
+    function updateMetrics() {
+        document.getElementById('m-dna').textContent = L13.motherDNA.toFixed(4);
+        document.getElementById('m-dphi').textContent = L13.deltaPhi.toFixed(4);
+        document.getElementById('m-curve').textContent = L13.curvature.toFixed(4);
+        document.getElementById('m-tensor').textContent = L13.tensorField.toFixed(4);
+        
+        document.getElementById('bar-dna').style.width = (Math.abs(L13.motherDNA) * 200) + '%';
+        document.getElementById('bar-dphi').style.width = (Math.abs(L13.deltaPhi) * 50) + '%';
+        document.getElementById('bar-curve').style.width = (Math.abs(L13.curvature) * 100) + '%';
+        
+        document.getElementById('m-ka').textContent = L19.KA.toFixed(3);
+        document.getElementById('m-ba').textContent = L19.BA.toFixed(3);
+        document.getElementById('m-akh').textContent = L19.AKH.toFixed(3);
+        document.getElementById('m-djed').textContent = L19.DJED.toFixed(3);
+        
+        document.getElementById('bar-ka').style.width = (L19.KA * 100) + '%';
+        document.getElementById('bar-ba').style.width = (L19.BA * 100) + '%';
+        document.getElementById('bar-akh').style.width = (L19.AKH * 100) + '%';
+        document.getElementById('bar-djed').style.width = (L19.DJED * 100) + '%';
+        
+        for (const name of operators.order) {
+            document.getElementById(`m-${name.toLowerCase()}`).textContent = operators[name].value.toFixed(3);
+            document.getElementById(`bar-${name.toLowerCase()}`).style.width = (operators[name].value * 100) + '%';
+        }
+        
+        document.getElementById('m-coh').textContent = L24.getTotalCoherence().toFixed(3);
+        document.getElementById('m-center').textContent = L24.getCenterDominance().toFixed(3);
+        document.getElementById('m-implode').textContent = L13.implodeCount;
+        
+        // Collapse warning
+        const totalTension = L24.glyphTension.reduce((a, b) => a + b, 0);
+        const tensionNorm = Math.min(1, totalTension / 3);
+        document.getElementById('tension-value').textContent = tensionNorm.toFixed(2);
+        document.getElementById('tension-fill').style.width = (tensionNorm * 100) + '%';
+        
+        const warn = document.getElementById('collapse-warn');
+        warn.classList.toggle('active', L13.checkCollapse() || L13.imploding);
+        
+        const dot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        if (L13.imploding) {
+            dot.classList.add('imploding');
+            statusText.textContent = 'IMPLODING';
+        } else {
+            dot.classList.remove('imploding');
+            statusText.textContent = 'Running';
+        }
+    }
+    
+    // === INTERACTION ===
+    let hoveredGlyph = -1;
+    
+    function getGlyphAt(mx, my) {
+        for (let i = 0; i < 7; i++) {
+            const [px, py] = L24.positions[i];
+            const x = cx + px * fieldRadius;
+            const y = cy + py * fieldRadius;
+            const dx = mx - x;
+            const dy = my - y;
+            const r = i === 0 ? 35 : 28;
+            if (dx * dx + dy * dy < r * r) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    canvasUi.addEventListener('mousemove', (e) => {
+        const rect = canvasUi.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        hoveredGlyph = getGlyphAt(mx, my);
+        canvasUi.style.cursor = hoveredGlyph >= 0 ? 'pointer' : 'crosshair';
+    });
+    
+    canvasUi.addEventListener('click', (e) => {
+        const rect = canvasUi.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const glyph = getGlyphAt(mx, my);
+        
+        if (glyph > 0 && !L13.imploding) {
+            L24.applyTension(glyph, 0.5);
+        }
+    });
+    
+    canvasUi.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (hoveredGlyph > 0 && !L13.imploding) {
+            const delta = e.deltaY > 0 ? 0.1 : -0.1;
+            L24.applyTension(hoveredGlyph, delta);
+        }
+    });
+    
+    // === LOOP ===
+    function loop() {
+        step();
+        render();
+        updateMetrics();
+        requestAnimationFrame(loop);
+    }
+    
+    window.addEventListener('resize', resize);
+    resize();
+    loop();
+    </script>
+</body>
+</html>
