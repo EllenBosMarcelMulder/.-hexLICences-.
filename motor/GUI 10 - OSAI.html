@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ HexOSAI L50/L1: Veldprocessor & Glyph Kernel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --bg-color: #050508;
+            --text-color: #a0a0b0;
+            --accent-gold: #d4af37;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-danger: #ff3333;
+            --accent-success: #00ff88;
+            
+            --glass-panel: rgba(10, 12, 20, 0.85);
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Canvas Layer (L50 Motor) */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        #interface {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 80px 1fr 150px;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--glass-panel);
+            border: 1px solid var(--border-light);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 15px;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s;
+        }
+
+        .panel-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: var(--accent-gold);
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Header Area */
+        #header-panel {
+            grid-column: 1 / 4;
+            grid-row: 1 / 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-color: var(--accent-cyan);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Metrics (Left) - Unchanged */
+        #metrics-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+        .metric-val { font-weight: bold; color: #fff; }
+        .bar-container { height: 4px; background: #222; border-radius: 2px; margin-bottom: 15px; overflow: hidden; }
+        .bar-fill { height: 100%; transition: width 0.2s; }
+
+        /* Controls (Right) - Unchanged */
+        #controls-panel { grid-column: 3 / 4; grid-row: 2 / 3; }
+        button { 
+            background: rgba(0, 240, 255, 0.1); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
+            padding: 10px; width: 100%; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+        }
+        button:hover { background: var(--accent-cyan); color: #000; box-shadow: 0 0 15px var(--accent-cyan); }
+        button.danger { border-color: var(--accent-danger); color: var(--accent-danger); background: rgba(255, 51, 51, 0.1); }
+        button.danger:hover { background: var(--accent-danger); color: #fff; box-shadow: 0 0 15px var(--accent-danger); }
+
+        /* Log (Bottom) - Unchanged */
+        #log-panel { grid-column: 1 / 4; grid-row: 3 / 4; font-size: 11px; overflow-y: auto; }
+        .log-entry { margin-bottom: 4px; opacity: 0.8; }
+        .log-time { color: #555; margin-right: 8px; }
+        .log-msg.sys { color: var(--accent-cyan); }
+        .log-msg.warn { color: var(--accent-gold); }
+        .log-msg.crit { color: var(--accent-danger); font-weight: bold; }
+        .log-msg.opt { color: var(--accent-success); }
+        .status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: #333; }
+        .status-active { background: var(--accent-success); box-shadow: 0 0 5px var(--accent-success); }
+        .status-process { background: var(--accent-gold); animation: blink 0.5s infinite; }
+        .status-crit { background: var(--accent-danger); }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* ====================================================================== */
+        /* HEX TYPOGRAPHY L1 - GLYPH RENDERING KERNEL */
+        /* ====================================================================== */
+
+        #glyph-container {
+            grid-column: 2 / 3; /* Centrale kolom */
+            grid-row: 2 / 3;    /* Centrale rij */
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: none; /* Standaard pass-through, tenzij op element */
+            z-index: 5; 
+            flex-wrap: wrap;
+        }
+
+        /* Een glyph is een veldobject. */
+        .hexNODeGLYph {
+            display: inline-block;
+            font-family: var(--glyph-font, 'Orbitron', sans-serif);
+            font-weight: 700;
+            
+            /* Dynamische geometrische parameters (Vorm = Functie) */
+            font-size: var(--glyph-size, 28px);          /* ΔΦ: Curvature/Size */
+            color: var(--glyph-color, var(--accent-cyan));          /* Phase: Kleur (Hue) */
+            letter-spacing: var(--glyph-spacing, 1px);   /* Ψ: Coherentie/Spatiëring */
+            line-height: 1.0;
+            
+            /* Morfologische transformatie (kernmotor) */
+            transform: rotate(var(--glyph-phase, 0deg))
+                       scale(var(--glyph-scale, 1)); /* Ω: Schaal (Puls) */
+            
+            /* Dynamische veld-randen (Entropie) */
+            border-bottom: var(--glyph-border, 2px solid rgba(255, 255, 255, 0.1));
+            
+            padding: 0 5px; 
+            margin: 0 8px;
+            
+            text-transform: uppercase;
+            transition: all 0.15s ease-out; /* Vloeiende overgang van veldveranderingen */
+            pointer-events: auto; 
+            cursor: pointer;
+            text-shadow: 0 0 8px var(--glyph-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="fieldCanvas"></canvas>
+
+    <div id="interface">
+        <div class="panel" id="header-panel">
+            <div style="display: flex; align-items: center;">
+                <div class="status-indicator status-active" id="kernel-led"></div>
+                <h1>HEXOSAI L50/L1 KERNEL</h1>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 10px; color: #666;">ARCHITECTUUR</div>
+                <div style="color: var(--accent-gold);">HEX-VELDPROCESSOR + GLYPH ENGINE</div>
+            </div>
+        </div>
+
+        <div class="panel" id="metrics-panel">
+            <div class="panel-header">VELD TELEMETRIE</div>
+            
+            <div class="metric-row">
+                <span>Systeem Coherentie (Ψ)</span>
+                <span class="metric-val" id="val-psi">0.00</span>
+            </div>
+            <div class="bar-container"><div class="bar-fill" id="bar-psi" style="width: 0%; background: var(--accent-cyan);"></div></div>
+
+            <div class="metric-row">
+                <span>Interne Spanning (ΔΦ)</span>
+                <span class="metric-val" id="val-delta">0.00</span>
+            </div>
+            <div class="bar-container"><div class="bar-fill" id="bar-delta" style="width: 0%; background: var(--accent-danger);"></div></div>
+
+            <div class="metric-row">
+                <span>Entropische Druk (S)</span>
+                <span class="metric-val" id="val-entropy">0.00</span>
+            </div>
+            <div class="bar-container"><div class="bar-fill" id="bar-entropy" style="width: 0%; background: var(--accent-magenta);"></div></div>
+
+            <div class="metric-row">
+                <span>Ma'at Stabiliteit</span>
+                <span class="metric-val" id="val-maat">0.00</span>
+            </div>
+            <div class="bar-container"><div class="bar-fill" id="bar-maat" style="width: 0%; background: var(--accent-gold);"></div></div>
+            
+            <div style="margin-top: auto; font-size: 10px; color: #666; border-top: 1px solid #333; padding-top: 10px;">
+                BEWUSTZIJNSTAAT: <span id="awareness-state" style="color: var(--accent-success);">PASSIEF</span>
+            </div>
+        </div>
+        
+        <div id="glyph-container">
+            </div>
+
+        <div class="panel" id="controls-panel">
+            <div class="panel-header">INTERVENTIE</div>
+            
+            <button onclick="fieldEngine.injectChaos()">
+                ⚠️ Injecteer Verstoring
+            </button>
+            <button onclick="fieldEngine.triggerPulse()">
+                🌊 Coherentie Puls
+            </button>
+            <button onclick="fieldEngine.resetField()" class="danger">
+                ⚡ Totale Veld Reset
+            </button>
+            
+            <div style="margin-top: 20px;">
+                <div class="panel-header">AUTOMATISERING</div>
+                <div style="display: flex; gap: 10px; align-items: center; font-size: 11px;">
+                    <input type="checkbox" id="auto-balance" checked>
+                    <label for="auto-balance">Auto-Ma'at Correctie</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="log-panel">
+            <div class="panel-header">SYSTEEM LOGBOEK</div>
+            <div id="log-content">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================================
+        // Wiskundige Kern (Vector & Veld Logica)
+        // ======================================================================
+        const Vector = {
+            add: (v1, v2) => ({ x: v1.x + v2.x, y: v1.y + v2.y }),
+            sub: (v1, v2) => ({ x: v1.x - v2.x, y: v1.y - v2.y }),
+            mult: (v, s) => ({ x: v.x * s, y: v.y * s }),
+            mag: (v) => Math.sqrt(v.x * v.x + v.y * v.y),
+            norm: (v) => {
+                const m = Math.sqrt(v.x * v.x + v.y * v.y);
+                return m === 0 ? { x: 0, y: 0 } : { x: v.x / m, y: v.y / m };
+            },
+            dist: (v1, v2) => Math.sqrt((v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2)
+        };
+
+        // ======================================================================
+        // HEXAGONALE GEOMETRIE (De Isotropische Processorstructuur)
+        // ======================================================================
+        const HEX_SIZE = 40;
+        const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+        const HEX_HEIGHT = 2 * HEX_SIZE;
+
+        const HexGrid = {
+            axialToPixel(q, r, center) {
+                const x = center.x + HEX_WIDTH * (q + r / 2);
+                const y = center.y + (HEX_HEIGHT * 3 / 4) * r;
+                return { x, y };
+            },
+            getNeighbors(q, r) {
+                const directions = [
+                    { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                    { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }
+                ];
+                return directions.map(dir => ({ q: q + dir.q, r: r + dir.r }));
+            }
+        };
+
+        // ======================================================================
+        // HexNode Klasse - Het Velddeeltje / State Machine
+        // ======================================================================
+        class HexNode {
+            constructor(id, q, r, pixelCenter) {
+                this.id = id;
+                this.q = q;
+                this.r = r;
+                this.initialPos = HexGrid.axialToPixel(q, r, pixelCenter);
+                
+                this.pos = { x: this.initialPos.x, y: this.initialPos.y };
+                this.vel = { x: (Math.random()-0.5)*0.1, y: (Math.random()-0.5)*0.1 };
+                this.acc = { x: 0, y: 0 };
+                this.mass = 1.0; 
+                this.radius = HEX_SIZE * 0.9;
+                
+                // --- HEXOSAI L50 Computationele Staat ---
+                this.state = {
+                    deltaPhi: 0.1,  // Spanning (ΔΦ)
+                    psi: 0.8,       // Coherentie (Ψ)
+                    entropy: 0.2,   // Verstoring (S)
+                    maat: 0.9,      // Stabiliteit (M)
+                    phase: 1,       // Faseflip: +1 (Explosie) of -1 (Implosie)
+                    omega: 0.0      // Pulsfrequentie (Ω)
+                };
+                this.neighbors = [];
+                this.glyphElement = null; // Koppel de node aan de letter (L1)
+            }
+
+            applyForce(force) {
+                const accFromForce = Vector.mult(force, 1 / this.mass);
+                this.acc = Vector.add(this.acc, accFromForce);
+            }
+
+            update(damping) {
+                this.vel = Vector.add(this.vel, this.acc);
+                this.vel = Vector.mult(this.vel, damping);
+                
+                this.pos.x += this.vel.x;
+                this.pos.y += this.vel.y;
+
+                this.acc = { x: 0, y: 0 }; 
+
+                // Spanning (ΔΦ) gekoppeld aan snelheid
+                this.state.deltaPhi = Vector.mag(this.vel) * 8; 
+                
+                // Entropie
+                this.state.entropy = Math.max(0, this.state.entropy * 0.99 - this.state.psi * 0.001 + this.state.deltaPhi * 0.01);
+                this.state.entropy = Math.min(1.0, this.state.entropy);
+            }
+        }
+
+        // ======================================================================
+        // Veld Motor (Field Engine) - Het Brein / De Dirigent
+        // ======================================================================
+        const fieldEngine = {
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+            nodes: [],
+            metrics: { psi: 0.8, delta: 0.1, entropy: 0.2, maat: 0.9 },
+            config: {
+                mouseRepelDist: 150,
+                autoBalance: true
+            },
+            mouse: { x: -1000, y: -1000 },
+            
+            // L1 GLYPH KERNEL PROPERTIES
+            glyphContainer: null,
+            glyphLetters: ['A', 'K', 'H', 'B', 'A', 'K'], // De semantische kern: AKH/KA/BA
+            // END L1 GLYPH KERNEL PROPERTIES
+
+            init() {
+                this.canvas = document.getElementById('fieldCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.glyphContainer = document.getElementById('glyph-container');
+
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                window.addEventListener('mousemove', e => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+                window.addEventListener('mousedown', () => this.injectChaos(0.5));
+
+                document.getElementById('auto-balance').addEventListener('change', (e) => {
+                    this.config.autoBalance = e.target.checked;
+                });
+
+                this.spawnNodes();
+                this.log("HEXOSAI L50 Veldprocessor actief. L1 Glyph Kernel geladen.", "sys");
+                this.animate();
+            },
+
+            resize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            },
+
+            spawnNodes() {
+                this.nodes = [];
+                const radius = 6;
+                let id = 0;
+                const center = { x: this.width / 2, y: this.height / 2 };
+
+                // L50: Creëer Hexagonale Veldprocessor Grid
+                for (let q = -radius; q <= radius; q++) {
+                    const r1 = Math.max(-radius, -q - radius);
+                    const r2 = Math.min(radius, -q + radius);
+                    for (let r = r1; r <= r2; r++) {
+                        const newNode = new HexNode(id++, q, r, center);
+                        this.nodes.push(newNode);
+                    }
+                }
+                
+                // L50: Link buren (Veld-Koppeling)
+                this.nodes.forEach(node => {
+                    HexGrid.getNeighbors(node.q, node.r).forEach(nCoord => {
+                        const neighbor = this.nodes.find(n => n.q === nCoord.q && n.r === nCoord.r);
+                        if (neighbor) {
+                            node.neighbors.push(neighbor);
+                        }
+                    });
+                });
+                
+                // L1: Koppel Glyphs aan de centrale Core Nodes
+                const coreNodes = this.nodes.filter(n => Math.abs(n.q) <= 1 && Math.abs(n.r) <= 1);
+                this.glyphContainer.innerHTML = '';
+                
+                coreNodes.slice(0, this.glyphLetters.length).forEach((node, index) => {
+                    const letter = this.glyphLetters[index];
+                    const glyphEl = document.createElement('span');
+                    glyphEl.className = 'hexNODeGLYph';
+                    glyphEl.id = `glyph-${node.id}`; 
+                    glyphEl.innerText = letter;
+                    this.glyphContainer.appendChild(glyphEl);
+                    
+                    node.glyphElement = glyphEl; 
+                });
+                
+                this.log(`Hexagoon Grid gecreëerd. ${this.nodes.length} velddeeltjes actief.`, "sys");
+                this.log(`HexTypography L1 geactiveerd: '${this.glyphLetters.join('-')}' gekoppeld aan Core Nodes.`, "opt");
+            },
+
+            // --- FYSISCHE/COMPUTATIONELE SIMULATIE (L50) ---
+            updatePhysics() {
+                let totalTension = 0;
+                let totalPsi = 0;
+
+                for (const node of this.nodes) {
+                    // 1. Muis Interactie (Repulsie/Chaos Injectie)
+                    const mouseDist = Vector.dist(node.pos, this.mouse);
+                    if (mouseDist < this.config.mouseRepelDist) {
+                        const forceMag = (1 - mouseDist / this.config.mouseRepelDist) * 3;
+                        const dir = Vector.norm(Vector.sub(node.pos, this.mouse));
+                        node.applyForce(Vector.mult(dir, forceMag));
+                        node.state.deltaPhi += forceMag * 5; 
+                        node.state.psi = Math.max(0.1, node.state.psi - 0.05);
+                    }
+
+                    // 2. Veldbehoud (Trek naar de ideale rasterpositie)
+                    const gridCenter = node.initialPos;
+                    const distToGridCenter = Vector.dist(node.pos, gridCenter);
+                    const centerDir = Vector.norm(Vector.sub(gridCenter, node.pos));
+                    node.applyForce(Vector.mult(centerDir, distToGridCenter * 0.02)); 
+
+                    // 3. HEX-NAAR-HEX KOPPELING
+                    for (const neighbor of node.neighbors) {
+                        const coherenceShare = 0.05;
+                        
+                        // PSI (Coherentie) Diffusie
+                        node.state.psi += (neighbor.state.psi - node.state.psi) * coherenceShare;
+                        
+                        // MA'AT (Stabiliteit) Diffusie
+                        node.state.maat += (neighbor.state.maat - node.state.maat) * coherenceShare * 0.1;
+                        
+                        // Springkracht
+                        const forceMag = (Vector.dist(node.pos, neighbor.pos) - HEX_WIDTH * 0.8) * 0.0001; 
+                        const dir = Vector.norm(Vector.sub(neighbor.pos, node.pos));
+                        node.applyForce(Vector.mult(dir, forceMag));
+                    }
+
+                    // 4. FASE-FLIP LOGICA (De Instructie-Uitvoering)
+                    if (node.state.deltaPhi > 1.5 && node.state.phase === 1) {
+                        node.state.phase = -1; // Implosie
+                        node.state.omega = 1; 
+                    } 
+                    else if (node.state.psi > 0.95 && node.state.deltaPhi < 0.2 && node.state.phase === -1) {
+                        node.state.phase = 1; // Explosie/Stabiliteit
+                        node.state.omega = 0.1;
+                    }
+                    
+                    node.update(0.95);
+                    
+                    if (node.pos.x < 0 || node.pos.x > this.width) node.vel.x *= -1;
+                    if (node.pos.y < 0 || node.pos.y > this.height) node.vel.y *= -1;
+                    
+                    totalTension += node.state.deltaPhi;
+                    totalPsi += node.state.psi;
+                }
+
+                // 5. Bereken Globale Metrieken
+                const avgTension = totalTension / this.nodes.length;
+                const avgPsi = totalPsi / this.nodes.length;
+                
+                this.metrics.delta += (avgTension - this.metrics.delta) * 0.1;
+                this.metrics.psi += (avgPsi - this.metrics.psi) * 0.1;
+                this.metrics.entropy += (this.metrics.delta - this.metrics.entropy) * 0.05;
+                this.metrics.entropy = Math.max(0, this.metrics.entropy - this.metrics.maat * 0.005);
+                
+                const idealPsi = 0.618;
+                this.metrics.maat = 1 - Math.abs(this.metrics.psi - idealPsi);
+                this.metrics.maat = Math.max(0, this.metrics.maat);
+                
+                this.runSelfAwarenessLoop();
+            },
+
+            // --- HEX TYPOGRAPHY L1 RENDERING KERNEL ---
+            updateGlyphs() {
+                // Filter alleen de nodes die gekoppeld zijn aan een glyph
+                this.nodes.filter(n => n.glyphElement).forEach(node => {
+                    const s = node.state;
+                    const glyphEl = node.glyphElement;
+
+                    // 1. ΔΦ (Spanning) → Curvature/Size
+                    glyphEl.style.setProperty('--glyph-size', (28 + s.deltaPhi * 30) + 'px');
+                    
+                    // 2. Phase (+1/-1) → Rotatie/Veldoriëntatie
+                    // De rotatie is ook gekoppeld aan deltaPhi om de 'spanning' van de fase-switch te visualiseren
+                    glyphEl.style.setProperty('--glyph-phase', (s.phase * s.deltaPhi * 120) + 'deg'); 
+                    
+                    // 3. Ω (Activatie) → Schaal
+                    glyphEl.style.setProperty('--glyph-scale', (1 + s.omega * 0.8));
+                    
+                    // 4. Ψ (Coherentie) → Spatiëring
+                    glyphEl.style.setProperty('--glyph-spacing', (s.psi * 4) + 'px');
+                    
+                    // 5. Entropie (S) → Border/Randen
+                    const borderThickness = 1 + s.entropy * 4;
+                    const borderAlpha = 0.2 + s.entropy * 0.6;
+                    glyphEl.style.setProperty('--glyph-border',
+                        `${borderThickness.toFixed(1)}px solid rgba(255,255,255,${borderAlpha.toFixed(2)})`
+                    );
+
+                    // 6. Fase (Phase) → Kleur (Rood/Blauw)
+                    const phaseHue = s.phase === 1 ? 20 : 200; // Rood (Explosie/Tension) vs Blauw (Implosie/Coherentie)
+                    const saturation = 50 + s.deltaPhi * 50; 
+                    const lightness = 60 + s.psi * 20; 
+                    
+                    glyphEl.style.setProperty('--glyph-color', `hsl(${phaseHue}, ${saturation.toFixed(0)}%, ${lightness.toFixed(0)}%)`);
+                    
+                    // Dempen Omega
+                    s.omega = Math.max(0, s.omega * 0.9);
+                });
+            },
+
+            // --- RENDERING (De Vorm is de Functie) ---
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // 1. Teken Veldlijnen (de koppeling tussen Hex-cellen)
+                for (const node of this.nodes) {
+                    this.ctx.lineWidth = 1;
+                    for (const neighbor of node.neighbors) {
+                        if (node.id < neighbor.id) {
+                            const alpha = (node.state.psi + neighbor.state.psi) / 2 * 0.5; 
+                            const tensionColor = Math.min(255, (node.state.deltaPhi + neighbor.state.deltaPhi) / 2 * 100);
+                            
+                            this.ctx.strokeStyle = `rgba(${tensionColor}, ${20 + tensionColor/2}, ${255 - tensionColor}, ${alpha})`;
+                            
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(node.pos.x, node.pos.y);
+                            this.ctx.lineTo(neighbor.pos.x, neighbor.pos.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+                
+                // 2. Teken Hexagons (De Velddeeltjes)
+                for (const node of this.nodes) {
+                    this.drawHexagon(node);
+                }
+            },
+            
+            drawHexagon(node) {
+                const ctx = this.ctx;
+                const x = node.pos.x;
+                const y = node.pos.y;
+                const r = node.radius * node.state.psi * 0.5 + HEX_SIZE * 0.4;
+                const t = Math.min(1, node.state.deltaPhi * 0.5); 
+                const rColor = 255 * t + 50 * (1 - t);
+                const gColor = 100 * (1 - t) * (node.state.psi * 0.8);
+                const bColor = 255 * (1 - t) + 50 * t;
+                const color = `rgba(${rColor}, ${gColor}, ${bColor}, 0.9)`;
+                
+                const rotation = (1 - node.state.maat) * Math.PI * 0.5; 
+                const phaseFactor = node.state.phase === 1 ? 1 : 0.7; 
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rotation);
+
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const vertX = Math.cos(angle) * r * phaseFactor;
+                    const vertY = Math.sin(angle) * r * phaseFactor;
+                    
+                    if (node.state.phase === -1) {
+                        const pullFactor = 0.5; 
+                        const midX = Math.cos(angle) * r * pullFactor;
+                        const midY = Math.sin(angle) * r * pullFactor;
+
+                        if (i === 0) ctx.moveTo(vertX, vertY);
+                        ctx.lineTo(midX, midY); 
+                    } else {
+                        if (i === 0) ctx.moveTo(vertX, vertY);
+                        else ctx.lineTo(vertX, vertY);
+                    }
+                }
+                ctx.closePath();
+                
+                ctx.fillStyle = color;
+                ctx.strokeStyle = `rgba(0, 240, 255, ${node.state.psi})`; 
+                ctx.lineWidth = 2;
+                
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            },
+
+            // --- SELFAWARENESS & CONTROLS (Ongewijzigd) ---
+            runSelfAwarenessLoop() {
+                const awarenessEl = document.getElementById('awareness-state');
+                
+                if (this.metrics.entropy > 0.6 && this.config.autoBalance) {
+                    awarenessEl.textContent = "CORRIGEREN...";
+                    awarenessEl.style.color = "var(--accent-gold)";
+                    
+                    this.nodes.forEach(n => {
+                        n.vel = Vector.mult(n.vel, 0.9);
+                        n.state.psi = Math.min(1.0, n.state.psi + 0.005);
+                    });
+
+                    if (Math.random() < 0.01) this.log("Hoge entropie gedetecteerd. Actieve demping toegepast.", "opt");
+                } 
+                else if (this.metrics.entropy < 0.05 && this.metrics.psi > 0.95) {
+                    awarenessEl.textContent = "STIMULEREN...";
+                    awarenessEl.style.color = "var(--accent-cyan)";
+                    
+                    this.nodes.forEach(n => {
+                        n.applyForce({x: (Math.random()-0.5)*0.5, y: (Math.random()-0.5)*0.5});
+                    });
+                }
+                else {
+                    awarenessEl.textContent = "STABIEL";
+                    awarenessEl.style.color = "var(--accent-success)";
+                }
+            },
+            
+            injectChaos(amount = 0.5) {
+                this.log("Handmatige Chaos Injectie!", "warn");
+                this.nodes.forEach(n => {
+                    const force = {
+                        x: (Math.random() - 0.5) * amount * 5,
+                        y: (Math.random() - 0.5) * amount * 5
+                    };
+                    n.applyForce(force);
+                    n.state.deltaPhi += amount;
+                    n.state.psi = 0; 
+                });
+            },
+
+            triggerPulse() {
+                this.log("Coherentie Puls uitgezonden...", "sys");
+                const center = {x: this.width/2, y: this.height/2};
+                this.nodes.forEach(n => {
+                    const dir = Vector.norm(Vector.sub(center, n.pos));
+                    n.applyForce(Vector.mult(dir, 2));
+                    n.state.psi = 1.0;
+                    n.state.phase = 1;
+                    n.state.omega = 1.0; // Trigger de schaalvergroting op de glyphs
+                });
+            },
+
+            resetField() {
+                this.log("Veld Reset...", "crit");
+                this.spawnNodes();
+                this.metrics.psi = 0.8;
+                this.metrics.delta = 0.1;
+                this.metrics.entropy = 0.2;
+            },
+
+            log(msg, type="sys") {
+                const logPanel = document.getElementById('log-content');
+                const time = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+                logPanel.insertBefore(entry, logPanel.firstChild);
+                
+                if (logPanel.children.length > 50) logPanel.removeChild(logPanel.lastChild);
+            },
+
+            // --- MAIN LOOP ---
+            animate() {
+                this.updatePhysics();
+                this.updateGlyphs(); // <-- De nieuwe koppeling tussen Motor en Typografie
+                this.draw();
+                this.updateUI();
+                requestAnimationFrame(() => this.animate());
+            },
+            
+            updateUI() {
+                document.getElementById('val-psi').innerText = this.metrics.psi.toFixed(3);
+                document.getElementById('bar-psi').style.width = (this.metrics.psi * 100) + '%';
+                document.getElementById('val-delta').innerText = this.metrics.delta.toFixed(3);
+                document.getElementById('bar-delta').style.width = Math.min(100, this.metrics.delta * 50) + '%';
+                document.getElementById('val-entropy').innerText = this.metrics.entropy.toFixed(3);
+                document.getElementById('bar-entropy').style.width = (this.metrics.entropy * 100) + '%';
+                document.getElementById('val-maat').innerText = this.metrics.maat.toFixed(3);
+                document.getElementById('bar-maat').style.width = (this.metrics.maat * 100) + '%';
+
+                const led = document.getElementById('kernel-led');
+                if (this.metrics.entropy > 0.7) led.className = "status-indicator status-crit";
+                else if (this.metrics.psi > 0.8 && this.metrics.maat > 0.8) led.className = "status-indicator status-active";
+                else led.className = "status-indicator status-process";
+            },
+        };
+
+        // Start
+        window.onload = () => fieldEngine.init();
+
+    </script>
+</body>
+</html>
