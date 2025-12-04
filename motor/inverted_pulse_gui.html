@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inverted Pulse Motor — Inside→Out Flow</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --core: #ffd93d;
+            --pulse: #ff6b6b;
+            --operator: #7b68ee;
+            --field: #00d4aa;
+            --text: #8a8a9a;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-weight: 300;
+            font-size: 1.2rem;
+            color: #e0e0e8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 0.7rem;
+            color: #5a5a6a;
+            margin-bottom: 2rem;
+        }
+        
+        .container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        
+        canvas {
+            background: #0a0a0f;
+            border-radius: 8px;
+        }
+        
+        .metrics {
+            font-size: 0.65rem;
+            background: #12121a;
+            padding: 1rem;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+        
+        .metric-group {
+            margin-bottom: 1rem;
+        }
+        
+        .metric-title {
+            color: #5a5a6a;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-value {
+            color: var(--core);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .operator-chain {
+            margin-top: 1rem;
+        }
+        
+        .operator-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+        
+        .operator-label {
+            width: 20px;
+            color: var(--operator);
+        }
+        
+        .operator-fill {
+            height: 8px;
+            background: var(--operator);
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+        
+        .operator-value {
+            margin-left: 0.5rem;
+            font-size: 0.55rem;
+        }
+        
+        .flow-direction {
+            text-align: center;
+            color: #3a3a4a;
+            font-size: 0.6rem;
+            margin-top: 0.5rem;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            font-size: 0.6rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Inverted Pulse Motor</h1>
+    <div class="subtitle">Computation flows from INSIDE → OUT (Core → Operators → Field)</div>
+    
+    <div class="container">
+        <canvas id="canvas" width="500" height="500"></canvas>
+        
+        <div class="metrics">
+            <div class="metric-group">
+                <div class="metric-title">Core (Source)</div>
+                <div class="metric">
+                    <span>motherDNA</span>
+                    <span class="metric-value" id="m-dna">1.000</span>
+                </div>
+                <div class="metric">
+                    <span>pulse</span>
+                    <span class="metric-value" id="m-pulse">0.000</span>
+                </div>
+                <div class="metric">
+                    <span>phase</span>
+                    <span class="metric-value" id="m-phase">0.000π</span>
+                </div>
+                <div class="metric">
+                    <span>curvature</span>
+                    <span class="metric-value" id="m-curve">0.000</span>
+                </div>
+            </div>
+            
+            <div class="metric-group">
+                <div class="metric-title">Asymmetry</div>
+                <div class="metric">
+                    <span>ΔΦ</span>
+                    <span class="metric-value" id="m-dphi">0.000</span>
+                </div>
+                <div class="metric">
+                    <span>trend</span>
+                    <span class="metric-value" id="m-trend">0.000</span>
+                </div>
+            </div>
+            
+            <div class="metric-group">
+                <div class="metric-title">Field (Manifestation)</div>
+                <div class="metric">
+                    <span>coherence</span>
+                    <span class="metric-value" id="m-coh">0.000</span>
+                </div>
+                <div class="metric">
+                    <span>center</span>
+                    <span class="metric-value" id="m-center">0.000</span>
+                </div>
+            </div>
+            
+            <div class="operator-chain">
+                <div class="metric-title">Operator Chain (S→M→R→V→F→C)</div>
+                <div class="flow-direction">inside ────────→ outside</div>
+                <div id="operator-bars"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-dot" style="background: var(--core)"></div>
+            <span>Core (motherDNA)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: var(--pulse)"></div>
+            <span>Pulse (implosion)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: var(--operator)"></div>
+            <span>Operators</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: var(--field)"></div>
+            <span>Field (manifestation)</span>
+        </div>
+    </div>
+
+    <script>
+    const π = Math.PI;
+    const φ = (1 + Math.sqrt(5)) / 2;
+    
+    // === CORE FIELDS ===
+    const core = {
+        motherDNA: 1.0,
+        deltaPhi: 0.0,
+        curvature: 0.0,
+        phase: 0.0,
+        pulse: 0.0,
+        
+        computePulse() {
+            this.pulse = this.motherDNA * (1 + Math.sin(this.phase));
+            return this.pulse;
+        },
+        
+        attenuate(distance) {
+            return this.pulse / (1 + this.curvature * distance);
+        }
+    };
+    
+    // === OPERATORS ===
+    const operators = {
+        S: { value: 0, weight: π },
+        M: { value: 0, weight: π / 2 },
+        R: { value: 0, weight: π / 3 },
+        V: { value: 0, weight: π / 4 },
+        F: { value: 0, weight: π / 5 },
+        C: { value: 0, weight: π / 6 },
+    };
+    
+    const operatorOrder = ['S', 'M', 'R', 'V', 'F', 'C'];
+    
+    function processOperators(pulse, curvature) {
+        let signal = pulse;
+        
+        for (const name of operatorOrder) {
+            const op = operators[name];
+            const attenuation = 1 / (1 + curvature * op.weight);
+            
+            switch (name) {
+                case 'S': signal = signal * Math.tanh(signal); break;
+                case 'M': signal = signal * (1 - Math.abs(signal - 1) * 0.1); break;
+                case 'R': signal = signal * (1 + 0.1 * Math.sin(signal * π)); break;
+                case 'V': signal = signal * (1 + 0.05 * (signal - 1) ** 2); break;
+                case 'F': signal = signal * Math.cos(signal * π / 4) ** 2 + 0.5; break;
+                case 'C': signal = signal / (1 + Math.abs(signal - 1)); break;
+            }
+            
+            signal *= attenuation;
+            op.value = signal;
+        }
+    }
+    
+    // === TENSOR FIELD ===
+    const field = {
+        values: new Float64Array(7),
+        positions: [],
+        coherence: new Float64Array(7).fill(1),
+        
+        init() {
+            this.positions = [[0, 0]];
+            for (let i = 0; i < 6; i++) {
+                const angle = i * π / 3;
+                this.positions.push([Math.cos(angle), Math.sin(angle)]);
+            }
+        },
+        
+        receivePulse() {
+            this.values[0] = operators.C.value * core.motherDNA;
+            
+            for (let i = 1; i < 7; i++) {
+                const dist = Math.sqrt(
+                    this.positions[i][0] ** 2 + 
+                    this.positions[i][1] ** 2
+                );
+                const atten = core.attenuate(dist);
+                const phaseShift = i * π / 3;
+                this.values[i] = atten * Math.cos(core.phase + phaseShift);
+            }
+            
+            // Coherence
+            for (let i = 0; i < 7; i++) {
+                const neighbors = i === 0 ? [1,2,3,4,5,6] : [0, ((i-2+6)%6)+1, (i%6)+1];
+                const mean = neighbors.reduce((s, n) => s + this.values[n], 0) / neighbors.length;
+                this.coherence[i] = 1 / (1 + Math.abs(this.values[i] - mean));
+            }
+        },
+        
+        getTotalCoherence() {
+            return this.coherence.reduce((a, b) => a + b, 0) / 7;
+        },
+        
+        getCenterDominance() {
+            const total = this.values.reduce((a, b) => a + Math.abs(b), 0);
+            return total > 1e-8 ? Math.abs(this.values[0]) / total : 0;
+        }
+    };
+    
+    field.init();
+    
+    // === MOTOR PARAMETERS ===
+    const dt = π / 64;
+    const omega = π / 16;
+    const kappa = π / 8;
+    const lambda = π / 4;
+    
+    let deltaPhi_prev = 0;
+    let trend = 0;
+    let t = 0;
+    
+    // === MOTOR STEP ===
+    function step() {
+        // 1. Core pulse (IMPLOSION)
+        core.computePulse();
+        
+        // 2. Curvature from asymmetry
+        core.curvature = Math.tanh(core.deltaPhi * 0.5);
+        
+        // 3. Operator chain (PHASE INVERSION)
+        processOperators(core.pulse, core.curvature);
+        
+        // 4. Tensor field (EXPLOSION/MANIFESTATION)
+        field.receivePulse();
+        
+        // 5. Feedback
+        const coherence = field.getTotalCoherence();
+        const centerDom = field.getCenterDominance();
+        core.deltaPhi = (1 - coherence) + (1 - centerDom);
+        
+        trend = (core.deltaPhi - deltaPhi_prev) / dt;
+        deltaPhi_prev = core.deltaPhi;
+        
+        // 6. Phase evolution
+        const dphase = omega - kappa * Math.sin(core.phase) + lambda * trend;
+        core.phase += dphase * dt;
+        
+        // 7. motherDNA regeneration
+        core.motherDNA += 0.01 * (coherence - 0.5) * dt;
+        core.motherDNA = Math.max(0.1, Math.min(2.0, core.motherDNA));
+        
+        t++;
+    }
+    
+    // === VISUALIZATION ===
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const cx = 250, cy = 250;
+    
+    // Create operator bars
+    const barsContainer = document.getElementById('operator-bars');
+    for (const name of operatorOrder) {
+        const bar = document.createElement('div');
+        bar.className = 'operator-bar';
+        bar.innerHTML = `
+            <span class="operator-label">${name}</span>
+            <div class="operator-fill" id="bar-${name}" style="width: 0px"></div>
+            <span class="operator-value" id="val-${name}">0.00</span>
+        `;
+        barsContainer.appendChild(bar);
+    }
+    
+    function render() {
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, 500, 500);
+        
+        const scale = 120;
+        
+        // Draw concentric rings (operator layers)
+        const ringColors = ['#ffd93d', '#ff6b6b', '#7b68ee', '#7b68ee', '#7b68ee', '#00d4aa'];
+        const ringRadii = [30, 60, 90, 120, 150, 180];
+        
+        for (let i = ringRadii.length - 1; i >= 0; i--) {
+            const r = ringRadii[i];
+            const alpha = 0.1 + operators[operatorOrder[i]].value * 0.3;
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * π);
+            ctx.strokeStyle = ringColors[i].replace(')', `, ${alpha})`).replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, (_, r, g, b) => 
+                `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${alpha})`
+            );
+            ctx.lineWidth = 2 + operators[operatorOrder[i]].value * 5;
+            ctx.stroke();
+        }
+        
+        // Draw pulse wave (expanding circles)
+        const pulsePhase = (t * 0.05) % 1;
+        for (let i = 0; i < 3; i++) {
+            const p = (pulsePhase + i * 0.33) % 1;
+            const r = 30 + p * 150;
+            const alpha = (1 - p) * 0.3 * core.pulse;
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * π);
+            ctx.strokeStyle = `rgba(255, 107, 107, ${alpha})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        // Draw core (motherDNA)
+        const coreRadius = 20 + core.motherDNA * 10;
+        const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreRadius * 2);
+        coreGlow.addColorStop(0, `rgba(255, 217, 61, ${0.5 + core.pulse * 0.3})`);
+        coreGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = coreGlow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreRadius * 2, 0, 2 * π);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreRadius, 0, 2 * π);
+        ctx.fillStyle = '#ffd93d';
+        ctx.fill();
+        
+        // Draw phase indicator in core
+        const px = cx + coreRadius * 0.7 * Math.cos(core.phase);
+        const py = cy + coreRadius * 0.7 * Math.sin(core.phase);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(px, py);
+        ctx.strokeStyle = '#0a0a0f';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw field nodes
+        for (let i = 0; i < 7; i++) {
+            const [fx, fy] = field.positions[i];
+            const x = cx + fx * scale;
+            const y = cy + fy * scale;
+            
+            const val = Math.abs(field.values[i]);
+            const radius = 8 + val * 15;
+            const coh = field.coherence[i];
+            
+            // Glow
+            const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 2);
+            glow.addColorStop(0, `rgba(0, 212, 170, ${val * 0.5})`);
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 2, 0, 2 * π);
+            ctx.fill();
+            
+            // Node
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * π);
+            ctx.fillStyle = `rgba(0, 212, 170, ${0.3 + coh * 0.7})`;
+            ctx.fill();
+            
+            // Value
+            ctx.fillStyle = '#e0e0e8';
+            ctx.font = '8px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(val.toFixed(2), x, y + radius + 12);
+        }
+        
+        // Draw flow arrows (inside → outside)
+        ctx.strokeStyle = 'rgba(123, 104, 238, 0.3)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+            const angle = i * π / 3 + (t * 0.01);
+            const r1 = 40, r2 = 170;
+            ctx.beginPath();
+            ctx.moveTo(cx + r1 * Math.cos(angle), cy + r1 * Math.sin(angle));
+            ctx.lineTo(cx + r2 * Math.cos(angle), cy + r2 * Math.sin(angle));
+            ctx.stroke();
+            
+            // Arrow head
+            const ax = cx + r2 * Math.cos(angle);
+            const ay = cy + r2 * Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(ax - 8 * Math.cos(angle - 0.3), ay - 8 * Math.sin(angle - 0.3));
+            ctx.lineTo(ax - 8 * Math.cos(angle + 0.3), ay - 8 * Math.sin(angle + 0.3));
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(123, 104, 238, 0.3)';
+            ctx.fill();
+        }
+        
+        // Update metrics
+        document.getElementById('m-dna').textContent = core.motherDNA.toFixed(3);
+        document.getElementById('m-pulse').textContent = core.pulse.toFixed(3);
+        document.getElementById('m-phase').textContent = (core.phase / π).toFixed(3) + 'π';
+        document.getElementById('m-curve').textContent = core.curvature.toFixed(3);
+        document.getElementById('m-dphi').textContent = core.deltaPhi.toFixed(3);
+        document.getElementById('m-trend').textContent = trend.toFixed(4);
+        document.getElementById('m-coh').textContent = field.getTotalCoherence().toFixed(3);
+        document.getElementById('m-center').textContent = field.getCenterDominance().toFixed(3);
+        
+        // Update operator bars
+        for (const name of operatorOrder) {
+            const val = operators[name].value;
+            document.getElementById(`bar-${name}`).style.width = `${val * 100}px`;
+            document.getElementById(`val-${name}`).textContent = val.toFixed(3);
+        }
+    }
+    
+    function loop() {
+        step();
+        render();
+        requestAnimationFrame(loop);
+    }
+    
+    loop();
+    </script>
+</body>
+</html>
