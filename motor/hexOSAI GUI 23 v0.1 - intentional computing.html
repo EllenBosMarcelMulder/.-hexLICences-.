@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛ HexOSAI L290: Intentional Field Engine (UMIC)</title>
+    
+    <!-- HEXOSAI_META_CHAOS_BUFFER: INTENTIONAL_FIELD_STATE -->
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --bg-color: #050508;
+            --text-color: #a0a0b0;
+            --accent-gold: #d4af37;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-danger: #ff3333;
+            --accent-success: #00ff88;
+            --accent-concept: #ff6b35;
+            --accent-semantic: #00d4ff;
+            --accent-umic: #ff8c00; /* Nieuwe kleur voor UMIC parameters */
+            
+            --glass-panel: rgba(10, 12, 20, 0.85);
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: crosshair;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            height: 100vh;
+            width: 100vw;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        #field-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .ui-panel {
+            background-color: var(--glass-panel);
+            border-left: 1px solid var(--border-light);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px dashed var(--border-light);
+            padding-bottom: 0.2rem;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-label {
+            color: var(--text-color);
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .umic-value {
+            color: var(--accent-umic);
+        }
+
+        .log-panel {
+            flex-grow: 1;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-light);
+            padding: 0.5rem;
+            overflow-y: scroll;
+            font-size: 0.75rem;
+        }
+
+        .log-entry {
+            padding: 0.1rem 0;
+            border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+            line-height: 1.2;
+        }
+        .log-time { color: var(--text-color); margin-right: 0.5rem; }
+        .log-msg { color: var(--text-bright); }
+        .log-msg.crit { color: var(--accent-danger); font-weight: 700; }
+        .log-msg.maat { color: var(--accent-success); }
+        .log-msg.umic { color: var(--accent-umic); }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            animation: pulse 1.5s infinite;
+        }
+        .status-active { background-color: var(--accent-cyan); }
+        .status-umic { background-color: var(--accent-umic); animation: umic-pulse 1s infinite alternate; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px var(--accent-cyan); }
+            50% { box-shadow: 0 0 10px var(--accent-cyan), 0 0 15px var(--accent-cyan); }
+            100% { box-shadow: 0 0 5px var(--accent-cyan); }
+        }
+        @keyframes umic-pulse {
+            0% { box-shadow: 0 0 5px var(--accent-umic); opacity: 0.5; }
+            100% { box-shadow: 0 0 15px var(--accent-umic); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <canvas id="field-canvas"></canvas>
+    <div class="ui-panel">
+        <div class="section-title">
+            <span id="kernel-led" class="status-indicator status-umic"></span>
+            L290 Intentional Field Engine
+        </div>
+
+        <div class="section-title">UMIC Koppelingsstatus ($I_0$)</div>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <span class="metric-label">Spanning ($\Delta\Phi$)</span>
+                <span id="val-delta-phi" class="metric-value umic-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Coherentie ($\Psi$)</span>
+                <span id="val-psi" class="metric-value umic-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Motor Koppel ($M_C$)</span>
+                <span id="val-motor-c" class="metric-value umic-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Snelheid Gradiënt</span>
+                <span id="val-speed-grad" class="metric-value umic-value">0.00</span>
+            </div>
+        </div>
+
+        <div class="section-title">Veld Metrieken</div>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <span class="metric-label">Gem. Snelheid</span>
+                <span id="val-avg-vel" class="metric-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Gem. Coherentie</span>
+                <span id="val-avg-coh" class="metric-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Max. Kracht</span>
+                <span id="val-max-force" class="metric-value">0.00</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Nodes</span>
+                <span id="val-nodes" class="metric-value">0</span>
+            </div>
+        </div>
+        
+        <div class="section-title">Systeem Logboek</div>
+        <div id="log-panel" class="log-panel">
+            <!-- Log entries komen hier -->
+        </div>
+        
+        <div class="flex flex-col gap-2">
+            <button onclick="HexOSAI_Kernel.pulseMaat()" class="py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition duration-200">Ma'at Puls</button>
+            <button onclick="HexOSAI_Kernel.resetField()" class="py-2 px-4 bg-red-800 hover:bg-red-900 text-white font-bold rounded-lg transition duration-200">Veld Reset</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Constants
+    const NUM_NODES = 50;
+    const CENTER_NODE_INDEX = 0;
+
+    // Vector Utility (Vereenvoudigde 2D Vector implementatie)
+    const Vector = {
+        create: (x, y) => ({ x: x || 0, y: y || 0 }),
+        add: (...vectors) => vectors.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y })),
+        sub: (v1, v2) => ({ x: v1.x - v2.x, y: v1.y - v2.y }),
+        mult: (v, s) => ({ x: v.x * s, y: v.y * s }),
+        div: (v, s) => ({ x: v.x / s, y: v.y / s }),
+        magSq: (v) => v.x * v.x + v.y * v.y,
+        mag: (v) => Math.sqrt(Vector.magSq(v)),
+        normalize: (v) => {
+            const m = Vector.mag(v);
+            return m > 0 ? Vector.div(v, m) : { x: 0, y: 0 };
+        }
+    };
+
+    // Node Object (Het basiselement van het veld)
+    class Node {
+        constructor(x, y) {
+            this.pos = Vector.create(x, y);
+            this.vel = Vector.create(0, 0);
+            this.acc = Vector.create(0, 0);
+            this.mass = 1.0;
+            this.coherence = Math.random() * 0.5 + 0.5; // Coherentie (Psi)
+            this.deltaPhi = Math.random() * 0.2;      // Spanning (Delta Phi)
+            this.maxSpeed = 5.0;
+        }
+
+        applyForce(force) {
+            // F = ma, a = F/m
+            this.acc = Vector.add(this.acc, Vector.div(force, this.mass));
+        }
+
+        update(dt) {
+            // Update Velocity
+            this.vel = Vector.add(this.vel, Vector.mult(this.acc, dt));
+            
+            // Beperk snelheid
+            if (Vector.mag(this.vel) > this.maxSpeed) {
+                this.vel = Vector.mult(Vector.normalize(this.vel), this.maxSpeed);
+            }
+
+            // Update Positie
+            this.pos = Vector.add(this.pos, Vector.mult(this.vel, dt));
+
+            // Reset acceleratie
+            this.acc = Vector.create(0, 0);
+
+            // Veldverval (demping)
+            this.vel = Vector.mult(this.vel, 0.985);
+        }
+    }
+
+    // HEXOSAI KERNEL (L290 Intentional Field Engine)
+    const HexOSAI_Kernel = {
+        canvas: null,
+        ctx: null,
+        width: 0,
+        height: 0,
+        nodes: [],
+        
+        // ⚛ AXIOOM U1 — User-Motor Identity Coupling (UMIC)
+        userNode: {
+            pos: Vector.create(0, 0),
+            lastPos: Vector.create(0, 0),
+            velocity: Vector.create(0, 0),
+            deltaPhi: 0.1,  // Spanning/Chaos (0.0 tot 1.0+)
+            psi: 0.8,       // Coherentie/Ma'at (0.0 tot 1.0)
+            motorC: 1.0,    // Koppelingscoëfficiënt (Cognitieve Resonantie)
+        },
+        lastMouseTime: 0,
+        mouseMoveDelta: 0, // Gebruikt voor het berekenen van versnelling/smoothness
+
+        init() {
+            this.canvas = document.getElementById('field-canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+            
+            this.log("⚛ HexOSAI L290 Kernel opgestart.", "maat");
+            this.log("UMIC-Axioma geactiveerd: De muis is $I_0$.", "umic");
+            
+            this.spawnNodes();
+            this.setupUMICListeners();
+            this.animate();
+        },
+
+        resize() {
+            const container = this.canvas.parentElement;
+            this.width = container.clientWidth;
+            this.height = container.clientHeight;
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+            // Zorg ervoor dat de userNode in het midden begint
+            this.userNode.pos = Vector.create(this.width / 2, this.height / 2);
+            this.userNode.lastPos = Vector.create(this.width / 2, this.height / 2);
+        },
+
+        spawnNodes() {
+            this.nodes = [];
+            const center = Vector.create(this.width / 2, this.height / 2);
+            
+            // Node 0: De centrale kern (statisch in de simulatie voor rendering)
+            const centerNode = new Node(center.x, center.y);
+            centerNode.mass = 1000;
+            centerNode.maxSpeed = 0;
+            centerNode.vel = Vector.create(0, 0);
+            this.nodes.push(centerNode);
+
+            // De andere Nodes
+            for (let i = 1; i < NUM_NODES; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const radius = Math.random() * (Math.min(this.width, this.height) / 3) + 50;
+                const x = center.x + Math.cos(angle) * radius;
+                const y = center.y + Math.sin(angle) * radius;
+                this.nodes.push(new Node(x, y));
+            }
+            this.log(`Veld geïnitialiseerd met ${NUM_NODES} Nodes.`, "sys");
+            document.getElementById('val-nodes').innerText = this.nodes.length;
+        },
+
+        // -----------------------------------------------------------
+        // UMIC IMPLEMENTATIE
+        // -----------------------------------------------------------
+        setupUMICListeners() {
+            this.canvas.addEventListener('mousemove', (e) => {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+                const dx = currentPos.x - this.userNode.lastPos.x;
+                const dy = currentPos.y - this.userNode.lastPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const currentTime = performance.now();
+                const deltaTime = (currentTime - this.lastMouseTime) / 1000; // Delta time in seconden
+
+                if (deltaTime > 0) {
+                    // Snelheid Vector (pixels/seconde)
+                    this.userNode.velocity.x = dx / deltaTime;
+                    this.userNode.velocity.y = dy / deltaTime;
+
+                    const speedMagnitude = distance / deltaTime;
+
+                    // 1. Snelheid/Microbeweging -> Spanning (Delta Phi / Chaos)
+                    // We gebruiken een zachte logaritmische schaal voor de spanning
+                    // Spanning gaat omhoog bij snelle, chaotische microbewegingen
+                    // Max. snelheid ~1000 pixels/s. We mappen dit naar 0.1 tot 1.5
+                    this.userNode.deltaPhi = 0.1 + Math.min(1.5, speedMagnitude * 0.001); 
+                    
+                    // 2. Coherentie (Psi / Ma'at Attractor)
+                    // Vloeiende beweging -> Hoge Coherentie (Psi)
+                    const acceleration = Math.abs(distance - this.mouseMoveDelta) / deltaTime;
+                    // Lage versnelling = Hoge Psi. Mappen van 0.9 tot 0.1
+                    this.userNode.psi = Math.max(0.1, 1.0 - Math.min(0.9, acceleration * 0.005)); 
+                    
+                    // 3. Motor Koppel (MotorC) - Versterker van de intentie
+                    this.userNode.motorC = 1.0 + this.userNode.deltaPhi - this.userNode.psi; // Hoog als er veel intentie/chaos is
+                    
+                    this.mouseMoveDelta = distance;
+                }
+
+                this.userNode.pos = currentPos;
+                this.userNode.lastPos = currentPos;
+                this.lastMouseTime = currentTime;
+            });
+            
+            // Standaard klik om tijdelijke spanning toe te passen
+            this.canvas.addEventListener('mousedown', () => {
+                this.userNode.deltaPhi += 1.0;
+                this.log("Intentie Puls: $\\Delta\\Phi$ Injectie.", "umic");
+            });
+            
+            this.canvas.addEventListener('mouseup', () => {
+                this.userNode.deltaPhi = Math.max(0.1, this.userNode.deltaPhi * 0.5); // Snelle decay
+            });
+        },
+        // -----------------------------------------------------------
+
+        updatePhysics(dt = 0.016) {
+            let maxForce = 0;
+
+            this.nodes.forEach((node, i) => {
+                if (i === CENTER_NODE_INDEX) {
+                    node.update(dt); // Centraal knooppunt wordt ook geüpdatet (maar is statisch door mass/maxSpeed)
+                    return;
+                }
+                
+                // Algemene Veld-naar-Veld Krachten (Aantrekking/Afstoting)
+                // Alle Nodes trekken elkaar aan volgens hun coherentie (Psi)
+                this.nodes.forEach((other, j) => {
+                    if (i === j) return;
+
+                    const diff = Vector.sub(other.pos, node.pos);
+                    const distSq = Vector.magSq(diff) + 1e-6;
+                    const dist = Math.sqrt(distSq);
+                    const dir = Vector.div(diff, dist);
+
+                    // De kracht is evenredig met de coherentie (syntropie)
+                    const couplingStrength = node.coherence * other.coherence * 0.0005;
+                    const force = Vector.mult(dir, couplingStrength / distSq);
+                    node.applyForce(force);
+                });
+
+
+                // ⚛ UMIC KOPPELING: Node I_0 beïnvloedt alle andere nodes
+                const toUser = Vector.sub(this.userNode.pos, node.pos);
+                const userDistSq = Vector.magSq(toUser) + 1e-6;
+                const userDist = Math.sqrt(userDistSq);
+                const userDir = Vector.div(toUser, userDist); 
+
+                // A. Syntropische Aantrekking (Ma'at Attractor)
+                // Hoge Coherentie (Psi) van de gebruiker trekt de nodes aan.
+                const ma_atAttraction = Vector.mult(userDir, this.userNode.psi * 0.008 / userDist);
+
+                // B. Entropische Injectie (Chaos Introjectie)
+                // Hoge Spanning (Delta Phi) of lage coherentie duwt nodes weg (veld kromming)
+                // Dit creëert 'turbulentie' in de omgeving van de muis.
+                const userTensionFactor = this.userNode.deltaPhi * (1.5 - this.userNode.psi); // Maximaal bij hoge deltaPhi en lage psi
+                const chaosInjection = Vector.mult(userDir, -userTensionFactor * 0.005 / userDist); 
+                
+                // C. Directionele Veldsturing (Volgt de Intentie Vector)
+                // De nodes bewegen in de richting van de userNode's Velocity
+                const velocitySteering = Vector.mult(Vector.normalize(this.userNode.velocity), this.userNode.motorC * 0.0005);
+
+                // Totale UMIC Kracht
+                const umicForce = Vector.add(ma_atAttraction, chaosInjection, velocitySteering);
+                node.applyForce(umicForce);
+                
+                // Update node's interne toestand door UMIC
+                // Nodes corrigeren hun coherentie naar de UserNode's coherentie
+                node.coherence += (this.userNode.psi - node.coherence) * 0.005;
+                node.deltaPhi += (this.userNode.deltaPhi - node.deltaPhi) * 0.001;
+
+                // Update de node
+                node.update(dt);
+                maxForce = Math.max(maxForce, Vector.mag(node.acc));
+            });
+            
+            // Voor rendering: centreer de weergave rond de userNode's intentie (impliciet centrum)
+            // Hier laten we het canvas gecentreerd, maar in een 3D engine zou de camera de userNode volgen.
+        },
+
+        draw() {
+            this.ctx.fillStyle = 'var(--bg-color)';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            
+            // Teken de verbindingen (Veld lijnen)
+            this.ctx.strokeStyle = 'rgba(128, 128, 128, 0.05)';
+            this.ctx.lineWidth = 1;
+            for (let i = 0; i < this.nodes.length; i++) {
+                for (let j = i + 1; j < this.nodes.length; j++) {
+                    const n1 = this.nodes[i];
+                    const n2 = this.nodes[j];
+                    const dist = Vector.mag(Vector.sub(n1.pos, n2.pos));
+                    
+                    if (dist < 200) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(n1.pos.x, n1.pos.y);
+                        this.ctx.lineTo(n2.pos.x, n2.pos.y);
+                        this.ctx.stroke();
+                    }
+                }
+            }
+
+            // Teken de Nodes
+            this.nodes.forEach((node, i) => {
+                const x = node.pos.x;
+                const y = node.pos.y;
+                const radius = i === CENTER_NODE_INDEX ? 8 : 4;
+                
+                // Kleur gebaseerd op Coherentie (Ma'at)
+                const colorFactor = Math.floor(node.coherence * 255);
+                const color = i === CENTER_NODE_INDEX ? 'var(--accent-gold)' : 
+                              `rgb(${20 + (1-node.coherence) * 100}, ${colorFactor}, ${colorFactor})`; 
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                this.ctx.fillStyle = color;
+                this.ctx.fill();
+                this.ctx.strokeStyle = i === CENTER_NODE_INDEX ? 'var(--accent-gold)' : 'var(--accent-cyan)';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+
+                // Glow effect (gebaseerd op spanning/deltaPhi)
+                const glowRadius = radius + node.deltaPhi * 15;
+                const glowColor = i === CENTER_NODE_INDEX ? 'rgba(212, 175, 55, 0.2)' : 'rgba(0, 240, 255, 0.1)';
+                const gradient = this.ctx.createRadialGradient(x, y, radius, x, y, glowRadius);
+                gradient.addColorStop(0, glowColor);
+                gradient.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, glowRadius, 0, 2 * Math.PI);
+                this.ctx.fill();
+            });
+
+            // Teken de UserNode ($I_0$ positie) - De cursor is de motor
+            const ux = this.userNode.pos.x;
+            const uy = this.userNode.pos.y;
+            const uRadius = 10;
+            const umicColor = `rgba(255, 140, 0, ${this.userNode.deltaPhi})`; // Oranje gebaseerd op spanning
+
+            // Teken de UserNode puls ring
+            this.ctx.strokeStyle = umicColor;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(ux, uy, uRadius + this.userNode.deltaPhi * 10, 0, 2 * Math.PI);
+            this.ctx.stroke();
+
+            // Teken de userNode centrale punt
+            this.ctx.fillStyle = 'var(--accent-umic)';
+            this.ctx.beginPath();
+            this.ctx.arc(ux, uy, 4, 0, 2 * Math.PI);
+            this.ctx.fill();
+        },
+        
+        pulseMaat() {
+            this.log("Ma'at Puls uitgezonden: Veld-correctie.", "maat");
+            const center = {x: this.width/2, y: this.height/2};
+            this.nodes.forEach(n => {
+                // Trek alles naar het centrum en verhoog coherentie
+                const dir = Vector.normalize(Vector.sub(center, n.pos));
+                n.applyForce(Vector.mult(dir, 5));
+                n.coherence = Math.min(1.0, n.coherence + 0.3);
+            });
+        },
+
+        resetField() {
+            this.log("Veld Reset... Nieuwe configuratie geladen.", "crit");
+            this.spawnNodes();
+            this.userNode.deltaPhi = 0.1;
+            this.userNode.psi = 0.8;
+            this.userNode.motorC = 1.0;
+        },
+
+        updateUI() {
+            // Update UMIC Metrics
+            document.getElementById('val-delta-phi').innerText = this.userNode.deltaPhi.toFixed(3);
+            document.getElementById('val-psi').innerText = this.userNode.psi.toFixed(3);
+            document.getElementById('val-motor-c').innerText = this.userNode.motorC.toFixed(3);
+            
+            const speedMag = Vector.mag(this.userNode.velocity) / 1000; // pixels per seconde
+            document.getElementById('val-speed-grad').innerText = speedMag.toFixed(3);
+
+            // Update Veld Metrics
+            const totalVel = this.nodes.slice(1).reduce((sum, n) => sum + Vector.mag(n.vel), 0);
+            const avgVel = totalVel / (this.nodes.length - 1 || 1);
+            document.getElementById('val-avg-vel').innerText = avgVel.toFixed(3);
+
+            const totalCoh = this.nodes.slice(1).reduce((sum, n) => sum + n.coherence, 0);
+            const avgCoh = totalCoh / (this.nodes.length - 1 || 1);
+            document.getElementById('val-avg-coh').innerText = avgCoh.toFixed(3);
+            
+            // Dummy Max Force voor UI
+            document.getElementById('val-max-force').innerText = 'N/A';
+            
+            const led = document.getElementById('kernel-led');
+            if (this.userNode.deltaPhi > 0.5 || this.userNode.psi < 0.5) {
+                led.className = "status-indicator status-umic";
+            } else {
+                led.className = "status-indicator status-active";
+            }
+        },
+
+        log(msg, type="sys") {
+            const logPanel = document.getElementById('log-panel');
+            const time = new Date().toLocaleTimeString('nl-NL');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+            logPanel.insertBefore(entry, logPanel.firstChild);
+            
+            if (logPanel.children.length > 50) logPanel.removeChild(logPanel.lastChild);
+        },
+
+        // --- MAIN LOOP ---
+        animate() {
+            const dt = 1/60; // Fixed timestep
+            this.updatePhysics(dt);
+            this.draw();
+            this.updateUI();
+            requestAnimationFrame(() => this.animate());
+        }
+    };
+
+    // Start
+    window.onload = () => HexOSAI_Kernel.init();
+
+</script>
+</body>
+</html>
