@@ -47,3 +47,12 @@ CertUtil: The process cannot access the file because it is being used by another
 SHA256 hash of hexagon-lab.jsx:
 9c5fb9bfe85c11900fdb06bb7f22656bc3fd228192801d7b6e23c1c57ce168f9
 CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== Unified Field-Theoretic Model of Language.md ==== 
+SHA256 hash of Unified Field-Theoretic Model of Language.md:
+b65275a2757178120ea0248a5e0ee63d918f07eacca6d7aef11175165cd343d3
+CertUtil: -hashfile command completed successfully.
+
+
