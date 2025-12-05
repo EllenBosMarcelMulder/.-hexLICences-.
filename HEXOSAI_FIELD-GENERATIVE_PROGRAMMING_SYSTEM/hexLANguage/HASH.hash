@@ -1,0 +1,18 @@
+==== A Field-Theoretic Encoding of Language Using Three (Crossed) L.ots ==== 
+SHA256 hash of A Field-Theoretic Encoding of Language Using Three (Crossed) L.ots:
+e6b70d238963fd76465b54e0895fd75d8c0643796a383e0f8977a5708d986a74
+CertUtil: -hashfile command completed successfully.
+==== A Field-Theoretic Encoding of Language Using Three (Crossed) Linked. (EXPANDED).md ==== 
+CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
+CertUtil: The system cannot find the file specified.
+==== A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md ==== 
+SHA256 hash of A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md:
+47276e1d67ee8c1d178899f18f13f820998cda5712063a4449e50d4932a4ca10
+CertUtil: -hashfile command completed successfully.
+==== A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md.ots ==== 
+SHA256 hash of A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md.ots:
+aa7cedc026ffe97c21a89cc0fffcd79703606977ad7d972e55afa2725dd2d649
+CertUtil: -hashfile command completed successfully.
+==== HASH.hash ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
