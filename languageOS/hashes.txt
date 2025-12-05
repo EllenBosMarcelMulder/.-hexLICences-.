@@ -18,14 +18,7 @@ CertUtil: -hashfile command completed successfully.
 ==== HASHREGISTER.txt ==== 
 CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
 CertUtil: The process cannot access the file because it is being used by another process.
-==== HEXOSAI FIELD-GENERATIVE PROGRAMMING SYSTEM v0.1.md ==== 
-SHA256 hash of HEXOSAI FIELD-GENERATIVE PROGRAMMING SYSTEM v0.1.md:
-07f8224eba68c22043851ba3682413fcb216efe6b8e23cc3db41897c4850b51b
-CertUtil: -hashfile command completed successfully.
-==== HEXOSAI FIELD-GENERATIVE PROGRAMMING SYSTEM v0.2.md ==== 
-SHA256 hash of HEXOSAI FIELD-GENERATIVE PROGRAMMING SYSTEM v0.2.md:
-825d9dda805eaba60e267fe085bc2529ac609b19f64c73267b259505e894b7f8
-CertUtil: -hashfile command completed successfully.
+
 
 
 
