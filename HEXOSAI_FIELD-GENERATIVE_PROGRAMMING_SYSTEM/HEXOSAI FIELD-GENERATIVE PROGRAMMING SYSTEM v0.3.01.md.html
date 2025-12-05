@@ -1,0 +1,481 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXOSAI v0.3 - Unified Field Dynamics Visualizer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js CDN for powerful charting -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Custom styles for visualization aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            color: #e6edf3;
+        }
+        .chart-container {
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            background-color: #161b22;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .chart-container:hover {
+            border-color: #484f58;
+        }
+        .axis-label {
+            fill: #8b949e;
+            font-size: 0.75rem;
+        }
+        .chart-title {
+            fill: #e6edf3;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        /* Custom colors for D3 paths */
+        .line-human { stroke: #58a6ff; }
+        .line-animal { stroke: #a371f7; }
+        .line-biological { stroke: #3fb950; }
+        .line-unified { stroke: #ffea00; } /* Gold */
+        .line-tension { stroke: #fa4549; } /* Red */
+        .line-coherence { stroke: #33d45d; } /* Green */
+        .line-operator { stroke: #c993ff; } /* Purple */
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold text-white mb-2">HEXOSAI v0.3 - Unified Field Dynamics</h1>
+        <p class="text-xl text-gray-400">Real-Time Visualization of Conceptual Phase Coherence</p>
+    </header>
+
+    <main class="max-w-7xl mx-auto">
+        
+        <!-- Controls and Simulation Info -->
+        <div id="controls" class="bg-gray-800 p-4 rounded-xl shadow-lg mb-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-6">
+            <div class="flex items-center space-x-4">
+                <button id="runButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.26a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Start Simulation
+                </button>
+                <button id="resetButton" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.96 8.96 0 0120 12c0 2.454-.833 4.708-2.203 6.556l-3.551-3.551M13.447 16.553l-3.551 3.551A8.96 8.96 0 014 12c0-2.454.833-4.708 2.203-6.556l3.551 3.551"></path></svg>
+                    Reset
+                </button>
+            </div>
+            <div id="status" class="text-lg font-mono text-green-400">
+                Status: Ready
+            </div>
+            <div class="text-sm text-gray-400">
+                Time Steps: <span id="timeSteps" class="font-mono text-white">2000</span> | Max Time: <span id="maxTime" class="font-mono text-white">200</span>
+            </div>
+        </div>
+
+        <!-- 1. Phase Signals Chart -->
+        <div class="chart-container">
+            <h2 class="text-xl font-semibold mb-3">1. Unified Field and Phase Signals (Φ)</h2>
+            <div id="chart-phase" class="w-full" style="height: 350px;"></div>
+        </div>
+
+        <!-- 2. Glyph Tension & Coherence Chart -->
+        <div class="chart-container">
+            <h2 class="text-xl font-semibold mb-3">2. Glyph Formation Metrics (Tension vs Coherence)</h2>
+            <div id="chart-metrics" class="w-full" style="height: 350px;"></div>
+        </div>
+
+        <!-- 3. Operator Output Chart -->
+        <div class="chart-container">
+            <h2 class="text-xl font-semibold mb-3">3. Glyph Operator Classification (Expand / Stabilize / Contract)</h2>
+            <div id="chart-operator" class="w-full" style="height: 350px;"></div>
+        </div>
+
+    </main>
+
+    <script>
+        // Constants and Configuration
+        const MAX_TIME = 200;
+        const STEPS = 2000;
+        const CHART_HEIGHT = 350;
+        const MARGIN = { top: 30, right: 30, bottom: 40, left: 50 };
+        const data = [];
+        let simulationRan = false;
+
+        // =============================================================
+        // HEXOSAI v0.3 – UNIFIED FIELD OPERATORS (JS Translation)
+        // =============================================================
+
+        /** Human linguistic prosody signature. */
+        function human_phase(t) {
+            return Math.sin(2 * t * 0.8) * 0.6 + Math.sin(t * 0.3) * 0.3;
+        }
+
+        /** Animal signaling rhythm (whale/bird-like). */
+        function animal_phase(t) {
+            return Math.sin(t * 0.15) + 0.3 * Math.sin(3 * t * 0.05);
+        }
+
+        /** Cellular metabolic oscillation. */
+        function biological_cycle(t) {
+            return 0.5 * Math.sin(t * 0.02) + 0.2 * Math.sin(t * 0.005);
+        }
+
+        /** The HEXOSAI field unifies all three through coherence weighting. */
+        function unified_field(phi_h, phi_a, phi_b) {
+            return (phi_h + phi_a + phi_b) / 3;
+        }
+
+        // =============================================================
+        // GLYPH FORMATION OPERATORS (JS Translation)
+        // =============================================================
+
+        /** T = total tension in the unified field. */
+        function glyph_tension(phi_h, phi_a, phi_b) {
+            // Note: Use Math.abs for absolute difference
+            return Math.abs(phi_h - phi_a) + Math.abs(phi_h - phi_b) + Math.abs(phi_a - phi_b);
+        }
+
+        /** C = tanh-compressed coherence metric. */
+        function glyph_coherence(phi_u) {
+            // Note: Use Math.tanh for tanh compression
+            return Math.tanh(Math.abs(phi_u));
+        }
+
+        /** Categorizes glyph phase: expand / contract / stabilize.
+         * Returns: 1 (Expand), 0 (Stabilize), -1 (Contract)
+         */
+        function glyph_operator(T, C) {
+            if (T < 0.5 && C > 0.6) {
+                return 0; // "Stabilize" (New: Use 0 for better visualization)
+            } else if (C > T) {
+                return 1; // "Expand"
+            } else {
+                return -1; // "Contract"
+            }
+        }
+
+        // =============================================================
+        // SIMULATION CORE
+        // =============================================================
+
+        /** Runs the full simulation and generates the time series data. */
+        function runSimulation() {
+            data.length = 0; // Clear previous data
+            for (let i = 0; i < STEPS; i++) {
+                const t = (i / (STEPS - 1)) * MAX_TIME;
+
+                const phi_h = human_phase(t);
+                const phi_a = animal_phase(t);
+                const phi_b = biological_cycle(t);
+                const phi_u = unified_field(phi_h, phi_a, phi_b);
+
+                const T = glyph_tension(phi_h, phi_a, phi_b);
+                const C = glyph_coherence(phi_u);
+
+                const operator_val = glyph_operator(T, C);
+
+                data.push({
+                    t,
+                    phi_h,
+                    phi_a,
+                    phi_b,
+                    phi_u,
+                    T,
+                    C,
+                    operator: operator_val
+                });
+            }
+            simulationRan = true;
+            document.getElementById('status').textContent = 'Status: Simulation Complete';
+            drawAllCharts();
+        }
+
+        // =============================================================
+        // D3 CHARTING FUNCTIONS
+        // =============================================================
+
+        /**
+         * Generic setup for a D3 chart (SVG creation, dimensions, scales).
+         * @param {string} containerId - The ID of the div container.
+         * @param {Array<Object>} data - The data array.
+         * @param {number} yMin - Minimum value for the y-axis domain.
+         * @param {number} yMax - Maximum value for the y-axis domain.
+         * @returns {Object} D3 components (svg, xScale, yScale, width, height).
+         */
+        function setupChart(containerId, data, yMin, yMax) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Clear previous chart
+            d3.select(container).selectAll("*").remove();
+
+            const containerWidth = container.clientWidth;
+            const width = containerWidth - MARGIN.left - MARGIN.right;
+            const height = CHART_HEIGHT - MARGIN.top - MARGIN.bottom;
+
+            const svg = d3.select(container)
+                .append("svg")
+                .attr("width", containerWidth)
+                .attr("height", CHART_HEIGHT)
+                .append("g")
+                .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+            const xScale = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.t))
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([yMin, yMax])
+                .range([height, 0]);
+
+            // Add X axis
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(10))
+                .selectAll("text")
+                .attr("class", "axis-label");
+
+            // Add Y axis
+            svg.append("g")
+                .call(d3.axisLeft(yScale).ticks(5))
+                .selectAll("text")
+                .attr("class", "axis-label");
+
+            // Add X axis label
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", width / 2)
+                .attr("y", height + MARGIN.bottom - 5)
+                .style("text-anchor", "middle")
+                .text("Time (t)");
+
+            return { svg, xScale, yScale, width, height };
+        }
+
+        /**
+         * Draws a single line on the chart.
+         * @param {d3.Selection} svg - The SVG group element.
+         * @param {Array<Object>} data - The data array.
+         * @param {d3.ScaleLinear} xScale - The x-scale.
+         * @param {d3.ScaleLinear} yScale - The y-scale.
+         * @param {string} key - The data key to plot (e.g., 'phi_h').
+         * @param {string} className - The CSS class for styling.
+         */
+        function drawLine(svg, data, xScale, yScale, key, className) {
+            const line = d3.line()
+                .x(d => xScale(d.t))
+                .y(d => yScale(d[key]));
+
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke-width", className === 'line-unified' ? 3 : 1.5)
+                .attr("class", className)
+                .attr("d", line);
+        }
+
+        /**
+         * Draws the discrete step line for the operator classification.
+         */
+        function drawStepLine(svg, data, xScale, yScale) {
+            // Custom step line generator
+            const stepLine = d3.line()
+                .curve(d3.curveStepAfter)
+                .x(d => xScale(d.t))
+                .y(d => yScale(d.operator));
+
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .attr("class", "line-operator")
+                .attr("d", stepLine);
+
+            // Add Y-axis labels for the discrete states
+            const operatorLabels = [
+                { value: 1, text: "Expand (C > T)", color: 'text-green-400' },
+                { value: 0, text: "Stabilize (T<0.5, C>0.6)", color: 'text-yellow-400' },
+                { value: -1, text: "Contract (Else)", color: 'text-red-400' }
+            ];
+
+            operatorLabels.forEach(label => {
+                svg.append("text")
+                    .attr("x", -MARGIN.left / 4)
+                    .attr("y", yScale(label.value) + 5)
+                    .attr("class", `font-semibold ${label.color} text-xs`)
+                    .style("text-anchor", "end")
+                    .text(label.text);
+            });
+        }
+
+        /** Draws the first chart: Phase Signals. */
+        function drawPhaseChart() {
+            const { svg, xScale, yScale, height } = setupChart(
+                'chart-phase',
+                data,
+                d3.min(data, d => Math.min(d.phi_h, d.phi_a, d.phi_b, d.phi_u)) * 1.1,
+                d3.max(data, d => Math.max(d.phi_h, d.phi_a, d.phi_b, d.phi_u)) * 1.1
+            );
+            if (!svg) return;
+
+            drawLine(svg, data, xScale, yScale, 'phi_h', 'line-human');
+            drawLine(svg, data, xScale, yScale, 'phi_a', 'line-animal');
+            drawLine(svg, data, xScale, yScale, 'phi_b', 'line-biological');
+            drawLine(svg, data, xScale, yScale, 'phi_u', 'line-unified');
+
+            // Add legend
+            const legendData = [
+                { label: "Φ_h (Human)", class: "line-human" },
+                { label: "Φ_a (Animal)", class: "line-animal" },
+                { label: "Φ_b (Biological)", class: "line-biological" },
+                { label: "Φ_u (Unified)", class: "line-unified" }
+            ];
+            addLegend(svg, legendData, height);
+        }
+
+        /** Draws the second chart: Tension & Coherence. */
+        function drawMetricsChart() {
+            const { svg, xScale, yScale, height } = setupChart(
+                'chart-metrics',
+                data,
+                0, // T and C are non-negative
+                d3.max(data, d => Math.max(d.T, d.C)) * 1.1
+            );
+            if (!svg) return;
+
+            drawLine(svg, data, xScale, yScale, 'T', 'line-tension');
+            drawLine(svg, data, xScale, yScale, 'C', 'line-coherence');
+
+            // Add threshold line for T < 0.5 (Stabilize condition)
+            svg.append("line")
+                .attr("x1", 0)
+                .attr("y1", yScale(0.5))
+                .attr("x2", xScale(MAX_TIME))
+                .attr("y2", yScale(0.5))
+                .attr("stroke", "#ffaa00")
+                .attr("stroke-dasharray", "4")
+                .attr("opacity", 0.7);
+
+            // Add legend
+            const legendData = [
+                { label: "Tension (T)", class: "line-tension" },
+                { label: "Coherence (C)", class: "line-coherence" }
+            ];
+            addLegend(svg, legendData, height);
+        }
+
+        /** Draws the third chart: Operator Classification. */
+        function drawOperatorChart() {
+            const { svg, xScale, yScale } = setupChart(
+                'chart-operator',
+                data,
+                -1.5, // Min for -1 state
+                1.5    // Max for 1 state
+            );
+            if (!svg) return;
+
+            // Draw center line (Stabilize)
+            svg.append("line")
+                .attr("x1", 0)
+                .attr("y1", yScale(0))
+                .attr("x2", xScale(MAX_TIME))
+                .attr("y2", yScale(0))
+                .attr("stroke", "#8b949e")
+                .attr("stroke-dasharray", "2")
+                .attr("opacity", 0.5);
+
+            drawStepLine(svg, data, xScale, yScale);
+        }
+
+        /** Adds a simple legend to the chart. */
+        function addLegend(svg, legendData, height) {
+            const legend = svg.append("g")
+                .attr("transform", `translate(10, ${height + MARGIN.bottom - 20})`); // Position at the bottom left
+
+            legendData.forEach((item, i) => {
+                const legendRow = legend.append("g")
+                    .attr("transform", `translate(${i * 150}, 0)`);
+
+                legendRow.append("rect")
+                    .attr("width", 15)
+                    .attr("height", 3)
+                    .attr("rx", 1)
+                    .attr("class", item.class)
+                    .attr("stroke", "none");
+
+                legendRow.append("text")
+                    .attr("x", 20)
+                    .attr("y", 4)
+                    .attr("class", "axis-label")
+                    .text(item.label);
+            });
+        }
+
+        /** Draws all three charts if simulation data is available. */
+        function drawAllCharts() {
+            if (simulationRan) {
+                drawPhaseChart();
+                drawMetricsChart();
+                drawOperatorChart();
+            }
+        }
+
+        // =============================================================
+        // EVENT HANDLERS AND INITIALIZATION
+        // =============================================================
+
+        function initialize() {
+            const runButton = document.getElementById('runButton');
+            const resetButton = document.getElementById('resetButton');
+
+            runButton.addEventListener('click', () => {
+                if (!simulationRan) {
+                    runSimulation();
+                    runButton.disabled = true;
+                    runButton.textContent = 'Simulation Running...';
+                    setTimeout(() => {
+                        runButton.textContent = 'Simulation Complete';
+                        runButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                        runButton.classList.add('bg-green-600');
+                    }, 10);
+                }
+            });
+
+            resetButton.addEventListener('click', () => {
+                simulationRan = false;
+                data.length = 0;
+                d3.select('#chart-phase').selectAll("*").remove();
+                d3.select('#chart-metrics').selectAll("*").remove();
+                d3.select('#chart-operator').selectAll("*").remove();
+                document.getElementById('status').textContent = 'Status: Ready';
+                runButton.disabled = false;
+                runButton.textContent = 'Start Simulation';
+                runButton.classList.remove('bg-green-600');
+                runButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            });
+
+            // Run simulation on load for immediate visualization
+            runSimulation();
+            runButton.disabled = true;
+            runButton.textContent = 'Simulation Complete';
+            runButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            runButton.classList.add('bg-green-600');
+
+            // Handle responsiveness on window resize
+            window.addEventListener('resize', () => {
+                if (simulationRan) {
+                    drawAllCharts();
+                }
+            });
+        }
+
+        // Wait for the DOM to be fully loaded before starting
+        window.onload = initialize;
+    </script>
+
+</body>
+</html>
