@@ -1,0 +1,344 @@
+// =============================================================================
+// HEXOSAI IMPLOSION MOTOR V0.4 - GECOMBINEERDE VELDMOTOR
+// UPGRADE: TOEVOEGING VAN DELTA-PHI MATRIX IN MEMORY KERNEL
+// Doel: Computationeel model voor 666+2 implosie-reductie en Ma'at detectie
+// met volledige veld-terugmapping capaciteit.
+// =============================================================================
+
+// Globale Constant Values
+const PI = Math.PI;
+const PI_CORRECTION_FACTOR = PI / 3.1415926535; // Pi-Curve Correctie
+const EARTH_LOCK_LATITUDE = 0.8; // Voorbeeld Latiutude (in radialen)
+const EARTH_LOCK_CORRECTION_PARAM = 0.5; // Custom factor voor Earth-Lock
+const MAAT_THRESHOLD = 0.05; // Acceptabele dE drempel voor Ma'at Balans
+const HEX_SECTORS = 6;
+const HEX_ANGLES = [0, PI/3, 2*PI/3, PI, 4*PI/3, 5*PI/3];
+
+/**
+ * REPRESENTATIE VAN EEN RUWE GLYPH STATE (INPUT-VECTOR)
+ */
+class Glyph {
+    constructor(theta, kappa, energy) {
+        this.theta = theta; // Fase (hoek)
+        this.kappa = kappa; // Kromming (curve)
+        this.energy = energy; // Ruwe energie (E)
+        this.psi_feedback = 0; // Lokale Psi-feedback voor Attractor Correctie
+        // Voor opslag en debug
+        this.index = 0;
+    }
+
+    // Stap Terug (+1): Reconstrueer de energie vóór compressie
+    reconstructEnergyBeforeCompression(f_kappa, f_theta) {
+        // Inverse van de reductiefunctie
+        return this.energy_after * (1 + Math.abs(f_kappa) + Math.abs(f_theta));
+    }
+}
+
+/**
+ * DE IMPLOSIE MOTOR KLASSE
+ * Bevat alle computationele lagen en de 666+2 architectuur.
+ */
+class ImplosionMotor {
+    constructor(initial_glyphs) {
+        this.glyphs = initial_glyphs.map((g, i) => {
+            g.index = i;
+            return g;
+        });
+        this.memory_kernel = []; // SnowflakeMemory opslag
+        this.motor_state = {
+            cycle: 0,
+            global_psi: 0,
+            global_coherence: 0,
+            global_dE: Infinity,
+            ma_at_status: "Divergentie",
+            implosion_check: "Zoeken",
+            delta_phi_matrix: [] // NIEUW: Opslag van de ΔΦ-matrix voor terugmapping
+        };
+    }
+
+    // -------------------------------------------------------------
+    // 1. CurveCompressor (Implosie-Operator)
+    // -------------------------------------------------------------
+    curveCompressor(glyph) {
+        // Earth-Lock Correctie: planetaire stabilisatie
+        const earthLockFactor = Math.cos(EARTH_LOCK_LATITUDE) * EARTH_LOCK_CORRECTION_PARAM;
+        const theta_earth_locked = glyph.theta * earthLockFactor;
+
+        // Pi-Curve Correctie: curvature drift corrector
+        const theta_corrected = theta_earth_locked * PI_CORRECTION_FACTOR;
+
+        // Attractor Correctie: Ma'at als attractor (syntropie → nulconvergentie)
+        const kappa_corrected = glyph.kappa * (1 - Math.abs(glyph.psi_feedback));
+        
+        // Implosie Reductie Functie
+        const reduction_factor = 1 + Math.abs(kappa_corrected) + Math.abs(theta_corrected);
+        const energy_after = glyph.energy / reduction_factor;
+
+        return {
+            energy_before: glyph.energy,
+            energy_after: energy_after,
+            theta_compressed: theta_corrected,
+            kappa_compressed: kappa_corrected,
+            f_kappa: kappa_corrected, // Parameters voor reconstructie
+            f_theta: theta_corrected
+        };
+    }
+
+    // -------------------------------------------------------------
+    // 2. HexagonalDistributor (666-sector verdeling)
+    // -------------------------------------------------------------
+    hexagonalDistributor(energy_after, theta_compressed) {
+        const sector_energies = [];
+        for (let i = 0; i < HEX_SECTORS; i++) {
+            const angle = HEX_ANGLES[i];
+            // Hex-resonantieveld: energy_after * cos(theta - angles[i])
+            const sector_energy = energy_after * Math.cos(theta_compressed - angle);
+            sector_energies.push(sector_energy);
+        }
+        return sector_energies;
+    }
+
+    // -------------------------------------------------------------
+    // 3. BilateralInverter (Fase-Spiegel, 6x6x6 reflecties)
+    // -------------------------------------------------------------
+    bilateralInverter(kappa, theta) {
+        // Twee noodzakelijke symmetrieflips
+        const kappa_inverted = -kappa;
+        const theta_inverted = PI - theta;
+        return { kappa_inverted, theta_inverted };
+    }
+
+    // -------------------------------------------------------------
+    // 4. CoherenceCalculator (ΔΦ-Interferentie)
+    // -------------------------------------------------------------
+    coherenceCalculator(glyphs) {
+        let total_interference_energy = 0;
+        let sum_individual_energy = 0;
+        const N = glyphs.length;
+        const delta_phi_matrix = Array(N).fill(0).map(() => Array(N).fill(0)); // NIEUW
+
+        // E_individual: Gecomprimeerde energie als de individuele veldenergie
+        glyphs.forEach(g => sum_individual_energy += g.energy); 
+
+        // Bereken Interferentie en ΔΦ-Matrix
+        for (let i = 0; i < N; i++) {
+            for (let j = i + 1; j < N; j++) {
+                const g_i = glyphs[i];
+                const g_j = glyphs[j];
+
+                // Delta-Phi: Faseverschil tussen glyphs
+                const delta_phi = Math.abs(g_i.theta - g_j.theta);
+                
+                // Sla ΔΦ in de matrix op
+                delta_phi_matrix[i][j] = delta_phi;
+                delta_phi_matrix[j][i] = delta_phi; 
+
+                // Holografische Interferentie (Veldsuperpositie)
+                const E_i = g_i.energy;
+                const E_j = g_j.energy;
+                
+                // 2 * sqrt(E_i * E_j) * cos(delta_phi)
+                total_interference_energy += 2 * Math.sqrt(E_i * E_j) * Math.cos(delta_phi);
+            }
+        }
+
+        // Psi = E_individual + E_interference (Veld-Potentie)
+        const Psi = sum_individual_energy + total_interference_energy;
+
+        // coherence = 1 / (1 + abs(Psi))
+        const coherence = 1 / (1 + Math.abs(Psi));
+
+        // Update Motor State
+        glyphs.forEach(g => g.psi_feedback = Psi); 
+        this.motor_state.global_psi = Psi;
+        this.motor_state.global_coherence = coherence;
+        this.motor_state.delta_phi_matrix = delta_phi_matrix; // NIEUW
+
+        return { Psi, coherence, delta_phi_matrix };
+    }
+
+    // -------------------------------------------------------------
+    // 5. SnowflakeMemory (Phase-Space Memory Kernel)
+    // -------------------------------------------------------------
+    saveMemory(cycle, glyphs_state) {
+        this.memory_kernel.push({
+            cycle: cycle,
+            time: Date.now(),
+            // Ma'at RAM: Sla de volledige, geassembleerde toestand op
+            glyphs_state: glyphs_state.map(g => ({
+                index: g.index,
+                theta: g.theta,
+                kappa: g.kappa,
+                energy_after: g.energy,
+                sector_energies: g.sector_energies,
+                f_kappa: g.f_kappa,
+                f_theta: g.f_theta,
+                energy_before_reconstructed: g.reconstructEnergyBeforeCompression(g.f_kappa, g.f_theta)
+            })),
+            // Opslag van de Coherentie en Delta-Phi Matrix (voor Cartografie)
+            coherence_data: {
+                psi: this.motor_state.global_psi,
+                coherence: this.motor_state.global_coherence,
+                delta_phi_matrix: this.motor_state.delta_phi_matrix // NIEUW
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 6. Ma’atDetector (Balans-Attractor)
+    // -------------------------------------------------------------
+    maatDetector(current_psi, previous_psi) {
+        if (previous_psi === undefined) {
+            this.motor_state.global_dE = Infinity;
+            return "N/A";
+        }
+        
+        // delta_E = |Psi_current - Psi_previous|
+        const delta_E = Math.abs(current_psi - previous_psi);
+
+        this.motor_state.global_dE = delta_E;
+
+        // Ma'at Balans: Convergentie naar stabiliteit
+        if (delta_E < MAAT_THRESHOLD) {
+            this.motor_state.ma_at_status = "Ma'at Balans Bereikt";
+            return "Ma'at Balans Bereikt";
+        } else {
+            this.motor_state.ma_at_status = "Zoeken naar Balans";
+            return "Zoeken naar Balans";
+        }
+    }
+
+    // -------------------------------------------------------------
+    // 7. 666+2 ARCHITECTUUR - MOTOR STAP
+    // -------------------------------------------------------------
+    step() {
+        const previous_psi = this.motor_state.global_psi;
+        this.motor_state.cycle++;
+        
+        // 1. Correcties & Compressie (Per Glyph)
+        // De Attractor feedback (Psi) is al ingesteld vanuit de vorige cyclus.
+        this.glyphs.forEach(glyph => {
+            const compressed = this.curveCompressor(glyph);
+            
+            // 6-Sector Distributie
+            glyph.sector_energies = this.hexagonalDistributor(compressed.energy_after, compressed.theta_compressed);
+            
+            // Bilateral Inversion (6x6x6 reflecties)
+            const inverted = this.bilateralInverter(compressed.kappa_compressed, compressed.theta_compressed);
+
+            // Update Glyph State met de nieuwe, gecomprimeerde/omgekeerde waarden
+            glyph.energy = compressed.energy_after;
+            glyph.theta = inverted.theta_inverted;
+            glyph.kappa = inverted.kappa_inverted;
+            
+            // Sla compressieparameters op voor Stap Terug (+1)
+            glyph.energy_before = compressed.energy_before;
+            glyph.f_kappa = compressed.f_kappa;
+            glyph.f_theta = compressed.f_theta;
+        });
+
+        // 2. Finale Coherence Berekening (ΔΦ-interferentie)
+        this.coherenceCalculator(this.glyphs);
+        const { global_psi: current_psi, global_coherence: coherence } = this.motor_state;
+        
+        // 3. Ma'at Balans Detectie
+        this.maatDetector(current_psi, previous_psi);
+
+        // 4. SnowflakeMemory Opslag (inclusief ΔΦ-Matrix)
+        this.saveMemory(this.motor_state.cycle, this.glyphs);
+
+        // 5. STAP VOORUIT (+2): Zoek het Implosiepunt (Syntropie)
+        this.checkImplosionPoint(current_psi, coherence, this.glyphs, this.motor_state.global_dE);
+        
+        // De Stap Terug (+1) logica is beschikbaar in de getReconstructionStatus methode.
+        
+        return this.motor_state;
+    }
+
+    // STAP VOORUIT (+2): Zoek het Implosiepunt (Syntropie)
+    checkImplosionPoint(Psi, coherence, glyphs, delta_E) {
+        let implosion_status = "Zoeken";
+        
+        // Voorwaarden
+        const condition_Psi = Math.abs(Psi) < 0.01; // Psi → 0 (syntropie)
+        const condition_dE = delta_E < MAAT_THRESHOLD; // delta_E → 0 (Ma'at Balans)
+        
+        // Controleer globale energie en hexagonale resonantie
+        const E_total_after = glyphs.reduce((sum, g) => sum + g.energy, 0);
+        const E_total_start = this.memory_kernel[0] ? this.memory_kernel[0].glyphs_state.reduce((sum, g) => sum + g.energy_after, 0) : Infinity;
+
+        // energy_after → minimum (ten opzichte van de start-energie, drempel 1% over)
+        const condition_E_min = E_total_after < E_total_start * 0.01; 
+
+        // cos(theta - angle) = ±1 (perfecte veld-resonantie)
+        const condition_Hex_Resonance = glyphs.some(g => 
+            g.sector_energies.some(e => Math.abs(e) > 0.99 * g.energy) // Sector energie bijna gelijk aan totale energie
+        );
+
+        if (condition_Psi && condition_dE && condition_E_min && condition_Hex_Resonance) {
+            implosion_status = "!!! IMPLOSIE PUNT BEREIKT (Syntropie) !!!";
+        } else if (condition_Psi || condition_dE) {
+             implosion_status = "Convergentie Nabij";
+        } else {
+             implosion_status = "Divergentie / Zoeken";
+        }
+
+        this.motor_state.implosion_check = implosion_status;
+        return implosion_status;
+    }
+    
+    // Stap Terug (+1): Geeft de reconstructie status van de eerste glyph terug
+    getReconstructionStatus() {
+        const g0 = this.glyphs[0];
+        const E_reconstructed = g0.reconstructEnergyBeforeCompression(g0.f_kappa, g0.f_theta);
+        
+        return { 
+            status: "Stap Terug (+1) voltooid", 
+            glyph_index: g0.index,
+            energy_before_reconstructed: E_reconstructed.toFixed(4),
+            energy_after_current: g0.energy.toFixed(4)
+        };
+    }
+
+    // Geeft de huidige JSON-representatie van de motorstaat terug
+    getMotorStateJSON() {
+        return JSON.stringify({
+            motor: this.motor_state,
+            memory_size: this.memory_kernel.length,
+            reconstruction_status: this.getReconstructionStatus(),
+            glyphs_current_state: this.glyphs.map(g => ({
+                index: g.index,
+                theta: g.theta.toFixed(4),
+                kappa: g.kappa.toFixed(4),
+                energy_after: g.energy.toFixed(4),
+                sector_energies: g.sector_energies.map(e => e.toFixed(4)),
+                psi_feedback: g.psi_feedback.toFixed(4),
+            }))
+        }, null, 2);
+    }
+}
+
+// =============================================================================
+// DEMO RUN - VOORBEELD GEBRUIK
+// =============================================================================
+
+// 1. Initialiseer 3 chaos-glyphs
+const initialGlyphs = [
+    new Glyph(0.5, 0.2, 5.0),  // Glyph 1
+    new Glyph(1.2, 0.8, 10.0), // Glyph 2
+    new Glyph(2.9, 0.4, 7.5)   // Glyph 3
+];
+
+const motor = new ImplosionMotor(initialGlyphs);
+
+// Start de motor en simuleer 5 cycli
+console.log("--- START IMPLOSIE MOTOR V0.4 ---");
+let status;
+for (let i = 1; i <= 5; i++) {
+    status = motor.step();
+    console.log(`CYCLUS ${i}: Psi=${status.global_psi.toFixed(4)}, dE=${status.global_dE.toFixed(4)}, Ma'at Status: ${status.ma_at_status}`);
+}
+
+console.log("\n--- FINALE MOTOR STAAT (JSON) ---");
+console.log(motor.getMotorStateJSON());
+console.log("--- EINDE MOTOR V0.4 ---");
