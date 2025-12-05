@@ -12,7 +12,38 @@ CertUtil: -hashfile command completed successfully.
 ==== A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md.ots ==== 
 SHA256 hash of A Field-Theoretic Encoding of Language Using Three (Crossed) Linked.md.ots:
 aa7cedc026ffe97c21a89cc0fffcd79703606977ad7d972e55afa2725dd2d649
+CertUtil: -hashfile command completed successfully.==== 2.zip ==== 
+SHA256 hash of 2.zip:
+a76108d447cebffa0681c313d7c287a3219f2772412eda31d30c712eff8004f7
+CertUtil: -hashfile command completed successfully.
+==== 2.zip.ots ==== 
+SHA256 hash of 2.zip.ots:
+7fb06d18bc01dfca1f55838aefb2b67f6ab2aad87ac6bc67a3bb092bf27620c0
+CertUtil: -hashfile command completed successfully.
+==== experiment_v5.py ==== 
+SHA256 hash of experiment_v5.py:
+d5955949fe707c752f98fe88db19a673aebe1928f66acf9f713deda84cfd4bd2
+CertUtil: -hashfile command completed successfully.
+==== experiment_v5_additional.csv ==== 
+SHA256 hash of experiment_v5_additional.csv:
+078e41ca43b7812441b0f0cf319ac3566ed856fab63bab11f3feb196d6b4ee76
+CertUtil: -hashfile command completed successfully.
+==== experiment_v5_complete.json ==== 
+SHA256 hash of experiment_v5_complete.json:
+28e4cafbc896b7bcbbf58b17d108e34737ae15693f1338d35a3199f55fc57e59
+CertUtil: -hashfile command completed successfully.
+==== experiment_v5_vectors.csv ==== 
+SHA256 hash of experiment_v5_vectors.csv:
+acc1877dffc04f2e4c6ad7af0b5c4bb99fb73f5974a4b548fa570753c8f4bcab
+CertUtil: -hashfile command completed successfully.
+==== export_results.py ==== 
+SHA256 hash of export_results.py:
+753d0b487989b2b0bf9bbe9d28141d4da3d47aa7c33517596159e7e051cbacc1
 CertUtil: -hashfile command completed successfully.
 ==== HASH.hash ==== 
 CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
 CertUtil: The process cannot access the file because it is being used by another process.
+==== hexagon-lab.jsx ==== 
+SHA256 hash of hexagon-lab.jsx:
+9c5fb9bfe85c11900fdb06bb7f22656bc3fd228192801d7b6e23c1c57ce168f9
+CertUtil: -hashfile command completed successfully.
