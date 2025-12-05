@@ -10,10 +10,20 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of DYNAMICAL GLYPH MATHEMATICS — Glyph Algebra Core Expansion v2.0.md:
 f0a53c649509ba4dcf89795417106980434d5e0c99a62b8c09619e9574491bca
 CertUtil: -hashfile command completed successfully.
-==== HASH.hash ==== 
-CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
-CertUtil: The process cannot access the file because it is being used by another process.
 ==== DYNAMICAL GLYPH MATHEMATICS - LINGUISTIC FIELD MATHEMATICS v4.0.md ==== 
 SHA256 hash of DYNAMICAL GLYPH MATHEMATICS — LINGUISTIC FIELD MATHEMATICS v4.0.md:
 63385d8be1b4454d3c0642400ac595d3dcec5e2ee7a08a8ca71d39f101e10616
 CertUtil: -hashfile command completed successfully.
+==== DYNAMICAL GLYPH MATHEMATICS - THE ENGINE OF ENGINES v7.0.md ==== 
+SHA256 hash of DYNAMICAL GLYPH MATHEMATICS — THE ENGINE OF ENGINES v7.0.md:
+e5440199434f040a1fcd995d2fa1ebbc143429f245634c9ffacc46f48f139805
+CertUtil: -hashfile command completed successfully.
+==== DYNAMICAL GLYPH MATHEMATICS - UNIVERSAL FIELD COMPUTATION v6.0.md ==== 
+SHA256 hash of DYNAMICAL GLYPH MATHEMATICS — UNIVERSAL FIELD COMPUTATION v6.0.md:
+15735194dcbb6c1f94e05fd0b13c30b5f4899dc1ea41e373bd0fec95dd3644a0
+CertUtil: -hashfile command completed successfully.
+==== DYNAMICAL GLYPH MATHEMATICS - BIO-LINGUISTIC FIELD THEORY v5.0.md ==== 
+SHA256 hash of DYNAMICAL GLYPH MATHEMATICS — BIO-LINGUISTIC FIELD THEORY v5.0.md:
+0baf305f3978e43c432b2cc95126b41b2c346e74fc4d58b13d298689a110415d
+CertUtil: -hashfile command completed successfully.
+
