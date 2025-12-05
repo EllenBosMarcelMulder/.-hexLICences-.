@@ -336,4 +336,13 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of Universal Hexagonal Field Processor Dynamic Glyph Kernel.md.hash:
 131b72af6340c302fb2d1629e27295f867359a51315b5f334a461de3f31d4853
 CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== HEXOSAI Implosion Motor V0.4.code ==== 
+SHA256 hash of HEXOSAI Implosion Motor V0.4.code:
+f832b13fc1291a291b6a213b685ec342fcdcbf44728d479f9c273f266711349d
+CertUtil: -hashfile command completed successfully.
+
+
 
