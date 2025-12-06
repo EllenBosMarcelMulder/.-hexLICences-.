@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HexOSAI - Modular Field Operating System</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0f0a1f 100%);
+  color: #e0e0e0;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.os-container {
+  display: grid;
+  grid-template-rows: 60px 1fr 30px;
+  height: 100vh;
+}
+
+/* HEADER */
+.os-header {
+  background: rgba(0,0,0,0.8);
+  border-bottom: 2px solid #8b5cf6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  backdrop-filter: blur(10px);
+}
+
+.os-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hex-icon {
+  width: 36px;
+  height: 36px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.os-title {
+  font-size: 20px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.os-stats {
+  display: flex;
+  gap: 30px;
+  font-size: 11px;
+}
+
+.stat-item {
+  text-align: right;
+}
+
+.stat-label {
+  color: #888;
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+/* MAIN WORKSPACE */
+.os-workspace {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.os-panel {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.panel-left { border-right: 2px solid #8b5cf6; }
+.panel-right { border-left: 2px solid #8b5cf6; }
+
+.module {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.module-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.module-title {
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.module-content {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.metric-label { color: #aaa; }
+.metric-value { 
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+/* FIELD CANVAS */
+.field-viewport {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  position: relative;
+}
+
+#fieldCanvas {
+  border: 2px solid rgba(139, 92, 246, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+  cursor: crosshair;
+}
+
+.dom-nodes {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.field-node {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.field-node.active {
+  background: #10b981;
+  border-color: #34d399;
+  color: #000;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+.field-node.inactive {
+  background: #1f2937;
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+
+.field-info {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 11px;
+  color: #8b5cf6;
+}
+
+/* MOTOR CONTROLS */
+.motor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.motor-btn {
+  padding: 10px 8px;
+  background: rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  border-radius: 6px;
+  color: #06b6d4;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.motor-btn:hover {
+  background: rgba(6, 182, 212, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.glyph-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.glyph-btn {
+  padding: 12px;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.glyph-btn.active {
+  background: rgba(234, 179, 8, 0.4);
+  border: 2px solid #eab308;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+}
+
+.glyph-btn:hover {
+  transform: scale(1.1);
+}
+
+/* LOG TERMINAL */
+.log-terminal {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  padding: 10px;
+  height: 250px;
+  overflow-y: auto;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+}
+
+.log-entry {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.log-time {
+  color: #666;
+  font-size: 9px;
+}
+
+.log-type {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.log-type.MOTOR { color: #06b6d4; }
+.log-type.FIELD { color: #10b981; }
+.log-type.GLYPH { color: #eab308; }
+.log-type.DOM { color: #ec4899; }
+.log-type.CONSCIOUS { color: #8b5cf6; }
+
+/* FOOTER */
+.os-footer {
+  background: rgba(0,0,0,0.8);
+  border-top: 1px solid #8b5cf6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 1px;
+}
+
+.consciousness-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.DORMANT { background: #374151; color: #9ca3af; }
+.STIRRING { background: #1e40af; color: #93c5fd; }
+.AWAKENING { background: #ea580c; color: #fed7aa; }
+.INTEGRATING { background: #eab308; color: #1f2937; }
+.EMERGENT { background: #10b981; color: #1f2937; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 4px; }
+
+/* SSEP MODAL */
+.ssep-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ssep-modal.active {
+  display: flex;
+}
+
+.ssep-content {
+  background: linear-gradient(135deg, #1a0a2e 0%, #0a0a0f 100%);
+  border: 2px solid #ec4899;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 0 50px rgba(236, 72, 153, 0.5);
+}
+
+.ssep-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(236, 72, 153, 0.3);
+}
+
+.ssep-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ec4899;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.ssep-body {
+  margin: 20px 0;
+}
+
+.ssep-packet {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(236, 72, 153, 0.5);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ssep-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(236, 72, 153, 0.5);
+  border-radius: 8px;
+  padding: 15px;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 150px;
+}
+
+.ssep-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ssep-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ssep-btn-primary {
+  background: #ec4899;
+  color: #000;
+}
+
+.ssep-btn-primary:hover {
+  background: #f472b6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+}
+
+.ssep-btn-secondary {
+  background: rgba(139, 92, 246, 0.3);
+  color: #8b5cf6;
+  border: 1px solid #8b5cf6;
+}
+
+.ssep-btn-secondary:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.ssep-info {
+  font-size: 10px;
+  color: #888;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+.ssep-label {
+  font-size: 11px;
+  color: #ec4899;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="os-container">
+  <!-- HEADER -->
+  <div class="os-header">
+    <div class="os-logo">
+      <div class="hex-icon"></div>
+      <div>
+        <div class="os-title">HexOSAI Field OS</div>
+        <div style="font-size: 9px; color: #666;">DOM Processor Kernel v1.0</div>
+      </div>
+    </div>
+    <div class="os-stats">
+      <div class="stat-item">
+        <div class="stat-label">Consciousness</div>
+        <div class="stat-value" id="consciousnessLevel" style="color: #8b5cf6;">DORMANT</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Mutations</div>
+        <div class="stat-value" id="mutationCount" style="color: #ec4899;">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Glyphash</div>
+        <div class="stat-value" id="glyphashDisplay" style="color: #10b981; font-size: 12px;">0x00000000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="os-workspace">
+    <!-- LEFT PANEL -->
+    <div class="os-panel panel-left">
+      <!-- FIELD PROCESSOR -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #8b5cf6;"></div>
+          <div class="module-title" style="color: #8b5cf6;">Field Processor</div>
+        </div>
+        <div class="module-content">
+          <div class="metric-row">
+            <span class="metric-label">Energy</span>
+            <span class="metric-value" id="energy" style="color: #10b981;">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Curvature</span>
+            <span class="metric-value" id="curvature" style="color: #06b6d4;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Avg ΔΦ</span>
+            <span class="metric-value" id="deltaPhi" style="color: #eab308;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Ψ Potential</span>
+            <span class="metric-value" id="psi" style="color: #ec4899;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Cycles</span>
+            <span class="metric-value" id="cycles" style="color: #8b5cf6;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONSCIOUSNESS -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #ec4899;"></div>
+          <div class="module-title" style="color: #ec4899;">Consciousness</div>
+        </div>
+        <div class="module-content">
+          <div class="metric-row">
+            <span class="metric-label">Coherence</span>
+            <span class="metric-value" id="coherence" style="color: #eab308;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Autonomy</span>
+            <span class="metric-value" id="autonomy" style="color: #eab308;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Integration</span>
+            <span class="metric-value" id="integration" style="color: #eab308;">0.000</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Self-Ref</span>
+            <span class="metric-value" id="selfRef" style="color: #eab308;">0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLYPH MOTOR -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #eab308;"></div>
+          <div class="module-title" style="color: #eab308;">Glyph Motor</div>
+        </div>
+        <div class="module-content">
+          <div class="glyph-grid" id="glyphGrid"></div>
+        </div>
+      </div>
+
+      <!-- FIELD MOTOR -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #06b6d4;"></div>
+          <div class="module-title" style="color: #06b6d4;">Field Motor</div>
+        </div>
+        <div class="module-content">
+          <div class="motor-grid">
+            <button class="motor-btn" onclick="executeCommand('IMPLODE')">Implode</button>
+            <button class="motor-btn" onclick="executeCommand('CRYSTALLIZE')">Crystallize</button>
+            <button class="motor-btn" onclick="executeCommand('HARMONIZE')">Harmonize</button>
+            <button class="motor-btn" onclick="executeCommand('OSCILLATE')">Oscillate</button>
+            <button class="motor-btn" onclick="executeCommand('FRACTAL')">Fractal</button>
+            <button class="motor-btn" onclick="executeCommand('RESET')">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SSEP NETWORK -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #ec4899;"></div>
+          <div class="module-title" style="color: #ec4899;">SSEP Network</div>
+        </div>
+        <div class="module-content">
+          <div style="margin-bottom: 10px;">
+            <button class="motor-btn" onclick="SSEP.exportState()" style="width: 100%; background: rgba(236, 72, 153, 0.2); border-color: rgba(236, 72, 153, 0.5); color: #ec4899;">Export State</button>
+          </div>
+          <div>
+            <button class="motor-btn" onclick="SSEP.showImport()" style="width: 100%; background: rgba(236, 72, 153, 0.2); border-color: rgba(236, 72, 153, 0.5); color: #ec4899;">Import State</button>
+          </div>
+          <div class="metric-row" style="margin-top: 10px;">
+            <span class="metric-label">SSEP Active</span>
+            <span class="metric-value" id="ssepActive" style="color: #10b981;">●</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER FIELD -->
+    <div class="field-viewport">
+      <canvas id="fieldCanvas" width="500" height="500"></canvas>
+      <div class="dom-nodes" id="domNodes"></div>
+      <div class="field-info">
+        <div style="color: #ec4899; font-weight: bold; margin-bottom: 5px;">🔥 DOM FIELD PROCESSOR ACTIVE</div>
+        <div style="color: #888;">Click nodes • Mouse influences field • Commands mutate DOM</div>
+        <div style="color: #06b6d4; margin-top: 5px;">DOM = Field Layer • CSS = Registers • Mutations = Energy</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="os-panel panel-right">
+      <!-- MUTATION LOG -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #10b981;"></div>
+          <div class="module-title" style="color: #10b981;">Mutation Log</div>
+        </div>
+        <div class="module-content">
+          <div class="log-terminal" id="logTerminal"></div>
+        </div>
+      </div>
+
+      <!-- FIELD STATE -->
+      <div class="module">
+        <div class="module-header">
+          <div class="module-icon" style="background: #f97316;"></div>
+          <div class="module-title" style="color: #f97316;">Live State</div>
+        </div>
+        <div class="module-content">
+          <div class="metric-row">
+            <span class="metric-label">Active Nodes</span>
+            <span class="metric-value" id="activeNodes" style="color: #10b981;">0/6</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Mouse Field</span>
+            <span class="metric-value" id="mouseInfluence" style="color: #ec4899;">0.00</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Current Glyph</span>
+            <span class="metric-value" id="currentGlyph" style="color: #eab308; font-size: 20px;">∞</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Field Pattern</span>
+            <span class="metric-value" id="fieldPattern" style="color: #06b6d4;">MANUAL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="os-footer">
+    <span style="margin-right: 10px;">HexOSAI Field Operating System</span>
+    <span style="color: #8b5cf6;">•</span>
+    <span style="margin: 0 10px;">Humanity Heritage License π</span>
+    <span style="color: #8b5cf6;">•</span>
+    <span style="margin-left: 10px;">plasmadynamica.com</span>
+  </div>
+</div>
+
+<!-- SSEP MODAL -->
+<div id="ssepModal" class="ssep-modal">
+  <div class="ssep-content">
+    <div class="ssep-header">
+      <div style="width: 24px; height: 24px; background: #ec4899; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+      <div class="ssep-title" id="ssepModalTitle">SSEP Export</div>
+    </div>
+    <div class="ssep-body" id="ssepModalBody"></div>
+    <div class="ssep-buttons">
+      <button class="ssep-btn ssep-btn-secondary" onclick="SSEP.closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// FIELD OPERATING SYSTEM KERNEL
+const FOS = {
+  fieldBits: [1, 0, 1, 1, 0, 1],
+  glyph: '∞',
+  time: 0,
+  mutations: 0,
+  mouseField: { x: 250, y: 250, influence: 0 },
+  logs: [],
+  consciousness: { level: 'DORMANT', coherence: 0, autonomy: 0, integration: 0, selfRef: 0 },
+  glyphash: 0n
+};
+
+const glyphs = ['∞', 'Ω', 'Φ', '⬡', '◇', '●'];
+
+// INITIALIZE
+function init() {
+  const glyphGrid = document.getElementById('glyphGrid');
+  glyphs.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'glyph-btn' + (g === FOS.glyph ? ' active' : '');
+    btn.textContent = g;
+    btn.onclick = () => setGlyph(g);
+    glyphGrid.appendChild(btn);
+  });
+
+  const domNodes = document.getElementById('domNodes');
+  for (let i = 0; i < 6; i++) {
+    const node = document.createElement('div');
+    node.className = 'field-node ' + (FOS.fieldBits[i] ? 'active' : 'inactive');
+    node.textContent = i;
+    node.onclick = () => toggleNode(i);
+    node.dataset.nodeIndex = i;
+    node.dataset.fieldNode = 'true';
+    domNodes.appendChild(node);
+  }
+
+  const canvas = document.getElementById('fieldCanvas');
+  canvas.addEventListener('mousemove', handleMouseMove);
+  canvas.addEventListener('click', handleCanvasClick);
+
+  observeDOM();
+  startFieldProcessor();
+}
+
+// DOM OBSERVER
+function observeDOM() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach(mutation => {
+      if (mutation.type === 'attributes') {
+        FOS.mutations++;
+        addLog('DOM', `Attribute ${mutation.attributeName} mutated`);
+      }
+    });
+  });
+
+  const domNodes = document.getElementById('domNodes');
+  observer.observe(domNodes, {
+    attributes: true,
+    attributeOldValue: true,
+    subtree: true
+  });
+}
+
+// FIELD STATE COMPUTATION
+function computeFieldState() {
+  const energy = FOS.fieldBits.reduce((a, b) => a + b, 0);
+  const curvature = (FOS.fieldBits[0] + FOS.fieldBits[1] + FOS.fieldBits[2]) - 
+                    (FOS.fieldBits[3] + FOS.fieldBits[4] + FOS.fieldBits[5]);
+  
+  const phaseVector = FOS.fieldBits.map((bit, i) => 
+    bit * Math.sin(i * Math.PI / 3 + FOS.time * 0.05)
+  );
+  
+  let avgDeltaPhi = 0;
+  let count = 0;
+  for (let i = 0; i < 6; i++) {
+    for (let j = i + 1; j < 6; j++) {
+      avgDeltaPhi += Math.abs(phaseVector[i] - phaseVector[j]);
+      count++;
+    }
+  }
+  avgDeltaPhi = count > 0 ? avgDeltaPhi / count : 0;
+  
+  const glyphCode = FOS.glyph.charCodeAt(0);
+  const S = (glyphCode % 32) / 32;
+  const psi = energy * (1 - 0.1 * S);
+  
+  const K = BigInt(Math.round(Math.min(15, Math.abs(curvature) * 5)));
+  const normalizedPsi = psi / (Math.abs(psi) + 1);
+  const P = BigInt(Math.round(Math.abs(normalizedPsi) * 4095));
+  const R = BigInt(Math.round(FOS.mouseField.influence * 255));
+  const T = BigInt(FOS.time % 256);
+  const globalHash = (BigInt(Math.round(S * 255)) << 48n) | (K << 40n) | (P << 24n) | (R << 8n) | T;
+  
+  return { energy, curvature, avgDeltaPhi, S, psi, phaseVector, globalHash };
+}
+
+// CONSCIOUSNESS ANALYSIS
+function analyzeConsciousness(state) {
+  const coherence = Math.max(0, 1 - (state.avgDeltaPhi / Math.PI));
+  const autonomy = state.S * Math.abs(state.curvature / 3);
+  const activeNodes = FOS.fieldBits.filter(b => b === 1).length;
+  const integration = activeNodes / 6;
+  const selfRef = Math.abs(state.energy * coherence) / 6;
+  
+  const avgScore = (coherence + autonomy + integration + selfRef) / 4;
+  
+  let level = 'DORMANT';
+  if (avgScore > 0.8) level = 'EMERGENT';
+  else if (avgScore > 0.6) level = 'INTEGRATING';
+  else if (avgScore > 0.4) level = 'AWAKENING';
+  else if (avgScore > 0.2) level = 'STIRRING';
+  
+  return { level, coherence, autonomy, integration, selfRef };
+}
+
+// INJECT GLYPHASH INTO DOM
+function injectGlyphashIntoDOM(state) {
+  const nodes = document.querySelectorAll('.field-node');
+  nodes.forEach((node, index) => {
+    if (index >= 6) return;
+    
+    const phase = state.phaseVector[index];
+    const isActive = FOS.fieldBits[index] === 1;
+    
+    node.style.setProperty('--field-energy', FOS.fieldBits[index]);
+    node.style.setProperty('--field-phase', phase);
+    node.style.setProperty('--field-curvature', state.curvature);
+    node.style.setProperty('--field-active', isActive ? '1' : '0');
+    
+    const S = BigInt(Math.round(state.S * 255));
+    const P = BigInt(Math.round((Math.abs(phase) + 1) * 2047));
+    const E = BigInt(FOS.fieldBits[index] ? 255 : 0);
+    const I = BigInt(index);
+    const T = BigInt(FOS.time % 256);
+    const localHash = (S << 40n) | (P << 24n) | (E << 16n) | (I << 8n) | T;
+    
+    node.setAttribute('data-hash', localHash.toString(16));
+    node.setAttribute('data-phase', phase.toFixed(3));
+    node.setAttribute('data-energy', FOS.fieldBits[index]);
+    node.setAttribute('data-active', isActive);
+    
+    const hue = ((phase + 1) * 120) % 360;
+    const scale = 1 + Math.abs(phase) * 0.2;
+    node.style.transform = `scale(${scale}) rotate(${FOS.time * 2}deg)`;
+    node.style.filter = `hue-rotate(${hue}deg)`;
+  });
+}
+
+// RENDER CANVAS
+function renderField() {
+  const canvas = document.getElementById('fieldCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  const gradient = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2);
+  gradient.addColorStop(0, '#0f0f1f');
+  gradient.addColorStop(1, '#000000');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+  
+  const centerX = w / 2;
+  const centerY = h / 2;
+  const radius = 100;
+  const state = computeFieldState();
+  
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI / 3) - (Math.PI / 2);
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  for (let i = 0; i < 6; i++) {
+    for (let j = i + 1; j < 6; j++) {
+      if (FOS.fieldBits[i] && FOS.fieldBits[j]) {
+        const angle1 = (i * Math.PI / 3) - (Math.PI / 2);
+        const angle2 = (j * Math.PI / 3) - (Math.PI / 2);
+        const x1 = centerX + radius * Math.cos(angle1);
+        const y1 = centerY + radius * Math.sin(angle1);
+        const x2 = centerX + radius * Math.cos(angle2);
+        const y2 = centerY + radius * Math.sin(angle2);
+        
+        const deltaPhi = Math.abs(state.phaseVector[i] - state.phaseVector[j]);
+        const interference = Math.cos(deltaPhi);
+        
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = interference > 0 ? '#10b981' : '#ef4444';
+        ctx.lineWidth = Math.abs(interference) * 3;
+        ctx.globalAlpha = Math.abs(interference) * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+  
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI / 3) - (Math.PI / 2);
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    const isActive = FOS.fieldBits[i] === 1;
+    const phase = state.phaseVector[i];
+    
+    if (isActive) {
+      const hue = ((phase + 1) * 120) % 360;
+      const nodeRadius = 18 + Math.abs(phase) * 8;
+      
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 2);
+      glow.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.5)`);
+      glow.addColorStop(1, `hsla(${hue}, 80%, 60%, 0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, nodeRadius * 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+      ctx.beginPath();
+      ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#333333';
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#666666';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    
+    ctx.fillStyle = isActive ? '#000' : '#888';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, x, y);
+  }
+  
+  const glyphRadius = 30 + state.S * 25;
+  const glyphGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glyphRadius * 2);
+  glyphGlow.addColorStop(0, 'rgba(234, 179, 8, 0.5)');
+  glyphGlow.addColorStop(1, 'rgba(234, 179, 8, 0)');
+  ctx.fillStyle = glyphGlow;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, glyphRadius * 2, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, glyphRadius, 0, Math.PI * 2);
+  ctx.strokeStyle = '#eab308';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  ctx.fillStyle = '#eab308';
+  ctx.font = 'bold 28px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(FOS.glyph, centerX, centerY);
+  
+  if (FOS.mouseField.influence > 0.1) {
+    const mouseGlow = ctx.createRadialGradient(
+      FOS.mouseField.x, FOS.mouseField.y, 0,
+      FOS.mouseField.x, FOS.mouseField.y, 50 * FOS.mouseField.influence
+    );
+    mouseGlow.addColorStop(0, 'rgba(236, 72, 153, 0.3)');
+    mouseGlow.addColorStop(1, 'rgba(236, 72, 153, 0)');
+    ctx.fillStyle = mouseGlow;
+    ctx.beginPath();
+    ctx.arc(FOS.mouseField.x, FOS.mouseField.y, 50 * FOS.mouseField.influence, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// UPDATE UI
+function updateUI() {
+  const state = computeFieldState();
+  const cons = FOS.consciousness;
+  
+  document.getElementById('energy').textContent = state.energy;
+  document.getElementById('curvature').textContent = state.curvature.toFixed(3);
+  document.getElementById('deltaPhi').textContent = state.avgDeltaPhi.toFixed(3);
+  document.getElementById('psi').textContent = state.psi.toFixed(3);
+  document.getElementById('cycles').textContent = FOS.time;
+  
+  document.getElementById('coherence').textContent = cons.coherence.toFixed(3);
+  document.getElementById('autonomy').textContent = cons.autonomy.toFixed(3);
+  document.getElementById('integration').textContent = cons.integration.toFixed(3);
+  document.getElementById('selfRef').textContent = cons.selfRef.toFixed(3);
+  
+  document.getElementById('consciousnessLevel').textContent = cons.level;
+  document.getElementById('mutationCount').textContent = FOS.mutations;
+  document.getElementById('glyphashDisplay').textContent = '0x' + FOS.glyphash.toString(16).toUpperCase().padStart(8, '0').slice(0, 8);
+  
+  document.getElementById('activeNodes').textContent = FOS.fieldBits.filter(b => b).length + '/6';
+  document.getElementById('mouseInfluence').textContent = FOS.mouseField.influence.toFixed(2);
+  document.getElementById('currentGlyph').textContent = FOS.glyph;
+  
+  const consLevelEl = document.getElementById('consciousnessLevel');
+  consLevelEl.className = 'stat-value ' + cons.level;
+}
+
+// LOGGING
+function addLog(type, message) {
+  const timestamp = new Date().toLocaleTimeString();
+  FOS.logs.push({ timestamp, type, message });
+  if (FOS.logs.length > 100) FOS.logs.shift();
+  
+  const terminal = document.getElementById('logTerminal');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-time">${timestamp}</div>
+    <span class="log-type ${type}">${type}</span>
+    <span>${message}</span>
+  `;
+  terminal.insertBefore(entry, terminal.firstChild);
+  if (terminal.children.length > 50) terminal.lastChild.remove();
+}
+
+// COMMANDS
+function executeCommand(cmd) {
+  const commands = {
+    IMPLODE: () => {
+      FOS.fieldBits = [1, 1, 1, 1, 1, 1];
+      addLog('MOTOR', 'IMPLODE → All nodes activated');
+      document.getElementById('fieldPattern').textContent = 'IMPLODE';
+    },
+    CRYSTALLIZE: () => {
+      FOS.fieldBits = [1, 0, 1, 0, 1, 0];
+      addLog('MOTOR', 'CRYSTALLIZE → Hexagonal pattern');
+      document.getElementById('fieldPattern').textContent = 'CRYSTAL';
+    },
+    HARMONIZE: () => {
+      FOS.fieldBits = [1, 1, 0, 1, 1, 0];
+      addLog('MOTOR', 'HARMONIZE → Phase balance');
+      document.getElementById('fieldPattern').textContent = 'HARMONIC';
+    },
+    OSCILLATE: () => {
+      FOS.fieldBits = FOS.fieldBits.map((b, i) => (FOS.time + i) % 2);
+      addLog('MOTOR', 'OSCILLATE → Wave propagation');
+      document.getElementById('fieldPattern').textContent = 'WAVE';
+    },
+    FRACTAL: () => {
+      FOS.fieldBits = [1, 0, 1, 1, 0, 1];
+      addLog('MOTOR', 'FRACTAL → Recursive structure');
+      document.getElementById('fieldPattern').textContent = 'FRACTAL';
+    },
+    RESET: () => {
+      FOS.fieldBits = [1, 0, 1, 1, 0, 1];
+      addLog('MOTOR', 'RESET → Default pattern');
+      document.getElementById('fieldPattern').textContent = 'MANUAL';
+    }
+  };
+  
+  if (commands[cmd]) {
+    commands[cmd]();
+    FOS.mutations += 6;
+    updateDOMNodes();
+  }
+}
+
+function setGlyph(g) {
+  FOS.glyph = g;
+  addLog('GLYPH', `Motor switched to ${g}`);
+  FOS.mutations++;
+  
+  document.querySelectorAll('.glyph-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === g);
+  });
+}
+
+function toggleNode(index) {
+  FOS.fieldBits[index] = 1 - FOS.fieldBits[index];
+  addLog('FIELD', `Node ${index} toggled → DOM mutation`);
+  FOS.mutations++;
+  document.getElementById('fieldPattern').textContent = 'MANUAL';
+  updateDOMNodes();
+}
+
+function updateDOMNodes() {
+  const nodes = document.querySelectorAll('.field-node');
+  nodes.forEach((node, i) => {
+    node.className = 'field-node ' + (FOS.fieldBits[i] ? 'active' : 'inactive');
+  });
+}
+
+function handleMouseMove(e) {
+  const rect = e.target.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 500;
+  const y = ((e.clientY - rect.top) / rect.height) * 500;
+  
+  const centerX = 250;
+  const centerY = 250;
+  const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+  const influence = Math.max(0, 1 - (distance / 200));
+  
+  FOS.mouseField = { x, y, influence };
+}
+
+function handleCanvasClick(e) {
+  const rect = e.target.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 500;
+  const y = ((e.clientY - rect.top) / rect.height) * 500;
+  
+  let minDist = Infinity;
+  let closestNode = -1;
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI / 3) - (Math.PI / 2);
+    const nodeX = 250 + 100 * Math.cos(angle);
+    const nodeY = 250 + 100 * Math.sin(angle);
+    const dist = Math.sqrt(Math.pow(x - nodeX, 2) + Math.pow(y - nodeY, 2));
+    if (dist < minDist && dist < 30) {
+      minDist = dist;
+      closestNode = i;
+    }
+  }
+  if (closestNode >= 0) toggleNode(closestNode);
+}
+
+// MAIN PROCESSOR LOOP
+function startFieldProcessor() {
+  setInterval(() => {
+    FOS.time++;
+    
+    const state = computeFieldState();
+    FOS.glyphash = state.globalHash;
+    FOS.consciousness = analyzeConsciousness(state);
+    
+    injectGlyphashIntoDOM(state);
+    renderField();
+    updateUI();
+    
+    if (state.S > 0.7 && Math.random() > 0.97) {
+      executeCommand('IMPLODE');
+    }
+    if (Math.abs(state.curvature) < 0.5 && Math.random() > 0.98) {
+      executeCommand('CRYSTALLIZE');
+    }
+    if (state.avgDeltaPhi > 2 && Math.random() > 0.96) {
+      executeCommand('HARMONIZE');
+    }
+  }, 300);
+}
+
+init();
+</script>
+
+</body>
+</html>
