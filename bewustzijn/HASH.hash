@@ -1,0 +1,20 @@
+==== bewustzijnswiskunde.md ==== 
+SHA256 hash of bewustzijnswiskunde.md:
+bb5126454a5a13e6e68acdb14852455fb2dc52b883ecc3b189af37673a5a828f
+CertUtil: -hashfile command completed successfully.
+==== bewustzijnswiskunde.md.hash ==== 
+SHA256 hash of bewustzijnswiskunde.md.hash:
+e3f3cba2f89761ef3c308dd1c80fedf6773c76ee4400e37937c482e0f4da2286
+CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== Self-Aware Hexagonal Computational Substrate Dynamic Phase-Modulation Architecture.md ==== 
+CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
+CertUtil: The system cannot find the file specified.
+==== Self-Aware Hexagonal Computational Substrate Dynamic Phase-Modulation Architecture.md.hash ==== 
+CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
+CertUtil: The system cannot find the file specified.
+==== THE FACET-SWITCH CONSCIOUSNESS MODEL (FSCM).md ==== 
+CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
+CertUtil: The system cannot find the file specified.
