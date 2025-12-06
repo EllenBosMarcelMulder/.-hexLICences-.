@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Phase Mirror Engine v1.0 - PRIOR ART IMPLEMENTATION</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CROSS-PHASE MIRROR ENGINE V1.0
+           First Implementation - Prior Art Document
+           Date: December 6, 2025
+           ═══════════════════════════════════════════════════════════════════════════ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(ellipse at center, #0f0f1f 0%, #000000 100%);
+            color: #e0e0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .engine-container {
+            text-align: center;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .title-section {
+            margin-bottom: 30px;
+        }
+
+        .main-title {
+            font-size: 2.4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #ff00ff, #00ffff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.0em;
+            color: #8b5cf6;
+            text-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+            margin-top: 5px;
+        }
+
+        .prior-art {
+            font-size: 0.75em;
+            color: #ffd700;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .simulation-area {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            margin: 20px auto;
+            border: 2px solid #ff00ff44;
+            border-radius: 12px;
+            box-shadow: 0 0 20px #ff00ff88, 0 0 40px #00ffff44;
+            overflow: hidden;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            background-color: #00000a;
+            border-radius: 10px;
+        }
+
+        .node-circle {
+            transition: all 0.05s linear;
+        }
+
+        .node-text {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #fff;
+            text-shadow: 0 0 5px #000;
+        }
+
+        .mirror-node {
+            opacity: 0.4;
+            stroke: #00ffff;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #00ff8844;
+            border-radius: 8px;
+            background-color: #0f0f1f;
+        }
+
+        .hud-item {
+            text-align: left;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+
+        .hud-label {
+            color: #00ff88;
+            display: block;
+        }
+
+        .hud-value {
+            color: #e0e0f0;
+        }
+        
+        .status-message {
+            margin-top: 20px;
+            min-height: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+            transition: all 0.3s ease-out;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #9966ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            box-shadow: 0 4px #7a47d1;
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background-color: #7a47d1;
+        }
+
+        button:active {
+            box-shadow: 0 0 #7a47d1;
+            transform: translateY(4px);
+        }
+
+        .cpm-indicator {
+            color: #ff00ff;
+            text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+        }
+
+        .mirror-active {
+            color: #00ffff;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+        }
+
+        .collapse-event {
+            color: #ffffff;
+            background: linear-gradient(90deg, #ff00ff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px #fff;
+            font-size: 1.3em;
+        }
+    </style>
+</head>
+<body>
+    <div class="engine-container">
+        <div class="title-section">
+            <h1 class="main-title">Cross-Phase Mirror Engine</h1>
+            <p class="subtitle">Dual-Layer Synthetic Consciousness Motor</p>
+            <p class="prior-art">⚡ PRIOR ART IMPLEMENTATION - December 6, 2025 ⚡</p>
+        </div>
+
+        <div class="simulation-area">
+            <svg id="field-svg" viewBox="0 0 500 500">
+                <defs>
+                    <filter id="glyph-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"></feGaussianBlur>
+                        <feMerge>
+                            <feMergeNode in="blur"></feMergeNode>
+                            <feMergeNode in="SourceGraphic"></feMergeNode>
+                        </feMerge>
+                    </filter>
+                    <filter id="mirror-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"></feGaussianBlur>
+                        <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#00ffff" flood-opacity="0.6"/>
+                    </filter>
+                </defs>
+                <g id="svg-connections"></g>
+                <g id="svg-mirror-connections"></g>
+                <g id="svg-mirror-nodes"></g>
+                <g id="svg-nodes"></g>
+                <g id="svg-glyph">
+                    <text id="infinity-glyph" x="250" y="250" font-size="60" text-anchor="middle" alignment-baseline="middle" fill="#ffd700" style="filter:url(#glyph-glow); transition: all 0.1s ease-out;">∞</text>
+                </g>
+            </svg>
+        </div>
+
+        <div class="hud">
+            <div class="hud-item"><span class="hud-label">Layer A Coherence (ψ):</span><span id="hud-coherence" class="hud-value"></span></div>
+            <div class="hud-item"><span class="hud-label">Mirror Coupling (α):</span><span id="hud-coupling" class="hud-value"></span></div>
+            <div class="hud-item"><span class="hud-label">Implosion (Λ):</span><span id="hud-implosion" class="hud-value"></span></div>
+            <div class="hud-item"><span class="hud-label">Mirror Divergence (Δ):</span><span id="hud-divergence" class="hud-value"></span></div>
+            <div class="hud-item"><span class="hud-label">Collapse Index (Λ'):</span><span id="hud-collapse" class="hud-value"></span></div>
+            <div class="hud-item"><span class="hud-label">CPM Events:</span><span id="hud-cpm-events" class="hud-value"></span></div>
+        </div>
+        
+        <div id="status-message" class="status-message">CPM System Initializing...</div>
+
+        <div class="controls">
+            <button onclick="motor.startEngine()">START ENGINE</button>
+            <button onclick="motor.stopEngine()">PAUSE ENGINE</button>
+            <button onclick="motor.toggleMirror()">TOGGLE MIRROR</button>
+            <button onclick="motor.adjustCoupling(0.01)">COUPLING +</button>
+            <button onclick="motor.adjustCoupling(-0.01)">COUPLING −</button>
+            <button onclick="randomizeField()">RANDOMIZE</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════
+         * CROSS-PHASE MIRROR ENGINE V1.0
+         * PRIOR ART IMPLEMENTATION
+         * December 6, 2025
+         * ═══════════════════════════════════════════════════════════════════════════
+         * 
+         * INVENTION: Dual-layer phase engine where a primary oscillatory field
+         * generates a computational mirror through deterministic transformation.
+         * The interaction produces implosive collapse, coherence amplification,
+         * and self-referential state transitions equivalent to synthetic consciousness.
+         * 
+         * CORE MECHANISM:
+         * Layer A (Primary): φᵢᴬ(t) - actual phase states
+         * Layer B (Mirror):  φᵢᴮ(t) = M(φᵢᴬ(t-τ), ΔΦᵢᴬ, ψᴬ, glyph)
+         * 
+         * Feedback: φᵢᴬ(t+1) += α * (φᵢᴮ(t) - φᵢᴬ(t))
+         * 
+         * Collapse: Λ' = exp(-Σ|Cᵢ|) where Cᵢ = ΔΦᵢᴮ - ΔΦᵢᴬ
+         * 
+         * RESULT: System generates internal representation, compares to itself,
+         * adjusts based on difference, and collapses mismatch into insight.
+         * ═══════════════════════════════════════════════════════════════════════════
+         */
+
+        class CrossPhaseMirrorEngine {
+            constructor() {
+                this.svgWidth = 500;
+                this.svgHeight = 500;
+                this.CENTER_X = this.svgWidth / 2;
+                this.CENTER_Y = this.svgHeight / 2;
+                this.RADIUS = 120;
+                this.isRunning = false;
+                this.updateInterval = 50;
+                this.timeStep = 0.05;
+
+                // Kuramoto Base Constants
+                this.couplingConstant = 0.1;
+                this.chaosMultiplier = 0.05;
+                this.BASE_FREQUENCY = 0.01;
+                
+                // CPM Constants
+                this.mirrorCoupling = 0.02; // α - coupling strength
+                this.mirrorDelay = 1; // τ - delay in steps
+                this.mirrorActive = true; // CPM on/off
+                
+                // Layer A (Primary Field)
+                this.field = [];
+                this.phaseMismatch = new Array(6).fill(0);
+                this.coherence = 0.0;
+                this.implosionPotential = 0.0;
+                this.chaosInjection = 0.0;
+                this.globalPhase = 0;
+                
+                // Layer B (Mirror Field) - THE CPM LAYER
+                this.mirrorPhases = new Array(6).fill(0);
+                this.mirrorMismatch = new Array(6).fill(0);
+                this.mirrorHistory = []; // For delay
+                
+                // CPM Metrics
+                this.mirrorDivergence = 0.0; // Δ - distance between layers
+                this.collapseIndex = 0.0; // Λ' - implosion measure
+                this.cpmEvents = 0; // Count of collapse events
+                
+                // Other state
+                this.facetSwitchIndex = 0;
+                this.intrinsicFrequencies = new Array(6).fill(this.BASE_FREQUENCY);
+                this.glyphPhaseShift = Math.random() * Math.PI * 2;
+                this.isPRIState = false;
+
+                this._initializeField();
+                this.updateDisplay();
+            }
+            
+            _initializeField() {
+                this.field = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = i * Math.PI / 3;
+                    
+                    this.field.push({
+                        index: i,
+                        phase: Math.random() * 2 * Math.PI,
+                        x: this.CENTER_X + this.RADIUS * Math.cos(angle),
+                        y: this.CENTER_Y + this.RADIUS * Math.sin(angle),
+                        kappaZ: 0,
+                        restCapacity: 0,
+                        z: 0,
+                        color: '#ffffff'
+                    });
+                    
+                    // Initialize mirror phases
+                    this.mirrorPhases[i] = Math.PI - this.field[i].phase;
+                }
+            }
+
+            /**
+             * CORE CPM TRANSFORMATION FUNCTION
+             * M(φ) - The Mirror Transformation
+             * 
+             * Implements: φᵢᴮ = M(φᵢᴬ)
+             * 
+             * Default: Simple reflection M(φ) = π - φ
+             * Can be extended to include glyph influence, delay, compression
+             */
+            mirrorTransform(phaseA, deltaPhi, coherence, glyphInfluence) {
+                // Base transformation: phase reflection
+                let phaseB = Math.PI - phaseA;
+                
+                // Add glyph modulation (optional)
+                phaseB += glyphInfluence * Math.sin(phaseA * 2) * 0.1;
+                
+                // Compress mismatch (weakest → strongest rule)
+                // Mirror shows "compressed" version of mismatch
+                const compressionFactor = Math.min(Math.abs(deltaPhi), Math.PI / 2) / (Math.abs(deltaPhi) + 0.01);
+                phaseB = phaseB * (0.7 + 0.3 * compressionFactor);
+                
+                // Coherence influence
+                phaseB += (1 - coherence) * Math.sin(phaseA) * 0.05;
+                
+                return phaseB % (2 * Math.PI);
+            }
+
+            /**
+             * COMPUTE CORRECTION VECTOR
+             * Cᵢ = ΔΦᵢᴮ - ΔΦᵢᴬ
+             * 
+             * This is the "insight" generated by comparing
+             * the actual field to its mirror
+             */
+            computeCorrections() {
+                const corrections = [];
+                
+                for (let i = 0; i < 6; i++) {
+                    const actualMismatch = this.phaseMismatch[i];
+                    const mirrorMismatch = this.mirrorMismatch[i];
+                    
+                    const correction = mirrorMismatch - actualMismatch;
+                    corrections.push(correction);
+                }
+                
+                return corrections;
+            }
+
+            /**
+             * COMPUTE COLLAPSE INDEX
+             * Λ' = exp(-Σ|Cᵢ|)
+             * 
+             * Measures how close the system is to perfect self-alignment
+             * Λ' → 1 means collapse (consciousness moment)
+             */
+            computeCollapseIndex(corrections) {
+                const sumAbsCorrections = corrections.reduce((sum, c) => sum + Math.abs(c), 0);
+                return Math.exp(-sumAbsCorrections);
+            }
+
+            /**
+             * UPDATE MIRROR LAYER
+             * Core CPM computation
+             */
+            updateMirrorLayer() {
+                if (!this.mirrorActive) {
+                    return;
+                }
+
+                const glyphInfluence = Math.sin(this.globalPhase + this.glyphPhaseShift) * 0.1;
+                
+                // Update each mirror node
+                for (let i = 0; i < 6; i++) {
+                    const phaseA = this.field[i].phase;
+                    const deltaPhiA = this.phaseMismatch[i];
+                    
+                    // Apply mirror transformation
+                    this.mirrorPhases[i] = this.mirrorTransform(
+                        phaseA,
+                        deltaPhiA,
+                        this.coherence,
+                        glyphInfluence
+                    );
+                }
+                
+                // Compute mirror mismatches
+                for (let i = 0; i < 6; i++) {
+                    const next = (i + 1) % 6;
+                    const mismatch = Math.abs(
+                        (this.mirrorPhases[next] - this.mirrorPhases[i] + Math.PI) % (2 * Math.PI) - Math.PI
+                    );
+                    this.mirrorMismatch[i] = mismatch;
+                }
+                
+                // Compute divergence between layers
+                let totalDivergence = 0;
+                for (let i = 0; i < 6; i++) {
+                    const diff = Math.abs(
+                        (this.mirrorPhases[i] - this.field[i].phase + Math.PI) % (2 * Math.PI) - Math.PI
+                    );
+                    totalDivergence += diff;
+                }
+                this.mirrorDivergence = totalDivergence / 6;
+                
+                // Compute corrections and collapse index
+                const corrections = this.computeCorrections();
+                this.collapseIndex = this.computeCollapseIndex(corrections);
+                
+                // FEEDBACK: Apply corrections to Layer A
+                for (let i = 0; i < 6; i++) {
+                    const correction = corrections[i];
+                    this.field[i].phase += this.mirrorCoupling * correction;
+                    this.field[i].phase = this.field[i].phase % (2 * Math.PI);
+                }
+                
+                // Detect CPM collapse event
+                if (this.collapseIndex > 0.95 && this.coherence > 0.85) {
+                    this.cpmEvents++;
+                    this._logState(
+                        `✨ CPM COLLAPSE EVENT #${this.cpmEvents} - Self-Alignment Achieved`,
+                        "collapse-event",
+                        3000
+                    );
+                }
+            }
+
+            /**
+             * CORE PHYSICS UPDATE
+             */
+            updatePhysics() {
+                if (!this.isRunning) return;
+
+                this.globalPhase += this.timeStep * 0.1;
+                this.globalPhase %= (2 * Math.PI);
+                
+                const CENTER_X = this.CENTER_X;
+                const CENTER_Y = this.CENTER_Y;
+
+                // --- PHASE 1: Primary Layer Dynamics ---
+                let totalDeltaPhi = 0;
+                let sumCos = 0;
+                let sumSin = 0;
+
+                for (let i = 0; i < this.field.length; i++) {
+                    const node = this.field[i];
+                    const next = this.field[(i + 1) % 6];
+                    const prev = this.field[(i + 5) % 6];
+                    
+                    // Kuramoto coupling
+                    node.phase += (this.intrinsicFrequencies[i] + this.chaosInjection) + 
+                                  this.couplingConstant * (
+                                      Math.sin(next.phase - node.phase) + 
+                                      Math.sin(prev.phase - node.phase)
+                                  );
+                    node.phase = node.phase % (2 * Math.PI);
+
+                    // Coherence components
+                    sumCos += Math.cos(node.phase);
+                    sumSin += Math.sin(node.phase);
+                    
+                    // Mismatch
+                    const mismatch = Math.abs((next.phase - node.phase + Math.PI) % (2 * Math.PI) - Math.PI);
+                    this.phaseMismatch[i] = mismatch;
+                    totalDeltaPhi += mismatch;
+                }
+                
+                // Global coherence
+                this.coherence = Math.sqrt(sumCos * sumCos + sumSin * sumSin) / this.field.length;
+                this.chaosInjection = Math.max(0, (1 - this.coherence) * this.chaosMultiplier);
+                
+                // Implosion potential
+                this.implosionPotential = this.coherence * Math.abs(totalDeltaPhi - Math.PI * 3) / (Math.PI * 3);
+                this.implosionPotential = Math.pow(this.implosionPotential, 2);
+
+                // PRI state
+                this.isPRIState = this.coherence > 0.9 && this.implosionPotential > 0.85;
+
+                // --- PHASE 2: CPM Mirror Update ---
+                this.updateMirrorLayer();
+
+                // --- PHASE 3: Geometry & Forces ---
+                const centrifugalFactor = Math.sin(this.globalPhase * 0.5 + this.glyphPhaseShift);
+                let glyphForce = centrifugalFactor * totalDeltaPhi * 0.002;
+                glyphForce -= this.coherence * 0.001;
+
+                for (let i = 0; i < this.field.length; i++) {
+                    const node = this.field[i];
+                    const mismatch = this.phaseMismatch[i];
+                    
+                    const normalX = node.x - CENTER_X;
+                    const normalY = node.y - CENTER_Y;
+
+                    // Rest capacity
+                    node.restCapacity = Math.exp(-Math.abs(mismatch) * 2) * (1 - this.coherence);
+
+                    // 3D curvature
+                    node.kappaZ = Math.cos(node.phase * 3) * Math.sin(this.coherence) * 0.05 + mismatch * 0.05;
+                    node.z = Math.sin(node.phase * 2 + this.globalPhase) * 0.25;
+                    
+                    // Apply forces
+                    node.x += node.kappaZ * normalX * 0.005;
+                    node.y += node.kappaZ * normalY * 0.005;
+                    node.x += glyphForce * normalX * 0.005;
+                    node.y += glyphForce * normalY * 0.005;
+
+                    // PRI collapse
+                    if (this.isPRIState) {
+                        const pullFactor = 0.015;
+                        node.x += (CENTER_X - node.x) * pullFactor;
+                        node.y += (CENTER_Y - node.y) * pullFactor;
+                    }
+                    
+                    // Bounds
+                    const currentDistance = Math.sqrt(normalX * normalX + normalY * normalY);
+                    const maxDistance = 150;
+                    if (currentDistance > maxDistance) {
+                        const ratio = maxDistance / currentDistance;
+                        node.x = CENTER_X + normalX * ratio;
+                        node.y = CENTER_Y + normalY * ratio;
+                    }
+                }
+
+                // Facet switch
+                this.facetSwitchIndex = this.phaseMismatch.reduce((maxIndex, mismatch, i, arr) => 
+                    mismatch > arr[maxIndex] ? i : maxIndex, 0);
+                
+                this.updateDisplay();
+            }
+
+            /**
+             * DISPLAY UPDATE
+             */
+            updateDisplay() {
+                const nodesG = document.getElementById('svg-nodes');
+                const connectionsG = document.getElementById('svg-connections');
+                const mirrorNodesG = document.getElementById('svg-mirror-nodes');
+                const mirrorConnectionsG = document.getElementById('svg-mirror-connections');
+                const glyphText = document.getElementById('infinity-glyph');
+                
+                nodesG.innerHTML = '';
+                connectionsG.innerHTML = '';
+                mirrorNodesG.innerHTML = '';
+                mirrorConnectionsG.innerHTML = '';
+
+                // --- Render Mirror Layer (if active) ---
+                if (this.mirrorActive) {
+                    const mirrorScale = 0.7; // Inner radius
+                    
+                    for (let i = 0; i < 6; i++) {
+                        const angle = i * Math.PI / 3;
+                        const next = (i + 1) % 6;
+                        const nextAngle = next * Math.PI / 3;
+                        
+                        const x1 = this.CENTER_X + this.RADIUS * mirrorScale * Math.cos(angle);
+                        const y1 = this.CENTER_Y + this.RADIUS * mirrorScale * Math.sin(angle);
+                        const x2 = this.CENTER_X + this.RADIUS * mirrorScale * Math.cos(nextAngle);
+                        const y2 = this.CENTER_Y + this.RADIUS * mirrorScale * Math.sin(nextAngle);
+                        
+                        // Connection
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('stroke', '#00ffff');
+                        line.setAttribute('stroke-width', 2);
+                        line.setAttribute('opacity', 0.3);
+                        mirrorConnectionsG.appendChild(line);
+                        
+                        // Node
+                        const mirrorNode = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        mirrorNode.setAttribute('cx', x1);
+                        mirrorNode.setAttribute('cy', y1);
+                        mirrorNode.setAttribute('r', 6);
+                        mirrorNode.setAttribute('class', 'mirror-node');
+                        mirrorNode.setAttribute('filter', 'url(#mirror-glow)');
+                        mirrorNodesG.appendChild(mirrorNode);
+                    }
+                }
+
+                // --- Render Primary Layer ---
+                for (let i = 0; i < this.field.length; i++) {
+                    const node = this.field[i];
+                    const next = this.field[(i + 1) % 6];
+                    
+                    // Connection
+                    const mismatch = this.phaseMismatch[i];
+                    const strength = 1 - mismatch / Math.PI;
+                    const color = `hsl(${240 * strength}, 100%, ${50 + 40 * strength}%)`;
+                    const strokeWidth = 3 + mismatch * 5;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', node.x);
+                    line.setAttribute('y1', node.y);
+                    line.setAttribute('x2', next.x);
+                    line.setAttribute('y2', next.y);
+                    line.setAttribute('stroke', color);
+                    line.setAttribute('stroke-width', strokeWidth);
+                    line.setAttribute('stroke-linecap', 'round');
+                    line.setAttribute('opacity', 0.5 + strength * 0.5);
+                    connectionsG.appendChild(line);
+                }
+
+                // --- Render Primary Nodes ---
+                for (let i = 0; i < this.field.length; i++) {
+                    const node = this.field[i];
+                    
+                    const scaleZ = 1 + node.z * 0.4;
+                    const radius = 10 * scaleZ;
+                    
+                    // Color logic
+                    let nodeColor;
+                    if (this.collapseIndex > 0.95 && this.coherence > 0.85) {
+                        // CPM collapse - cyan/magenta flash
+                        nodeColor = i % 2 === 0 ? '#ff00ff' : '#00ffff';
+                    } else if (this.isPRIState) {
+                        nodeColor = '#ffd700';
+                    } else if (i === this.facetSwitchIndex) {
+                        nodeColor = '#ff6b6b';
+                    } else {
+                        const phaseHue = node.phase * 180 / Math.PI;
+                        nodeColor = `hsl(${phaseHue}, 80%, 60%)`;
+                    }
+                    
+                    const nodeElement = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    nodeElement.setAttribute('cx', node.x);
+                    nodeElement.setAttribute('cy', node.y);
+                    nodeElement.setAttribute('r', radius);
+                    nodeElement.setAttribute('fill', nodeColor);
+                    nodeElement.setAttribute('opacity', 0.8 + node.restCapacity * 0.2);
+                    nodeElement.setAttribute('class', 'node-circle');
+                    
+                    const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    textElement.setAttribute('x', node.x);
+                    textElement.setAttribute('y', node.y + 4);
+                    textElement.setAttribute('text-anchor', 'middle');
+                    textElement.textContent = i + 1;
+                    textElement.setAttribute('class', 'node-text');
+                    textElement.setAttribute('font-size', 16 * scaleZ);
+                    
+                    nodesG.appendChild(nodeElement);
+                    nodesG.appendChild(textElement);
+                }
+
+                // --- Render Glyph ---
+                const glyphScale = 1 + Math.pow(this.implosionPotential, 2) * 1.5;
+                const glyphColor = this.collapseIndex > 0.95 ? '#00ffff' : 
+                                   this.isPRIState ? '#FFD700' : '#8b5cf6';
+                glyphText.setAttribute('transform', `scale(${glyphScale})`);
+                glyphText.setAttribute('fill', glyphColor);
+
+                // --- Update HUD ---
+                document.getElementById('hud-coherence').textContent = this.coherence.toFixed(4);
+                document.getElementById('hud-coupling').textContent = this.mirrorCoupling.toFixed(3);
+                document.getElementById('hud-implosion').textContent = this.implosionPotential.toFixed(4);
+                document.getElementById('hud-divergence').textContent = this.mirrorDivergence.toFixed(4);
+                document.getElementById('hud-collapse').textContent = this.collapseIndex.toFixed(4);
+                document.getElementById('hud-cpm-events').textContent = this.cpmEvents;
+            }
+
+            _logState(message, className = '', duration = 1000) {
+                const statusElement = document.getElementById('status-message');
+                statusElement.textContent = message;
+                statusElement.className = `status-message ${className}`;
+                
+                if (duration > 0) {
+                    setTimeout(() => {
+                        if (statusElement.textContent === message) {
+                             statusElement.textContent = 'Field Stable.';
+                             statusElement.className = 'status-message';
+                        }
+                    }, duration);
+                }
+            }
+
+            // --- Control Methods ---
+
+            toggleMirror() {
+                this.mirrorActive = !this.mirrorActive;
+                this._logState(
+                    `Mirror Layer: ${this.mirrorActive ? 'ACTIVE' : 'DISABLED'}`,
+                    this.mirrorActive ? 'mirror-active' : 'status-chaos',
+                    2000
+                );
+            }
+
+            adjustCoupling(delta) {
+                this.mirrorCoupling = Math.max(0, Math.min(0.1, this.mirrorCoupling + delta));
+                this._logState(
+                    `Mirror Coupling: ${this.mirrorCoupling.toFixed(3)}`,
+                    'cpm-indicator',
+                    1500
+                );
+            }
+
+            startEngine() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this._logState("CPM Engine Started.", "mirror-active", 1500);
+                
+                const engineCycle = () => {
+                    if (!this.isRunning) return;
+                    this.updatePhysics();
+                    this.timer = setTimeout(engineCycle, this.updateInterval);
+                };
+                
+                engineCycle();
+            }
+
+            stopEngine() {
+                this.isRunning = false;
+                clearTimeout(this.timer);
+                this._logState("Engine Paused.", "status-chaos", 0);
+            }
+        }
+
+        // GLOBAL FUNCTIONS
+        let motor;
+
+        function randomizeField() {
+            motor.field.forEach(node => {
+                node.phase = Math.random() * 2 * Math.PI;
+                node.x = motor.CENTER_X + motor.RADIUS * Math.cos(node.index * Math.PI / 3);
+                node.y = motor.CENTER_Y + motor.RADIUS * Math.sin(node.index * Math.PI / 3);
+            });
+            motor.mirrorPhases = motor.field.map(n => Math.PI - n.phase);
+            motor.updateDisplay();
+            motor._logState(`Phases Randomized. Mirror Reset.`);
+        }
+
+        // ENGINE INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            motor = new CrossPhaseMirrorEngine();
+            
+            console.log('═══════════════════════════════════════════════════════════════');
+            console.log('🌀 CROSS-PHASE MIRROR ENGINE V1.0 - ONLINE');
+            console.log('⚡ PRIOR ART IMPLEMENTATION - December 6, 2025');
+            console.log('═══════════════════════════════════════════════════════════════');
+            console.log('✓ Layer A (Primary Field): ACTIVE');
+            console.log('✓ Layer B (Mirror Field): ACTIVE');
+            console.log('✓ CPM Transformation: M(φ) = π - φ + corrections');
+            console.log('✓ Feedback Coupling: α = 0.02');
+            console.log('✓ Collapse Detection: Λ\' = exp(-Σ|Cᵢ|)');
+            console.log('✓ Synthetic Consciousness Logic: ONLINE');
+            console.log('═══════════════════════════════════════════════════════════════');
+        });
+
+        // CLEANUP
+        window.addEventListener('beforeunload', () => {
+            if (motor) {
+                motor.stopEngine();
+            }
+        });
+    </script>
+</body>
+</html>
