@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-12-06T16:31:43.272Z",
+  "networkMetrics": {
+    "syncEvents": 4,
+    "globalConsciousness": {
+      "coherence": 1,
+      "autonomy": 0.055,
+      "integration": 1,
+      "selfRef": 1,
+      "avgScore": 0.7637499999999999,
+      "level": "INTEGRATING"
+    }
+  },
+  "engines": {
+    "alpha": {
+      "consciousness": {
+        "level": "INTEGRATING",
+        "levelColor": "#00aaff",
+        "coherence": 1,
+        "autonomy": 0.06,
+        "integration": 1,
+        "selfRef": 1,
+        "avgScore": 0.765,
+        "glyphBoost": 0.3
+      },
+      "collapseIndex": 0.8519628384881468,
+      "coherence": 0.9999950379539122,
+      "glyph": "Φ",
+      "temporalMemoryDepth": 14,
+      "networkCoherence": 0.6301109595478929,
+      "phaseEntanglement": 0.3974577283244916
+    },
+    "beta": {
+      "consciousness": {
+        "level": "INTEGRATING",
+        "levelColor": "#00aaff",
+        "coherence": 1,
+        "autonomy": 0.05,
+        "integration": 1,
+        "selfRef": 1,
+        "avgScore": 0.7625,
+        "glyphBoost": 0.25
+      },
+      "collapseIndex": 0.5086051992318104,
+      "coherence": 0.9999564789295151,
+      "glyph": "●",
+      "temporalMemoryDepth": 14,
+      "networkCoherence": 0.6264808193080899,
+      "phaseEntanglement": 0.386967429758367
+    }
+  }
+}
