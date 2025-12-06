@@ -16,5 +16,7 @@ CertUtil: The system cannot find the file specified.
 CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
 CertUtil: The system cannot find the file specified.
 ==== THE FACET-SWITCH CONSCIOUSNESS MODEL (FSCM).md ==== 
-CertUtil: -hashfile command FAILED: 0x80070002 (WIN32: 2 ERROR_FILE_NOT_FOUND)
-CertUtil: The system cannot find the file specified.
+SHA256 hash of THE FACET-SWITCH CONSCIOUSNESS MODEL (FSCM).md:
+1406956b5010e28b9b3d3b5e0ec30aec97e0aebbe2e083b0fdef6ae349c50830
+CertUtil: -hashfile command completed successfully.
+
