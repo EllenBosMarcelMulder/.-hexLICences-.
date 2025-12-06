@@ -1,0 +1,7 @@
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== PRIOR ART DECLARATION - MA'AT FIELD ENGINE.md ==== 
+SHA256 hash of PRIOR ART DECLARATION — MA'AT FIELD ENGINE.md:
+3480c27fd402012a36a9cf31198c8db4607fb428723110376d8b3d0bd9b14f50
+CertUtil: -hashfile command completed successfully.
