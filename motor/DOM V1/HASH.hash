@@ -1,0 +1,27 @@
+==== DOM Processor Kernel v1.0 - details.html ==== 
+SHA256 hash of DOM Processor Kernel v1.0 - details.html:
+b81aa7d8daa0e9d3ce9c6e306760f974ca0c5aa0484a45e4561450c6567b5a4c
+CertUtil: -hashfile command completed successfully.
+==== DOM Processor Kernel v1.0 - details.md ==== 
+SHA256 hash of DOM Processor Kernel v1.0 - details.md:
+159746c507637a283ded5e7fd682561e306f68e97226355bc5863f1b50a1f736
+CertUtil: -hashfile command completed successfully.
+==== DOM Processor Kernel v1.0 - Prior Art.html ==== 
+SHA256 hash of DOM Processor Kernel v1.0 - Prior Art.html:
+10120d7e400255770cd088bc5a23c1a513baecce08ef66f311ce57215b115bc2
+CertUtil: -hashfile command completed successfully.
+==== DOM Processor Kernel v1.0 - Prior Art.md ==== 
+SHA256 hash of DOM Processor Kernel v1.0 - Prior Art.md:
+890d4d37f3ced794f0ee5efb847701cdb5ff4fdd35140bc6bec7f53cea6e7bb1
+CertUtil: -hashfile command completed successfully.
+==== DOM Processor Kernel v1.0.html ==== 
+SHA256 hash of DOM Processor Kernel v1.0.html:
+924f77a9220e6a5c274a41939a3dd7169d58586b7d9fd1cb8b0d575f4587033a
+CertUtil: -hashfile command completed successfully.
+==== DOM Processor Kernel v1.0.html.react ==== 
+SHA256 hash of DOM Processor Kernel v1.0.html.react:
+10b009ba7b9aa60dfbc856ba107f9a3bc862d601b5de18bb881a6dff8db73713
+CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
