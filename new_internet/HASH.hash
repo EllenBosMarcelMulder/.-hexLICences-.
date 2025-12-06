@@ -29,3 +29,12 @@ c2313f1b7d724f0c4d4da7157c352638f81d2182f4ef14ef9eef71c27fddc50a
 CertUtil: -hashfile command completed successfully.
 CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
 CertUtil: The process cannot access the file because it is being used by another process.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== Syntropic State Exchange Protocol.md ==== 
+SHA256 hash of Syntropic State Exchange Protocol.md:
+5ca58e006a91feaebafb50c3ca8480ef65fd82cf07d60aa42c18e54f3140f25a
+CertUtil: -hashfile command completed successfully.
+
+
