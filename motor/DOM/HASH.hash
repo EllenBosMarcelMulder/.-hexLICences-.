@@ -1,1 +1,12 @@
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== PRIOR ART DECLARATION - DOM FIELD ENGINE ARCHITECTURE.md ==== 
+SHA256 hash of PRIOR ART DECLARATION — DOM FIELD ENGINE ARCHITECTURE.md:
+7f0ec200f6eabc8277c392642d045ac0f81ceba1804fbb243d6f4c47d6788271
+CertUtil: -hashfile command completed successfully.
+==== PRIOR ART DECLARATION - DOM FIELD ENGINE ARCHITECTURE.md.ots ==== 
+SHA256 hash of PRIOR ART DECLARATION — DOM FIELD ENGINE ARCHITECTURE.md.ots:
+76ae827270a46d7e369f9a78daf7e3ac4e372854e43d3f4301196ea0044db044
+CertUtil: -hashfile command completed successfully.
 
