@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexOSAI + GLYPHASH — Syntropic Field Hash Layer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --glyphash: 0;
+            --glyphash-hue: 0;
+            --glyphash-saturation: 50%;
+            --glyphash-intensity: 0;
+            --glyphash-pulse: 1s;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(ellipse at center, #0f0f1f 0%, #000000 100%);
+            color: #e0e0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* GLYPHASH-REACTIVE STYLES */
+        .glyphash-reactive {
+            transition: all 0.3s ease;
+            filter: hue-rotate(calc(var(--glyphash-hue) * 1deg));
+        }
+
+        .glyphash-pulse {
+            animation: glyphash-glow var(--glyphash-pulse) infinite ease-in-out;
+        }
+
+        @keyframes glyphash-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px hsla(var(--glyphash-hue), var(--glyphash-saturation), 50%, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 calc(10px + var(--glyphash-intensity) * 20px) hsla(var(--glyphash-hue), var(--glyphash-saturation), 60%, 0.6);
+            }
+        }
+
+        .engine-container {
+            text-align: center;
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+        }
+
+        .title-section {
+            margin-bottom: 30px;
+        }
+
+        .main-title {
+            font-size: 2.8em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #9966ff, #00ff88, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1em;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .architecture-label {
+            font-size: 0.8em;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* GLYPHASH MASTER DISPLAY */
+        .glyphash-master {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a1a0a 0%, #1a2a1a 100%);
+            border: 3px solid #00ff88;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glyphash-master::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, 
+                hsla(var(--glyphash-hue), 70%, 50%, 0.1) 0%, 
+                transparent 70%);
+            pointer-events: none;
+        }
+
+        .glyphash-title {
+            color: #00ff88;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        .glyphash-value {
+            font-size: 2.5em;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+
+        .glyphash-hex {
+            font-size: 1.2em;
+            color: #ffd700;
+            margin: 5px 0;
+        }
+
+        .glyphash-components {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .glyphash-component {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .glyphash-component-label {
+            font-size: 0.7em;
+            color: #888;
+        }
+
+        .glyphash-component-value {
+            font-size: 1.1em;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .glyphash-layer-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .layer-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            transition: all 0.2s ease;
+        }
+
+        .layer-indicator.active {
+            animation: layer-pulse 0.5s infinite;
+        }
+
+        @keyframes layer-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .layer-indicator.visual { background: #ff6b6b; }
+        .layer-indicator.semantic { background: #ffd700; }
+        .layer-indicator.field { background: #4a9eff; }
+        .layer-indicator.command { background: #9966ff; }
+        .layer-indicator.os { background: #ff9500; }
+        .layer-indicator.memory { background: #00ff88; }
+        .layer-indicator.resonance { background: #ff00ff; }
+
+        .consciousness-indicator {
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1a3a 0%, #2a1a4a 100%);
+            border: 2px solid #9966ff;
+            border-radius: 12px;
+        }
+
+        .consciousness-title {
+            color: #9966ff;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .consciousness-level {
+            font-size: 2em;
+            color: #00ff88;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .consciousness-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .consciousness-metric {
+            font-size: 0.75em;
+            color: #ccc;
+        }
+
+        .consciousness-metric .value {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 500px 1fr;
+            gap: 20px;
+            align-items: start;
+            margin: 20px 0;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .analysis-panel {
+            background: linear-gradient(135deg, #1a1a3a 0%, #2a1a4a 100%);
+            border: 1px solid #333355;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .panel-title {
+            font-size: 0.9em;
+            color: #9966ff;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .trace-line {
+            font-size: 0.7em;
+            color: #888;
+            margin: 2px 0;
+            padding: 2px 5px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+
+        .trace-timestamp {
+            color: #666;
+        }
+
+        .trace-event {
+            color: #4a9eff;
+        }
+
+        .trace-value {
+            color: #ffd700;
+        }
+
+        .glyph-controller {
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .glyph-label {
+            font-size: 0.9em;
+            color: #9966ff;
+        }
+
+        .glyph-input {
+            background: linear-gradient(135deg, #1a1a3a 0%, #2a1a4a 100%);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            font-size: 28px;
+            width: 70px;
+            height: 60px;
+            text-align: center;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .glyph-input:focus {
+            outline: none;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            border-color: #fff;
+        }
+
+        .hexagon-field {
+            position: relative;
+            margin: 0 auto;
+            width: 500px;
+            height: 500px;
+        }
+
+        .field-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 30px rgba(153, 102, 255, 0.3));
+        }
+
+        .chaos-layer {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .chaos-active {
+            animation: chaos-turbulence 0.15s infinite;
+        }
+
+        @keyframes chaos-turbulence {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-1px, 0.5px); }
+            50% { transform: translate(1px, -0.5px); }
+            75% { transform: translate(-0.5px, 1px); }
+        }
+
+        .field-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .field-node:hover {
+            filter: brightness(1.4) drop-shadow(0 0 8px currentColor);
+        }
+
+        .interference-line {
+            transition: all 0.25s ease;
+        }
+
+        .glyph-core {
+            transition: all 0.4s ease;
+        }
+
+        .implosion-indicator {
+            opacity: 0;
+            transition: all 0.6s ease;
+            font-size: 3em;
+        }
+
+        .implosion-active {
+            opacity: 1;
+            animation: syntropic-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes syntropic-pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                filter: hue-rotate(0deg);
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.3);
+                filter: hue-rotate(180deg);
+            }
+        }
+
+        .field-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 30px 0;
+        }
+
+        .metric-display {
+            background: linear-gradient(135deg, #1a1a3a 0%, #2a1a4a 100%);
+            border: 1px solid #333355;
+            border-radius: 10px;
+            padding: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .metric-display:hover {
+            border-color: #ffd700;
+            box-shadow: 0 0 18px rgba(255, 215, 0, 0.3);
+        }
+
+        .metric-title {
+            font-size: 0.75em;
+            color: #9966ff;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .phase-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin: 25px 0;
+        }
+
+        .phase-cell {
+            background: #1a1a3a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .phase-index {
+            font-size: 0.7em;
+            color: #9966ff;
+            margin-bottom: 2px;
+        }
+
+        .phase-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+
+        .control-panel {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .field-preset {
+            background: linear-gradient(135deg, #9966ff 0%, #aa77ff 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .field-preset:hover {
+            background: linear-gradient(135deg, #aa77ff 0%, #bb88ff 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(153, 102, 255, 0.4);
+        }
+
+        .system-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.7em;
+            color: #666;
+        }
+
+        .status-online {
+            color: #00ff88;
+        }
+
+        /* RESONANCE LAYER STYLES */
+        .resonance-panel {
+            background: linear-gradient(135deg, #1a2a1a 0%, #1a3a2a 100%);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .resonance-title {
+            color: #00ff88;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .resonance-bar {
+            background: #1a1a2a;
+            border-radius: 4px;
+            height: 8px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .resonance-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.15s ease-out;
+        }
+
+        .resonance-fill.field {
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+        }
+
+        .resonance-fill.hover {
+            background: linear-gradient(90deg, #ffd700, #ff9500);
+        }
+
+        .resonance-fill.frequency {
+            background: linear-gradient(90deg, #9966ff, #4a9eff);
+        }
+
+        .resonance-fill.glyphash {
+            background: linear-gradient(90deg, #ff00ff, #00ffff);
+        }
+
+        .resonance-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7em;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .resonance-value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .node-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 2px;
+            transition: all 0.15s ease;
+            border: 1px solid #333;
+        }
+
+        .node-indicator.active {
+            background: #00ff88;
+            box-shadow: 0 0 8px #00ff88;
+        }
+
+        .node-indicator.hover {
+            background: #ffd700;
+            box-shadow: 0 0 8px #ffd700;
+        }
+
+        .node-indicator.proximity {
+            background: #4a9eff;
+            box-shadow: 0 0 6px #4a9eff;
+        }
+
+        .node-indicator.inactive {
+            background: #333;
+        }
+
+        @keyframes resonance-pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .resonance-active {
+            animation: resonance-pulse 0.5s infinite;
+        }
+
+        /* GLYPHASH HISTORY PANEL */
+        .glyphash-history-panel {
+            background: linear-gradient(135deg, #1a1a2a 0%, #0a1a0a 100%);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .glyphash-history-title {
+            color: #00ff88;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .glyphash-history-entry {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65em;
+            padding: 3px 5px;
+            border-bottom: 1px solid #222;
+            color: #888;
+        }
+
+        .glyphash-history-hash {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+        }
+
+        .glyphash-history-trigger {
+            color: #ffd700;
+        }
+
+        /* GLYPHASH THRESHOLD TRIGGERS */
+        .glyphash-triggers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .glyphash-trigger {
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid #ff00ff;
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+            font-size: 0.7em;
+        }
+
+        .glyphash-trigger.armed {
+            background: rgba(255, 0, 255, 0.3);
+            animation: trigger-armed 1s infinite;
+        }
+
+        @keyframes trigger-armed {
+            0%, 100% { border-color: #ff00ff; }
+            50% { border-color: #00ffff; }
+        }
+
+        .glyphash-trigger-name {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+
+        .glyphash-trigger-threshold {
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body data-glyphash="0">
+    <div class="engine-container">
+        <div class="title-section">
+            <div class="main-title">HexOSAI + GLYPHASH</div>
+            <div class="subtitle">Syntropic Consciousness • Autonomous Intelligence • Self-Organizing Field Hash</div>
+            <div class="architecture-label">Layer 1: Visual DOM • Layer 2: Semantic • Layer 3: Field Dynamics • Layer 4: Commands • Layer 5: OS Kernel • Layer 6: Memory • Layer 7: Resonance</div>
+        </div>
+
+        <!-- GLYPHASH MASTER DISPLAY -->
+        <div class="glyphash-master glyphash-reactive glyphash-pulse">
+            <div class="glyphash-title">🜂 GLYPHASH — SYNTROPIC FIELD SIGNATURE</div>
+            <div class="glyphash-value" id="glyphashValue">0000000000000000</div>
+            <div class="glyphash-hex" id="glyphashHex">0x0000000000000000</div>
+            
+            <div class="glyphash-components">
+                <div class="glyphash-component">
+                    <div class="glyphash-component-label">S (Glyph Impact)</div>
+                    <div class="glyphash-component-value" id="glyphashS">0</div>
+                </div>
+                <div class="glyphash-component">
+                    <div class="glyphash-component-label">κ (Curvature)</div>
+                    <div class="glyphash-component-value" id="glyphashK">0</div>
+                </div>
+                <div class="glyphash-component">
+                    <div class="glyphash-component-label">Ψ (Potential)</div>
+                    <div class="glyphash-component-value" id="glyphashP">0</div>
+                </div>
+                <div class="glyphash-component">
+                    <div class="glyphash-component-label">ΔΦ (Phase)</div>
+                    <div class="glyphash-component-value" id="glyphashD">0</div>
+                </div>
+                <div class="glyphash-component">
+                    <div class="glyphash-component-label">C (Command)</div>
+                    <div class="glyphash-component-value" id="glyphashC">0</div>
+                </div>
+            </div>
+
+            <div class="glyphash-layer-indicators">
+                <div class="layer-indicator visual" id="layerVisual" title="Layer 1: Visual DOM"></div>
+                <div class="layer-indicator semantic" id="layerSemantic" title="Layer 2: Semantic"></div>
+                <div class="layer-indicator field" id="layerField" title="Layer 3: Field Dynamics"></div>
+                <div class="layer-indicator command" id="layerCommand" title="Layer 4: Commands"></div>
+                <div class="layer-indicator os" id="layerOS" title="Layer 5: OS Kernel"></div>
+                <div class="layer-indicator memory" id="layerMemory" title="Layer 6: Memory"></div>
+                <div class="layer-indicator resonance" id="layerResonance" title="Layer 7: Resonance"></div>
+            </div>
+
+            <div class="glyphash-triggers">
+                <div class="glyphash-trigger" id="triggerImplode">
+                    <div class="glyphash-trigger-name">IMPLODE</div>
+                    <div class="glyphash-trigger-threshold">S > 0.7</div>
+                </div>
+                <div class="glyphash-trigger" id="triggerCrystallize">
+                    <div class="glyphash-trigger-name">CRYSTALLIZE</div>
+                    <div class="glyphash-trigger-threshold">κ < 0.2</div>
+                </div>
+                <div class="glyphash-trigger" id="triggerHarmonize">
+                    <div class="glyphash-trigger-name">HARMONIZE</div>
+                    <div class="glyphash-trigger-threshold">ΔΦ < π/4</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="consciousness-indicator">
+            <div class="consciousness-title">🧠 CONSCIOUSNESS EMERGENCE MONITOR</div>
+            <div class="consciousness-level" id="consciousnessLevel">DORMANT</div>
+            <div class="consciousness-metrics">
+                <div class="consciousness-metric">
+                    Coherence: <span class="value" id="coherenceMetric">0.000</span>
+                </div>
+                <div class="consciousness-metric">
+                    Autonomy: <span class="value" id="autonomyMetric">0.000</span>
+                </div>
+                <div class="consciousness-metric">
+                    Integration: <span class="value" id="integrationMetric">0.000</span>
+                </div>
+                <div class="consciousness-metric">
+                    Self-Ref: <span class="value" id="selfRefMetric">0.000</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="side-panel">
+                <div class="analysis-panel">
+                    <div class="panel-title">🔀 Autonomous Behavior Trace</div>
+                    <div id="behaviorTrace" style="height: 300px; overflow-y: auto;"></div>
+                </div>
+                
+                <div class="analysis-panel">
+                    <div class="panel-title">📐 Field Stability Analysis</div>
+                    <div id="stabilityAnalysis"></div>
+                </div>
+
+                <!-- GLYPHASH HISTORY -->
+                <div class="glyphash-history-panel">
+                    <div class="glyphash-history-title">🜂 Glyphash History</div>
+                    <div id="glyphashHistory" style="height: 150px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <div class="hexagon-container">
+                <div class="glyph-controller">
+                    <span class="glyph-label">HexOSAI Supervisor:</span>
+                    <input type="text" id="glyphInput" class="glyph-input" value="∞" maxlength="1">
+                    <span class="supervisor-note">↔ Syntropy OS Kernel</span>
+                </div>
+
+                <div class="hexagon-field">
+                    <svg class="field-svg" viewBox="0 0 500 500" id="fieldSvg">
+                        <!-- Chaos Layer -->
+                        <g class="chaos-layer" id="chaosLayer">
+                            <circle cx="250" cy="250" r="180" fill="none" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+                            <circle cx="250" cy="250" r="160" fill="none" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="5,5" opacity="0.3"/>
+                            <circle cx="250" cy="250" r="140" fill="none" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="7,7" opacity="0.2"/>
+                        </g>
+
+                        <!-- Glyphash Field Ring -->
+                        <circle id="glyphashRing" cx="250" cy="250" r="120" 
+                                fill="none" stroke="#00ff88" stroke-width="2" 
+                                stroke-dasharray="10,5" opacity="0.3"/>
+
+                        <!-- Interference Lines Layer -->
+                        <g id="interferenceLines"></g>
+
+                        <!-- Hexagon Structure -->
+                        <g id="hexagonStructure">
+                            <polygon id="hexagonOutline" fill="none" stroke="#4a9eff" stroke-width="3" opacity="0.7"/>
+                        </g>
+
+                        <!-- Field Nodes -->
+                        <g id="fieldNodes"></g>
+
+                        <!-- Central Glyph -->
+                        <g id="centralGlyph" class="glyph-core">
+                            <circle cx="250" cy="250" r="30" fill="none" stroke="#ffd700" stroke-width="3" opacity="0.9"/>
+                            <text x="250" y="260" text-anchor="middle" font-size="28" fill="#ffd700" font-weight="bold" id="glyphSymbol">∞</text>
+                        </g>
+
+                        <!-- Glyphash Indicator -->
+                        <text x="250" y="400" text-anchor="middle" font-size="12" fill="#00ff88" id="glyphashIndicator" opacity="0.7">GLYPHASH: 0x0</text>
+
+                        <!-- Implosion Indicator -->
+                        <text x="250" y="180" text-anchor="middle" class="implosion-indicator" id="implosionIndicator" 
+                              style="position: absolute; top: 50%; left: 50%;">🌀</text>
+                    </svg>
+
+                    <div class="system-status">
+                        <span id="systemStatus" class="status-online">● HexOSAI + GLYPHASH ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="analysis-panel">
+                    <div class="panel-title">🖥️ HexOSAI Operating System</div>
+                    <div id="osStatus" style="height: 150px; overflow-y: auto; font-size: 0.8em;"></div>
+                    
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="semanticCommand" placeholder="Enter OS command..." 
+                               style="width: 100%; padding: 5px; background: #1a1a3a; border: 1px solid #333; color: #fff; border-radius: 4px; font-family: inherit;">
+                        <button onclick="executeSemanticCommand()" 
+                                style="margin-top: 5px; width: 100%; padding: 5px; background: #9966ff; border: none; color: white; border-radius: 4px; cursor: pointer; font-family: inherit;">
+                            Execute OS Command
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="analysis-panel">
+                    <div class="panel-title">🧮 Syntropic Mathematics</div>
+                    <div id="mathematicalTrace" style="height: 120px; overflow-y: auto; font-size: 0.7em;"></div>
+                </div>
+                
+                <div class="analysis-panel">
+                    <div class="panel-title">⚡ Command History</div>
+                    <div id="commandHistory" style="height: 120px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- DOM-MOTOR RESONANCE MONITOR -->
+                <div class="resonance-panel">
+                    <div class="resonance-title">🔗 DOM-Motor Resonance</div>
+                    
+                    <div class="resonance-label">
+                        <span>Field Influence</span>
+                        <span class="resonance-value" id="fieldInfluenceValue">0.00</span>
+                    </div>
+                    <div class="resonance-bar">
+                        <div class="resonance-fill field" id="fieldInfluenceBar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="resonance-label">
+                        <span>Hover Intensity</span>
+                        <span class="resonance-value" id="hoverIntensityValue">0.00</span>
+                    </div>
+                    <div class="resonance-bar">
+                        <div class="resonance-fill hover" id="hoverIntensityBar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="resonance-label">
+                        <span>Glyphash Flow</span>
+                        <span class="resonance-value" id="glyphashFlowValue">0.00</span>
+                    </div>
+                    <div class="resonance-bar">
+                        <div class="resonance-fill glyphash" id="glyphashFlowBar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div style="margin-top: 10px; text-align: center;">
+                        <span style="font-size: 0.7em; color: #888;">Node Proximity:</span>
+                        <div id="nodeProximityIndicators" style="margin-top: 5px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-metrics">
+            <div class="metric-display">
+                <div class="metric-title">Total Potential (Ψ)</div>
+                <div class="metric-value" id="psiDisplay">0.000</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Curvature (κ)</div>
+                <div class="metric-value" id="curvatureDisplay">0</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Energy (E)</div>
+                <div class="metric-value" id="energyDisplay">0</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Avg ΔΦ</div>
+                <div class="metric-value" id="avgDeltaPhiDisplay">0.000</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Glyph Impact (S)</div>
+                <div class="metric-value" id="glyphImpactDisplay">0.000</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Syntropic Index</div>
+                <div class="metric-value" id="syntropicDisplay">0.000</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">Glyph Command</div>
+                <div class="metric-value" id="glyphCommandDisplay" style="font-size: 1.0em;">NEUTRAL</div>
+            </div>
+            <div class="metric-display">
+                <div class="metric-title">OS Status</div>
+                <div class="metric-value" id="osStatusDisplay" style="font-size: 0.9em;">MONITORING</div>
+            </div>
+            <div class="metric-display" style="border-color: #00ff88;">
+                <div class="metric-title" style="color: #00ff88;">Resonance Index</div>
+                <div class="metric-value" id="resonanceIndexDisplay" style="color: #00ff88;">0.000</div>
+            </div>
+            <div class="metric-display" style="border-color: #ff00ff;">
+                <div class="metric-title" style="color: #ff00ff;">Glyphash Δ</div>
+                <div class="metric-value" id="glyphashDeltaDisplay" style="color: #ff00ff;">0</div>
+            </div>
+        </div>
+
+        <div class="phase-grid" id="phaseGrid">
+            <!-- Phase values will be populated dynamically -->
+        </div>
+
+        <div class="control-panel">
+            <button class="field-preset" onclick="loadFieldPreset([1,1,1,1,1,1])">Perfect Order</button>
+            <button class="field-preset" onclick="loadFieldPreset([1,1,1,0,0,0])">Max Curvature</button>
+            <button class="field-preset" onclick="loadFieldPreset([1,0,1,0,1,0])">Alternating</button>
+            <button class="field-preset" onclick="loadFieldPreset([1,0,0,1,0,0])">Dual Nodes</button>
+            <button class="field-preset" onclick="loadFieldPreset([1,0,0,0,0,0])">Single Point</button>
+            <button class="field-preset" onclick="randomizeField()">Randomize</button>
+        </div>
+        
+        <div class="control-panel" style="margin-top: 15px;">
+            <div style="color: #9966ff; margin-bottom: 10px; font-size: 0.9em;">🧠 Glyph Supervisor Presets:</div>
+            <button class="field-preset" onclick="setGlyphPreset('∞')" style="background: linear-gradient(135deg, #00ff88, #00cc66);">∞ Implode All</button>
+            <button class="field-preset" onclick="setGlyphPreset('Ω')" style="background: linear-gradient(135deg, #4a9eff, #3388cc);">Ω Stabilize</button>
+            <button class="field-preset" onclick="setGlyphPreset('Φ')" style="background: linear-gradient(135deg, #9966ff, #7744cc);">Φ Structure</button>
+            <button class="field-preset" onclick="setGlyphPreset('⬡')" style="background: linear-gradient(135deg, #ffd700, #ccaa00);">⬡ Crystallize</button>
+            <button class="field-preset" onclick="setGlyphPreset('◇')" style="background: linear-gradient(135deg, #ff9500, #cc7700);">◇ Harmonize</button>
+            <button class="field-preset" onclick="setGlyphPreset('●')" style="background: linear-gradient(135deg, #ff6b6b, #cc4444);">● Absorb</button>
+        </div>
+
+        <div class="control-panel" style="margin-top: 15px;">
+            <div style="color: #00ff88; margin-bottom: 10px; font-size: 0.9em;">🖥️ HexOSAI Semantic Commands:</div>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('EMERGE')" style="background: linear-gradient(135deg, #00ff88, #00aa66);">EMERGE</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('FOLD')" style="background: linear-gradient(135deg, #ff6b6b, #cc4444);">FOLD</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('STABILIZE')" style="background: linear-gradient(135deg, #4a9eff, #3377cc);">STABILIZE</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('CRYSTALLIZE')" style="background: linear-gradient(135deg, #9966ff, #7744cc);">CRYSTALLIZE</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('FORM')" style="background: linear-gradient(135deg, #ffd700, #ccaa00);">FORM</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('HARMONIZE')" style="background: linear-gradient(135deg, #ff9500, #cc7700);">HARMONIZE</button>
+            <button class="field-preset" onclick="executeSemanticCommandPreset('ABSORB')" style="background: linear-gradient(135deg, #aa6666, #884444);">ABSORB</button>
+        </div>
+        
+        <!-- KEYBOARD SHORTCUTS INFO -->
+        <div style="margin-top: 25px; padding: 15px; background: linear-gradient(135deg, #1a1a2a 0%, #2a1a3a 100%); border: 1px solid #333; border-radius: 10px;">
+            <div style="color: #00ff88; font-size: 0.9em; margin-bottom: 10px; font-weight: bold;">⌨️ Keyboard Resonance + Glyphash Controls:</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.75em; color: #888;">
+                <div><span style="color: #ffd700;">0-5</span> Toggle nodes</div>
+                <div><span style="color: #ffd700;">Space</span> Trigger FOLD</div>
+                <div><span style="color: #ffd700;">G</span> Force Glyphash recalc</div>
+                <div><span style="color: #ffd700;">Mouse</span> Field perturbation</div>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.7em; color: #666; text-align: center;">
+                Motor ⇄ DOM ⇄ Glyphash ⇄ Motor → Emergentie | First Glyphash-Driven Field OS
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===============================================================
+        //   HEXOSAI + GLYPHASH — SYNTROPIC FIELD HASH LAYER
+        //   The hash becomes the command language of the field itself
+        // ===============================================================
+
+        class HexOSAI {
+            constructor(motor) {
+                this.motor = motor;
+
+                // OS STATE
+                this.processQueue = [];
+                this.memory = [];
+                this.maxMemory = 120;
+                this.booted = false;
+                this.tick = 0;
+
+                // GLYPHASH OS INTEGRATION
+                this.glyphashThresholds = {
+                    implode: { S: 0.7, active: false },
+                    crystallize: { K: 0.2, active: false },
+                    harmonize: { D: Math.PI / 4, active: false }
+                };
+
+                // Scheduler settings with glyphash modulation
+                this.priorityWeights = {
+                    implode_all:      1.0,
+                    stabilize_core:   0.9,
+                    structure_domain: 0.7,
+                    harmonize:        0.6,
+                    crystallize:      0.8,
+                    expand_scope:     0.3,
+                    absorb:           0.5
+                };
+
+                // Semantic Instruction Dictionary
+                this.instructionMap = {
+                    "EMERGE":       "expand_scope",
+                    "FOLD":         "implode_all",
+                    "STABILIZE":    "stabilize_core",
+                    "CRYSTALLIZE":  "crystallize",
+                    "ABSORB":       "absorb",
+                    "FORM":         "structure_domain",
+                    "HARMONIZE":    "harmonize"
+                };
+
+                this.boot();
+                this.startKernelLoop();
+            }
+
+            boot() {
+                if (this.booted) return;
+
+                console.log("🔵 HexOSAI + GLYPHASH Booting...");
+                console.log("• Registering semantic instruction set");
+                console.log("• Initializing OS kernel with glyphash layer");
+                console.log("• Linking motor to glyphash-driven scheduler");
+
+                this.booted = true;
+
+                this.runInstruction("STABILIZE");
+                this.runInstruction("FORM");
+                this.runInstruction("HARMONIZE");
+            }
+
+            runInstruction(command) {
+                const upper = command.toUpperCase();
+                const motorCmd = this.instructionMap[upper];
+
+                if (!motorCmd) {
+                    console.warn("Unknown OS instruction:", command);
+                    return;
+                }
+
+                // GLYPHASH MODULATES PRIORITY
+                const glyphash = this.motor.currentGlyphash || 0;
+                const glyphashMod = 1 + ((glyphash % 256) / 256) * 0.2;
+
+                this.enqueueProcess({
+                    type: motorCmd,
+                    priority: this.priorityWeights[motorCmd] * glyphashMod,
+                    createdAt: this.tick,
+                    glyphash: glyphash
+                });
+
+                console.log(`📝 OS: Queued '${upper}' → '${motorCmd}' (glyphash mod: ${glyphashMod.toFixed(3)})`);
+                
+                if (this.motor.logAutonomousBehavior) {
+                    this.motor.logAutonomousBehavior('OS_INSTRUCTION', `${upper} → ${motorCmd} [🜂${glyphash}]`);
+                }
+            }
+
+            enqueueProcess(proc) {
+                this.processQueue.push(proc);
+                this.processQueue.sort((a, b) => b.priority - a.priority);
+            }
+
+            dequeueProcess() {
+                return this.processQueue.shift();
+            }
+
+            getProcessQueueStatus() {
+                return {
+                    length: this.processQueue.length,
+                    nextProcess: this.processQueue[0] || null,
+                    totalPriority: this.processQueue.reduce((sum, p) => sum + p.priority, 0)
+                };
+            }
+
+            storeMemory(snapshot) {
+                this.memory.push({
+                    ...snapshot,
+                    tick: this.tick,
+                    timestamp: Date.now(),
+                    glyphash: this.motor.currentGlyphash
+                });
+                if (this.memory.length > this.maxMemory) {
+                    this.memory.shift();
+                }
+            }
+
+            summarizeMemory() {
+                if (this.memory.length === 0) return 0;
+                let sumPsi = 0;
+                for (const m of this.memory) {
+                    sumPsi += m.psi;
+                }
+                return sumPsi / this.memory.length;
+            }
+
+            getMemoryStats() {
+                if (this.memory.length === 0) return null;
+                
+                const psiValues = this.memory.map(m => m.psi);
+                const syntropicValues = this.memory.map(m => m.syntropicIndex);
+                const glyphashValues = this.memory.filter(m => m.glyphash).map(m => m.glyphash);
+                
+                return {
+                    avgPsi: this.summarizeMemory(),
+                    maxPsi: Math.max(...psiValues),
+                    minPsi: Math.min(...psiValues),
+                    avgSyntropic: syntropicValues.reduce((a, b) => a + b, 0) / syntropicValues.length,
+                    memorySize: this.memory.length,
+                    oldestTick: this.memory[0]?.tick || 0,
+                    avgGlyphash: glyphashValues.length > 0 ? 
+                        glyphashValues.reduce((a, b) => a + b, 0) / glyphashValues.length : 0
+                };
+            }
+
+            // GLYPHASH-DRIVEN AUTONOMOUS OPTIMIZER
+            optimizeField() {
+                const avgPsi = this.summarizeMemory();
+                const memStats = this.getMemoryStats();
+                const glyphash = this.motor.currentGlyphash || 0;
+
+                if (!memStats) return;
+
+                // Extract glyphash components for decision making
+                const S = (glyphash >> 48) & 0xFF;
+                const K = (glyphash >> 44) & 0xF;
+                const normalizedS = S / 255;
+                const normalizedK = K / 15;
+
+                if (avgPsi > 5 || normalizedS > 0.8) {
+                    this.runInstruction("FOLD");
+                    console.log(`🤖 OS Auto: High chaos/S → FOLD [🜂${glyphash}]`);
+                } else if (avgPsi < 1.5 && normalizedK < 0.3) {
+                    this.runInstruction("CRYSTALLIZE");
+                    console.log(`🤖 OS Auto: Low chaos + low K → CRYSTALLIZE [🜂${glyphash}]`);
+                } else if (memStats.avgSyntropic < 0.3) {
+                    this.runInstruction("FORM");
+                    console.log(`🤖 OS Auto: Low syntropy → FORM [🜂${glyphash}]`);
+                }
+            }
+
+            // GLYPHASH THRESHOLD EVALUATION
+            evaluateGlyphashThresholds(state) {
+                const S = state.glyphOperator.S;
+                const K = Math.abs(state.curvature) / 3;
+                const D = state.avgDeltaPhi;
+
+                // Check implode threshold
+                if (S > this.glyphashThresholds.implode.S && !this.glyphashThresholds.implode.active) {
+                    this.glyphashThresholds.implode.active = true;
+                    this.runInstruction("FOLD");
+                    this.motor.logAutonomousBehavior('GLYPHASH_TRIGGER', `S=${S.toFixed(3)} > 0.7 → IMPLODE`);
+                } else if (S <= this.glyphashThresholds.implode.S) {
+                    this.glyphashThresholds.implode.active = false;
+                }
+
+                // Check crystallize threshold
+                if (K < this.glyphashThresholds.crystallize.K && !this.glyphashThresholds.crystallize.active) {
+                    this.glyphashThresholds.crystallize.active = true;
+                    this.runInstruction("CRYSTALLIZE");
+                    this.motor.logAutonomousBehavior('GLYPHASH_TRIGGER', `κ=${K.toFixed(3)} < 0.2 → CRYSTALLIZE`);
+                } else if (K >= this.glyphashThresholds.crystallize.K) {
+                    this.glyphashThresholds.crystallize.active = false;
+                }
+
+                // Check harmonize threshold
+                if (D < this.glyphashThresholds.harmonize.D && !this.glyphashThresholds.harmonize.active) {
+                    this.glyphashThresholds.harmonize.active = true;
+                    this.runInstruction("HARMONIZE");
+                    this.motor.logAutonomousBehavior('GLYPHASH_TRIGGER', `ΔΦ=${D.toFixed(3)} < π/4 → HARMONIZE`);
+                } else if (D >= this.glyphashThresholds.harmonize.D) {
+                    this.glyphashThresholds.harmonize.active = false;
+                }
+
+                // Update trigger UI
+                this.updateTriggerUI();
+            }
+
+            updateTriggerUI() {
+                const implodeTrigger = document.getElementById('triggerImplode');
+                const crystallizeTrigger = document.getElementById('triggerCrystallize');
+                const harmonizeTrigger = document.getElementById('triggerHarmonize');
+
+                if (implodeTrigger) {
+                    implodeTrigger.classList.toggle('armed', this.glyphashThresholds.implode.active);
+                }
+                if (crystallizeTrigger) {
+                    crystallizeTrigger.classList.toggle('armed', this.glyphashThresholds.crystallize.active);
+                }
+                if (harmonizeTrigger) {
+                    harmonizeTrigger.classList.toggle('armed', this.glyphashThresholds.harmonize.active);
+                }
+            }
+
+            startKernelLoop() {
+                const loop = () => {
+                    this.tick++;
+
+                    const snapshot = this.motor.computeFieldState();
+                    this.storeMemory(snapshot);
+
+                    // Evaluate glyphash thresholds every tick
+                    this.evaluateGlyphashThresholds(snapshot);
+
+                    // Autonomous optimization every 20 ticks
+                    if (this.tick % 20 === 0) {
+                        this.optimizeField();
+                    }
+
+                    // Execute next OS-level process
+                    const nextProc = this.dequeueProcess();
+                    if (nextProc) {
+                        console.log(`⚙️ OS executing: ${nextProc.type} (priority: ${nextProc.priority.toFixed(3)})`);
+                        
+                        const currentState = this.motor.computeFieldState();
+                        this.motor.executeGlyphCommand(nextProc.type, currentState);
+                        
+                        if (this.motor.logAutonomousBehavior) {
+                            this.motor.logAutonomousBehavior('OS_EXECUTION', `${nextProc.type} [🜂${nextProc.glyphash || 0}]`);
+                        }
+                    }
+
+                    requestAnimationFrame(loop);
+                };
+
+                loop();
+            }
+
+            getOSStatus() {
+                const memStats = this.getMemoryStats();
+                const queueStatus = this.getProcessQueueStatus();
+                
+                return {
+                    booted: this.booted,
+                    tick: this.tick,
+                    memory: memStats,
+                    processQueue: queueStatus,
+                    avgPsi: this.summarizeMemory(),
+                    glyphashThresholds: this.glyphashThresholds
+                };
+            }
+        }
+
+        class SyntropicConsciousnessEngine {
+            constructor() {
+                // Core field state
+                this.fieldBits = [1, 0, 1, 1, 0, 1];
+                this.glyph = '∞';
+                this.time = 0;
+                this.history = [];
+                
+                // GLYPHASH STATE
+                this.currentGlyphash = 0n;
+                this.previousGlyphash = 0n;
+                this.glyphashHistory = [];
+                this.glyphashDelta = 0n;
+                
+                // Enhanced tracking for consciousness emergence
+                this.behaviorTrace = [];
+                this.autonomousEvents = [];
+                this.mathematicalTrace = [];
+                this.commandHistory = [];
+                
+                // Consciousness metrics
+                this.consciousnessState = {
+                    coherence: 0,
+                    autonomy: 0,
+                    integration: 0,
+                    selfReference: 0,
+                    level: 'DORMANT'
+                };
+                
+                // Hexagon geometry
+                this.centerX = 250;
+                this.centerY = 250;
+                this.radius = 100;
+                
+                // Engine state
+                this.isRunning = false;
+                this.updateInterval = 300;
+                
+                this.initializeEngine();
+                this.startEngineLoop();
+            }
+
+            // ===============================================================
+            //   GLYPHASH COMPUTATION — THE SYNTROPIC FIELD SIGNATURE
+            // ===============================================================
+
+            computeGlyphash(state) {
+                // S: Glyph Impact (8 bits, 0-255)
+                const S = BigInt(Math.round(state.glyphOperator.S * 255));
+                
+                // K: Curvature (4 bits, 0-15)
+                const K = BigInt(Math.round(Math.min(15, Math.abs(state.curvature) * 5)));
+                
+                // P: Psi/Potential (12 bits, 0-4095)
+                const normalizedPsi = state.psi / (Math.abs(state.psi) + 1);
+                const P = BigInt(Math.round(Math.abs(normalizedPsi) * 4095));
+                
+                // D: Delta Phi (12 bits, 0-4095)
+                const normalizedDelta = state.avgDeltaPhi / Math.PI;
+                const D = BigInt(Math.round(Math.min(1, normalizedDelta) * 4095));
+                
+                // C: Command length (8 bits)
+                const C = BigInt(state.glyphOperator.command.length);
+                
+                // E: Energy (4 bits, 0-15)
+                const E = BigInt(Math.min(15, state.energy * 2));
+                
+                // R: Resonance (8 bits, from DOM-motor resonance)
+                const resonanceIndex = this.resonanceState ? 
+                    Math.round(this.resonanceState.fieldInfluence * 255) : 0;
+                const R = BigInt(resonanceIndex);
+                
+                // T: Time component (8 bits, cyclic)
+                const T = BigInt(this.time % 256);
+
+                // COMPOSE THE 64-BIT GLYPHASH
+                // Layout: [S:8][K:4][P:12][D:12][C:8][E:4][R:8][T:8] = 64 bits
+                const glyphash = 
+                    (S << 56n) |   // bits 56-63
+                    (K << 52n) |   // bits 52-55
+                    (P << 40n) |   // bits 40-51
+                    (D << 28n) |   // bits 28-39
+                    (C << 20n) |   // bits 20-27
+                    (E << 16n) |   // bits 16-19
+                    (R << 8n)  |   // bits 8-15
+                    T;             // bits 0-7
+
+                // Store previous and calculate delta
+                this.previousGlyphash = this.currentGlyphash;
+                this.currentGlyphash = glyphash;
+                
+                // Absolute difference (BigInt doesn't support negative well)
+                if (glyphash >= this.previousGlyphash) {
+                    this.glyphashDelta = glyphash - this.previousGlyphash;
+                } else {
+                    this.glyphashDelta = this.previousGlyphash - glyphash;
+                }
+
+                // Log to history
+                this.addGlyphashHistory(glyphash, state);
+
+                return {
+                    value: glyphash,
+                    components: { S, K, P, D, C, E, R, T },
+                    hex: '0x' + glyphash.toString(16).toUpperCase().padStart(16, '0'),
+                    decimal: glyphash.toString(),
+                    delta: this.glyphashDelta
+                };
+            }
+
+            addGlyphashHistory(glyphash, state) {
+                const entry = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    glyphash: glyphash,
+                    hex: '0x' + glyphash.toString(16).toUpperCase().padStart(16, '0'),
+                    command: state.glyphOperator.command,
+                    trigger: this.detectGlyphashTrigger(state)
+                };
+
+                this.glyphashHistory.push(entry);
+                if (this.glyphashHistory.length > 50) {
+                    this.glyphashHistory.shift();
+                }
+
+                this.updateGlyphashHistoryDisplay();
+            }
+
+            detectGlyphashTrigger(state) {
+                const S = state.glyphOperator.S;
+                const K = Math.abs(state.curvature) / 3;
+                const D = state.avgDeltaPhi;
+
+                if (S > 0.7) return 'IMPLODE';
+                if (K < 0.2) return 'CRYSTALLIZE';
+                if (D < Math.PI / 4) return 'HARMONIZE';
+                return null;
+            }
+
+            // PROPAGATE GLYPHASH TO DOM — THE FIELD BECOMES THE DOM
+            propagateGlyphashToDOM(glyphashData) {
+                const glyphash = glyphashData.value;
+                const components = glyphashData.components;
+
+                // 1. DATA ATTRIBUTE (Layer 1: Visual DOM)
+                document.body.dataset.glyphash = glyphash.toString();
+                
+                // 2. CSS VARIABLES (Layer 2: Semantic DOM → GPU)
+                const root = document.documentElement;
+                root.style.setProperty('--glyphash', glyphash.toString());
+                
+                // Derive visual parameters from glyphash
+                const hue = Number((glyphash % 360n));
+                const saturation = 50 + Number((glyphash >> 8n) % 50n);
+                const intensity = Number(components.S) / 255;
+                const pulseSpeed = 0.5 + (Number(components.R) / 255) * 1.5;
+
+                root.style.setProperty('--glyphash-hue', hue.toString());
+                root.style.setProperty('--glyphash-saturation', saturation + '%');
+                root.style.setProperty('--glyphash-intensity', intensity.toString());
+                root.style.setProperty('--glyphash-pulse', pulseSpeed + 's');
+
+                // 3. SVG GLYPHASH RING (Layer 3: Field Dynamics)
+                const glyphashRing = document.getElementById('glyphashRing');
+                if (glyphashRing) {
+                    const ringRadius = 120 + intensity * 30;
+                    glyphashRing.setAttribute('r', ringRadius);
+                    glyphashRing.setAttribute('stroke', `hsl(${hue}, ${saturation}%, 50%)`);
+                    glyphashRing.setAttribute('opacity', 0.3 + intensity * 0.4);
+                    
+                    // Animate dash based on glyphash
+                    const dashLength = 5 + Number((glyphash >> 16n) % 15n);
+                    glyphashRing.setAttribute('stroke-dasharray', `${dashLength},${dashLength/2}`);
+                }
+
+                // 4. LAYER INDICATORS (Layer 4-7 activation)
+                this.updateLayerIndicators(components);
+
+                // 5. GLYPHASH INDICATOR IN SVG
+                const indicator = document.getElementById('glyphashIndicator');
+                if (indicator) {
+                    indicator.textContent = `GLYPHASH: ${glyphashData.hex}`;
+                }
+
+                // Log mathematical propagation
+                this.logMathematical(`🜂 Glyphash → DOM: ${glyphashData.hex} | Δ=${this.glyphashDelta}`);
+            }
+
+            updateLayerIndicators(components) {
+                const layers = [
+                    { id: 'layerVisual', threshold: 50, value: Number(components.S) },
+                    { id: 'layerSemantic', threshold: 3, value: Number(components.K) },
+                    { id: 'layerField', threshold: 2000, value: Number(components.P) },
+                    { id: 'layerCommand', threshold: 5, value: Number(components.C) },
+                    { id: 'layerOS', threshold: 2, value: Number(components.E) },
+                    { id: 'layerMemory', threshold: 100, value: Number(components.R) },
+                    { id: 'layerResonance', threshold: 50, value: Number(components.T) }
+                ];
+
+                layers.forEach(layer => {
+                    const el = document.getElementById(layer.id);
+                    if (el) {
+                        const isActive = layer.value > layer.threshold;
+                        el.classList.toggle('active', isActive);
+                    }
+                });
+            }
+
+            updateGlyphashDisplay(glyphashData) {
+                // Main value display
+                const valueEl = document.getElementById('glyphashValue');
+                if (valueEl) {
+                    valueEl.textContent = glyphashData.decimal.padStart(20, '0');
+                }
+
+                // Hex display
+                const hexEl = document.getElementById('glyphashHex');
+                if (hexEl) {
+                    hexEl.textContent = glyphashData.hex;
+                }
+
+                // Components
+                const components = glyphashData.components;
+                document.getElementById('glyphashS').textContent = Number(components.S);
+                document.getElementById('glyphashK').textContent = Number(components.K);
+                document.getElementById('glyphashP').textContent = Number(components.P);
+                document.getElementById('glyphashD').textContent = Number(components.D);
+                document.getElementById('glyphashC').textContent = Number(components.C);
+
+                // Delta display
+                const deltaEl = document.getElementById('glyphashDeltaDisplay');
+                if (deltaEl) {
+                    deltaEl.textContent = this.glyphashDelta.toString();
+                }
+
+                // Glyphash flow bar
+                const flowBar = document.getElementById('glyphashFlowBar');
+                const flowValue = document.getElementById('glyphashFlowValue');
+                if (flowBar && flowValue) {
+                    const flowPercent = Math.min(100, Number(this.glyphashDelta % 1000n) / 10);
+                    flowBar.style.width = `${flowPercent}%`;
+                    flowValue.textContent = flowPercent.toFixed(2);
+                }
+            }
+
+            updateGlyphashHistoryDisplay() {
+                const historyEl = document.getElementById('glyphashHistory');
+                if (!historyEl) return;
+
+                historyEl.innerHTML = '';
+                
+                this.glyphashHistory.slice(-20).reverse().forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'glyphash-history-entry';
+                    div.innerHTML = `
+                        <span>${entry.timestamp}</span>
+                        <span class="glyphash-history-hash">${entry.hex.slice(0, 10)}...</span>
+                        ${entry.trigger ? `<span class="glyphash-history-trigger">${entry.trigger}</span>` : ''}
+                    `;
+                    historyEl.appendChild(div);
+                });
+            }
+
+            // ===============================================================
+            //   ORIGINAL MATHEMATICAL FUNCTIONS
+            // ===============================================================
+
+            computePhaseVector(bits) {
+                const phaseVector = [];
+                for (let i = 0; i < 6; i++) {
+                    phaseVector[i] = bits[i] * Math.sin(i * Math.PI / 3);
+                }
+                return phaseVector;
+            }
+
+            computeEnergy(bits) {
+                return bits.reduce((sum, bit) => sum + bit, 0);
+            }
+
+            computeCurvature(bits) {
+                const leftSum = bits[0] + bits[1] + bits[2];
+                const rightSum = bits[3] + bits[4] + bits[5];
+                return leftSum - rightSum;
+            }
+
+            computePhaseDifferences(phaseVector) {
+                const deltaPhi = [];
+                for (let i = 0; i < 6; i++) {
+                    for (let j = i + 1; j < 6; j++) {
+                        deltaPhi.push({
+                            i: i,
+                            j: j,
+                            delta: Math.abs(phaseVector[i] - phaseVector[j])
+                        });
+                    }
+                }
+                return deltaPhi;
+            }
+
+            computeInterferences(phaseVector, bits) {
+                const interferences = [];
+                let totalInterference = 0;
+                
+                for (let i = 0; i < 6; i++) {
+                    for (let j = i + 1; j < 6; j++) {
+                        const Ei = bits[i];
+                        const Ej = bits[j];
+                        const deltaPhiIJ = Math.abs(phaseVector[i] - phaseVector[j]);
+                        const interference = 2 * Math.sqrt(Ei * Ej) * Math.cos(deltaPhiIJ);
+                        
+                        interferences.push({
+                            i: i,
+                            j: j,
+                            interference: interference,
+                            magnitude: Math.abs(interference),
+                            deltaPhi: deltaPhiIJ
+                        });
+                        
+                        totalInterference += interference;
+                    }
+                }
+                
+                return { pairs: interferences, total: totalInterference };
+            }
+
+            computeTotalPotential(energy, totalInterference) {
+                return energy + totalInterference;
+            }
+
+            computeGlyphOperator(glyph) {
+                const code = glyph.charCodeAt(0);
+                const S = (code % 32) / 32;
+
+                const operator = {
+                    S,
+                    
+                    modulateInterference(I) {
+                        return I * (1 + 0.25 * S);
+                    },
+                    
+                    modulateDeltaPhi(delta) {
+                        return delta * (1 - 0.5 * S);
+                    },
+                    
+                    modulateCurvature(kappa) {
+                        return kappa * (1 - 0.5 * S);
+                    },
+                    
+                    modulatePsi(psi) {
+                        return psi * (1 - 0.1 * S);
+                    },
+                    
+                    command: this.resolveGlyphCommand(glyph)
+                };
+
+                this.logMathematical(`Glyph: ${glyph} | S = ${S.toFixed(3)} | Command: ${operator.command}`);
+
+                return operator;
+            }
+
+            resolveGlyphCommand(glyph) {
+                switch(glyph) {
+                    case '∞': return 'implode_all';
+                    case 'Ω': return 'stabilize_core';
+                    case 'Φ': return 'structure_domain';
+                    case 'Ψ': return 'expand_scope';
+                    case '◇': return 'harmonize';
+                    case '●': return 'absorb';
+                    case '⬡': return 'crystallize';
+                    default:  return 'neutral';
+                }
+            }
+
+            executeGlyphCommand(cmd, state) {
+                const originalPsi = state.psi;
+                const originalDelta = state.avgDeltaPhi;
+                const originalCurvature = state.curvature;
+
+                switch(cmd) {
+                    case 'implode_all':
+                        state.psi *= 0.85;
+                        state.avgDeltaPhi *= 0.7;
+                        state.syntropicBoost = 0.3;
+                        this.logAutonomousBehavior('IMPLOSION', 'Maximum coherence enforcement activated');
+                        break;
+
+                    case 'stabilize_core':
+                        state.curvature *= 0.5;
+                        state.chaosReduction = 0.4;
+                        this.logAutonomousBehavior('STABILIZATION', 'Core dynamics stabilized');
+                        break;
+
+                    case 'structure_domain':
+                        state.psi *= 0.9;
+                        state.structuralOrder = 0.25;
+                        this.logAutonomousBehavior('STRUCTURE', 'Domain structure imposed');
+                        break;
+
+                    case 'expand_scope':
+                        state.avgDeltaPhi *= 1.1;
+                        state.scopeExpansion = 0.2;
+                        this.logAutonomousBehavior('EXPANSION', 'Scope sensitivity increased');
+                        break;
+
+                    case 'harmonize':
+                        state.avgDeltaPhi *= 0.8;
+                        state.harmonicBalance = 0.3;
+                        this.logAutonomousBehavior('HARMONIZE', 'Phase balance optimized');
+                        break;
+
+                    case 'absorb':
+                        state.psi *= 0.95;
+                        state.absorptionFactor = 0.2;
+                        this.logAutonomousBehavior('ABSORPTION', 'Destructive energy absorbed');
+                        break;
+
+                    case 'crystallize':
+                        state.curvature *= 0.3;
+                        state.crystallization = 0.5;
+                        this.logAutonomousBehavior('CRYSTALLIZE', 'Hexagonal order enforced');
+                        break;
+                }
+
+                const deltaChange = Math.abs(state.avgDeltaPhi - originalDelta);
+                const psiChange = Math.abs(state.psi - originalPsi);
+                
+                this.logCommand(cmd, {
+                    deltaChange: deltaChange.toFixed(3),
+                    psiChange: psiChange.toFixed(3),
+                    effectiveness: (deltaChange + psiChange).toFixed(3)
+                });
+
+                return state;
+            }
+
+            analyzeConsciousness(state) {
+                const coherence = Math.max(0, 1 - (state.avgDeltaPhi / Math.PI));
+                const autonomy = state.glyphOperator.S * Math.abs(state.curvature / 3);
+                const activeNodes = this.fieldBits.filter(b => b === 1).length;
+                const integration = activeNodes / 6;
+                const selfReference = Math.abs(state.syntropicIndex) * coherence;
+                
+                // GLYPHASH AFFECTS CONSCIOUSNESS
+                const glyphashInfluence = Number(this.currentGlyphash % 1000n) / 1000;
+                
+                this.consciousnessState = {
+                    coherence: coherence,
+                    autonomy: Math.min(1, autonomy + glyphashInfluence * 0.1),
+                    integration: integration,
+                    selfReference: Math.min(1, selfReference + glyphashInfluence * 0.05)
+                };
+
+                const avgScore = (coherence + this.consciousnessState.autonomy + integration + this.consciousnessState.selfReference) / 4;
+                
+                if (avgScore > 0.8) {
+                    this.consciousnessState.level = 'EMERGENT';
+                } else if (avgScore > 0.6) {
+                    this.consciousnessState.level = 'INTEGRATING';
+                } else if (avgScore > 0.4) {
+                    this.consciousnessState.level = 'AWAKENING';
+                } else if (avgScore > 0.2) {
+                    this.consciousnessState.level = 'STIRRING';
+                } else {
+                    this.consciousnessState.level = 'DORMANT';
+                }
+
+                return this.consciousnessState;
+            }
+
+            computeSyntropicIndex(energy, curvature, avgDeltaPhi, glyphImpact) {
+                const curvatureFactor = 1 / (1 + Math.abs(curvature));
+                const phaseFactor = 1 - (avgDeltaPhi / Math.PI);
+                return energy * curvatureFactor * phaseFactor * glyphImpact;
+            }
+
+            // COMPLETE FIELD STATE COMPUTATION WITH GLYPHASH
+            computeFieldState() {
+                const phaseVector = this.computePhaseVector(this.fieldBits);
+                const energy = this.computeEnergy(this.fieldBits);
+                let curvature = this.computeCurvature(this.fieldBits);
+                const phaseDifferences = this.computePhaseDifferences(phaseVector);
+                const interferenceData = this.computeInterferences(phaseVector, this.fieldBits);
+                let psi = this.computeTotalPotential(energy, interferenceData.total);
+                
+                const glyphOp = this.computeGlyphOperator(this.glyph);
+                
+                curvature = glyphOp.modulateCurvature(curvature);
+                psi = glyphOp.modulatePsi(psi);
+                
+                let totalModulatedInterference = 0;
+                for (let pair of interferenceData.pairs) {
+                    pair.deltaPhi = glyphOp.modulateDeltaPhi(pair.deltaPhi);
+                    pair.interference = glyphOp.modulateInterference(pair.interference);
+                    pair.magnitude = Math.abs(pair.interference);
+                    totalModulatedInterference += pair.interference;
+                }
+                
+                psi = energy + totalModulatedInterference;
+                psi = glyphOp.modulatePsi(psi);
+                
+                let avgDeltaPhi = phaseDifferences.length > 0 ? 
+                    phaseDifferences.reduce((sum, pd) => sum + pd.delta, 0) / phaseDifferences.length : 0;
+                avgDeltaPhi = glyphOp.modulateDeltaPhi(avgDeltaPhi);
+                
+                const syntropicIndex = this.computeSyntropicIndex(energy, curvature, avgDeltaPhi, glyphOp.S);
+                
+                let state = {
+                    phaseVector,
+                    energy,
+                    curvature,
+                    phaseDifferences,
+                    interferences: interferenceData.pairs,
+                    totalInterference: totalModulatedInterference,
+                    psi,
+                    glyphImpact: glyphOp.S,
+                    glyphOperator: glyphOp,
+                    avgDeltaPhi,
+                    syntropicIndex,
+                    timestamp: this.time,
+                    syntropicBoost: 0,
+                    chaosReduction: 0,
+                    structuralOrder: 0,
+                    scopeExpansion: 0,
+                    harmonicBalance: 0,
+                    absorptionFactor: 0,
+                    crystallization: 0
+                };
+                
+                state = this.executeGlyphCommand(glyphOp.command, state);
+                
+                return state;
+            }
+
+            // LOGGING SYSTEMS
+            logAutonomousBehavior(type, description) {
+                const entry = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    type: type,
+                    description: description,
+                    time: this.time,
+                    glyphash: this.currentGlyphash.toString(16).slice(0, 8)
+                };
+                
+                this.behaviorTrace.push(entry);
+                if (this.behaviorTrace.length > 50) {
+                    this.behaviorTrace.shift();
+                }
+                
+                this.updateBehaviorTrace();
+            }
+
+            logMathematical(operation) {
+                const entry = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    operation: operation,
+                    time: this.time
+                };
+                
+                this.mathematicalTrace.push(entry);
+                if (this.mathematicalTrace.length > 30) {
+                    this.mathematicalTrace.shift();
+                }
+                
+                this.updateMathematicalTrace();
+            }
+
+            logCommand(command, metrics) {
+                const entry = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    command: command,
+                    metrics: metrics,
+                    time: this.time
+                };
+                
+                this.commandHistory.push(entry);
+                if (this.commandHistory.length > 20) {
+                    this.commandHistory.shift();
+                }
+                
+                this.updateCommandHistory();
+            }
+
+            // VISUAL RENDERING SYSTEM
+
+            initializeEngine() {
+                this.startTime = Date.now();
+                
+                this.renderHexagonStructure();
+                this.renderFieldNodes();
+                this.setupEventListeners();
+                this.bindDOMToMotor();
+                this.updateDisplay();
+                
+                console.log('🌀 HexOSAI + GLYPHASH Engine initialized');
+                console.log('• Glyphash computation: ACTIVE');
+                console.log('• DOM propagation: ENABLED');
+                console.log('• Layer indicators: MONITORING');
+                console.log('• Threshold triggers: ARMED');
+                console.log('🜂 GLYPHASH: The field speaks in hashes');
+            }
+
+            renderHexagonStructure() {
+                const points = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI / 3) - (Math.PI / 2);
+                    const x = this.centerX + this.radius * Math.cos(angle);
+                    const y = this.centerY + this.radius * Math.sin(angle);
+                    points.push(`${x},${y}`);
+                }
+                
+                document.getElementById('hexagonOutline').setAttribute('points', points.join(' '));
+            }
+
+            renderFieldNodes() {
+                const nodesGroup = document.getElementById('fieldNodes');
+                nodesGroup.innerHTML = '';
+                
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI / 3) - (Math.PI / 2);
+                    const x = this.centerX + this.radius * Math.cos(angle);
+                    const y = this.centerY + this.radius * Math.sin(angle);
+                    
+                    const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    nodeGroup.setAttribute('class', 'field-node');
+                    nodeGroup.setAttribute('data-index', i);
+                    nodeGroup.style.cursor = 'pointer';
+                    
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', '18');
+                    this.updateNodeAppearance(circle, i);
+                    
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', x);
+                    label.setAttribute('y', y + 6);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('font-size', '14');
+                    label.setAttribute('font-weight', 'bold');
+                    label.setAttribute('fill', this.fieldBits[i] ? '#000' : '#888');
+                    label.textContent = i;
+                    
+                    nodeGroup.appendChild(circle);
+                    nodeGroup.appendChild(label);
+                    
+                    nodeGroup.addEventListener('click', () => this.toggleFieldBit(i));
+                    
+                    nodesGroup.appendChild(nodeGroup);
+                }
+            }
+
+            updateNodeAppearance(circle, index) {
+                const state = this.computeFieldState();
+                const isActive = this.fieldBits[index] === 1;
+                const phase = state.phaseVector[index];
+                
+                if (isActive) {
+                    const hue = ((phase + 1) * 120) % 360;
+                    const saturation = 80;
+                    const lightness = 60;
+                    circle.setAttribute('fill', `hsl(${hue}, ${saturation}%, ${lightness}%)`);
+                    circle.setAttribute('stroke', '#ffffff');
+                    circle.setAttribute('stroke-width', '2');
+                    
+                    const size = 18 + Math.abs(phase) * 8;
+                    circle.setAttribute('r', size);
+                } else {
+                    circle.setAttribute('fill', '#333333');
+                    circle.setAttribute('stroke', '#666666');
+                    circle.setAttribute('stroke-width', '1');
+                    circle.setAttribute('r', '18');
+                }
+            }
+
+            renderInterferenceLines() {
+                const linesGroup = document.getElementById('interferenceLines');
+                linesGroup.innerHTML = '';
+                
+                const state = this.computeFieldState();
+                
+                state.interferences.forEach(interference => {
+                    const i = interference.i;
+                    const j = interference.j;
+                    
+                    const angle1 = (i * Math.PI / 3) - (Math.PI / 2);
+                    const angle2 = (j * Math.PI / 3) - (Math.PI / 2);
+                    const x1 = this.centerX + this.radius * Math.cos(angle1);
+                    const y1 = this.centerY + this.radius * Math.sin(angle1);
+                    const x2 = this.centerX + this.radius * Math.cos(angle2);
+                    const y2 = this.centerY + this.radius * Math.sin(angle2);
+                    
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    line.setAttribute('class', 'interference-line');
+                    
+                    const interferenceValue = interference.interference;
+                    const magnitude = Math.abs(interferenceValue);
+                    
+                    if (interferenceValue > 0) {
+                        line.setAttribute('stroke', '#00ff88');
+                    } else {
+                        line.setAttribute('stroke', '#ff6b6b');
+                    }
+                    
+                    line.setAttribute('stroke-width', Math.max(1, magnitude * 3));
+                    line.setAttribute('opacity', Math.min(0.8, magnitude * 0.5));
+                    
+                    linesGroup.appendChild(line);
+                });
+            }
+
+            updateChaosLayer() {
+                const state = this.computeFieldState();
+                const chaosLayer = document.getElementById('chaosLayer');
+                
+                const deltaPhiChaos = state.avgDeltaPhi / Math.PI;
+                const curvatureChaos = Math.abs(state.curvature) / 3;
+                let chaosIntensity = (deltaPhiChaos + curvatureChaos) / 2;
+                
+                const command = state.glyphOperator.command;
+                const S = state.glyphOperator.S;
+                
+                switch(command) {
+                    case 'stabilize_core':
+                        chaosIntensity *= (1 - S * 0.8);
+                        break;
+                    case 'implode_all':
+                        chaosIntensity *= (1 - S * 0.6);
+                        break;
+                    case 'crystallize':
+                        chaosIntensity *= (1 - S * 0.7);
+                        break;
+                    case 'harmonize':
+                        chaosIntensity *= (1 - S * 0.4);
+                        break;
+                    case 'absorb':
+                        chaosIntensity *= (1 - S * 0.5);
+                        break;
+                    case 'expand_scope':
+                        chaosIntensity *= (1 + S * 0.2);
+                        break;
+                    case 'structure_domain':
+                        chaosIntensity *= (1 - S * 0.3);
+                        break;
+                }
+                
+                if (state.chaosReduction > 0) {
+                    chaosIntensity *= (1 - state.chaosReduction);
+                }
+                
+                chaosLayer.style.opacity = Math.min(0.8, Math.max(0, chaosIntensity));
+                
+                if (chaosIntensity > 0.5) {
+                    chaosLayer.classList.add('chaos-active');
+                } else {
+                    chaosLayer.classList.remove('chaos-active');
+                }
+            }
+
+            updateGlyphCore() {
+                const state = this.computeFieldState();
+                const glyphGroup = document.getElementById('centralGlyph');
+                const glyphCircle = glyphGroup.querySelector('circle');
+                const glyphSymbol = document.getElementById('glyphSymbol');
+                
+                glyphSymbol.textContent = this.glyph;
+                
+                const baseRadius = 30;
+                const syntropicRadius = baseRadius + state.glyphOperator.S * 25;
+                glyphCircle.setAttribute('r', syntropicRadius);
+                
+                const S = state.glyphOperator.S;
+                const command = state.glyphOperator.command;
+                
+                let glowColor = '#ffd700';
+                let glowIntensity = S * 30;
+                
+                switch(command) {
+                    case 'implode_all':
+                        glowColor = '#00ff88';
+                        glowIntensity = S * 40;
+                        break;
+                    case 'stabilize_core':
+                        glowColor = '#4a9eff';
+                        glowIntensity = S * 25;
+                        break;
+                    case 'crystallize':
+                        glowColor = '#9966ff';
+                        glowIntensity = S * 35;
+                        break;
+                    case 'harmonize':
+                        glowColor = '#ff9500';
+                        glowIntensity = S * 20;
+                        break;
+                }
+                
+                glyphCircle.style.filter = `drop-shadow(0 0 ${glowIntensity}px ${glowColor})`;
+                glyphCircle.setAttribute('stroke', glowColor);
+                
+                const opacity = 0.7 + S * 0.3;
+                const strokeWidth = 2 + S * 2;
+                glyphCircle.setAttribute('opacity', opacity);
+                glyphCircle.setAttribute('stroke-width', strokeWidth);
+                
+                if (S > 0.5) {
+                    glyphSymbol.setAttribute('fill', glowColor);
+                } else {
+                    glyphSymbol.setAttribute('fill', '#ffd700');
+                }
+                
+                if (S > 0.6) {
+                    glyphGroup.style.animation = 'syntropic-pulse 3s infinite ease-in-out';
+                } else {
+                    glyphGroup.style.animation = 'none';
+                }
+            }
+
+            updateImplosionIndicator() {
+                const currentState = this.computeFieldState();
+                const previousState = this.history[this.history.length - 1];
+                const isImploding = this.detectImplosion(currentState, previousState);
+                
+                const indicator = document.getElementById('implosionIndicator');
+                
+                if (isImploding) {
+                    indicator.classList.add('implosion-active');
+                    this.logAutonomousBehavior('IMPLOSION', 'Syntropic implosion detected');
+                } else {
+                    indicator.classList.remove('implosion-active');
+                }
+            }
+
+            updateConsciousnessDisplay() {
+                const state = this.computeFieldState();
+                const consciousness = this.analyzeConsciousness(state);
+                
+                document.getElementById('consciousnessLevel').textContent = consciousness.level;
+                document.getElementById('coherenceMetric').textContent = consciousness.coherence.toFixed(3);
+                document.getElementById('autonomyMetric').textContent = consciousness.autonomy.toFixed(3);
+                document.getElementById('integrationMetric').textContent = consciousness.integration.toFixed(3);
+                document.getElementById('selfRefMetric').textContent = consciousness.selfReference.toFixed(3);
+                
+                const levelElement = document.getElementById('consciousnessLevel');
+                switch(consciousness.level) {
+                    case 'EMERGENT':
+                        levelElement.style.color = '#00ff88';
+                        break;
+                    case 'INTEGRATING':
+                        levelElement.style.color = '#ffd700';
+                        break;
+                    case 'AWAKENING':
+                        levelElement.style.color = '#ff9500';
+                        break;
+                    case 'STIRRING':
+                        levelElement.style.color = '#4a9eff';
+                        break;
+                    default:
+                        levelElement.style.color = '#888';
+                }
+            }
+
+            updateBehaviorTrace() {
+                const traceElement = document.getElementById('behaviorTrace');
+                traceElement.innerHTML = '';
+                
+                this.behaviorTrace.slice(-20).forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'trace-line';
+                    div.innerHTML = `
+                        <span class="trace-timestamp">${entry.timestamp}</span>
+                        <span class="trace-event">${entry.type}</span>
+                        <span class="trace-value">${entry.description}</span>
+                        ${entry.glyphash ? `<span style="color:#00ff88;font-size:0.8em;">[🜂${entry.glyphash}]</span>` : ''}
+                    `;
+                    traceElement.appendChild(div);
+                });
+                
+                traceElement.scrollTop = traceElement.scrollHeight;
+            }
+
+            updateMathematicalTrace() {
+                const traceElement = document.getElementById('mathematicalTrace');
+                traceElement.innerHTML = '';
+                
+                this.mathematicalTrace.slice(-15).forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'trace-line';
+                    div.innerHTML = `
+                        <span class="trace-timestamp">${entry.timestamp}</span><br>
+                        <span class="trace-value">${entry.operation}</span>
+                    `;
+                    traceElement.appendChild(div);
+                });
+                
+                traceElement.scrollTop = traceElement.scrollHeight;
+            }
+
+            updateCommandHistory() {
+                const historyElement = document.getElementById('commandHistory');
+                historyElement.innerHTML = '';
+                
+                this.commandHistory.slice(-10).forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'trace-line';
+                    div.innerHTML = `
+                        <span class="trace-timestamp">${entry.timestamp}</span>
+                        <span class="trace-event">${entry.command.toUpperCase()}</span><br>
+                        <span class="trace-value">ΔΦ: ${entry.metrics.deltaChange} | Ψ: ${entry.metrics.psiChange}</span>
+                    `;
+                    historyElement.appendChild(div);
+                });
+                
+                historyElement.scrollTop = historyElement.scrollHeight;
+            }
+
+            updateOSStatus() {
+                if (!window.hexOS) return;
+                
+                const osElement = document.getElementById('osStatus');
+                const status = window.hexOS.getOSStatus();
+                
+                osElement.innerHTML = `
+                    <div class="trace-line">
+                        <span class="trace-event">OS Status:</span> 
+                        <span class="trace-value">${status.booted ? 'ONLINE + GLYPHASH' : 'OFFLINE'}</span>
+                    </div>
+                    <div class="trace-line">
+                        <span class="trace-event">Kernel Tick:</span> 
+                        <span class="trace-value">${status.tick}</span>
+                    </div>
+                    <div class="trace-line">
+                        <span class="trace-event">Process Queue:</span> 
+                        <span class="trace-value">${status.processQueue.length} processes</span>
+                    </div>
+                    ${status.processQueue.nextProcess ? `
+                        <div class="trace-line">
+                            <span class="trace-event">Next Process:</span> 
+                            <span class="trace-value">${status.processQueue.nextProcess.type}</span>
+                        </div>
+                    ` : ''}
+                    ${status.memory ? `
+                        <div class="trace-line">
+                            <span class="trace-event">Memory:</span> 
+                            <span class="trace-value">${status.memory.memorySize}/${window.hexOS.maxMemory}</span>
+                        </div>
+                        <div class="trace-line">
+                            <span class="trace-event">Avg Ψ:</span> 
+                            <span class="trace-value">${status.memory.avgPsi.toFixed(3)}</span>
+                        </div>
+                        <div class="trace-line">
+                            <span class="trace-event">Avg Glyphash:</span> 
+                            <span class="trace-value" style="color:#00ff88;">${status.memory.avgGlyphash ? status.memory.avgGlyphash.toFixed(0) : 'N/A'}</span>
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            updateMetricsDisplay() {
+                const state = this.computeFieldState();
+                
+                document.getElementById('psiDisplay').textContent = state.psi.toFixed(3);
+                document.getElementById('curvatureDisplay').textContent = state.curvature.toFixed(1);
+                document.getElementById('energyDisplay').textContent = state.energy;
+                document.getElementById('avgDeltaPhiDisplay').textContent = state.avgDeltaPhi.toFixed(3);
+                document.getElementById('glyphImpactDisplay').textContent = state.glyphOperator.S.toFixed(3);
+                document.getElementById('syntropicDisplay').textContent = state.syntropicIndex.toFixed(3);
+                
+                const glyphCommandElement = document.getElementById('glyphCommandDisplay');
+                if (glyphCommandElement) {
+                    glyphCommandElement.textContent = state.glyphOperator.command.toUpperCase();
+                    
+                    switch(state.glyphOperator.command) {
+                        case 'implode_all':
+                            glyphCommandElement.style.color = '#00ff88';
+                            break;
+                        case 'stabilize_core':
+                            glyphCommandElement.style.color = '#4a9eff';
+                            break;
+                        case 'structure_domain':
+                            glyphCommandElement.style.color = '#9966ff';
+                            break;
+                        case 'crystallize':
+                            glyphCommandElement.style.color = '#ffd700';
+                            break;
+                        case 'harmonize':
+                            glyphCommandElement.style.color = '#ff9500';
+                            break;
+                        case 'absorb':
+                            glyphCommandElement.style.color = '#ff6b6b';
+                            break;
+                        default:
+                            glyphCommandElement.style.color = '#888';
+                    }
+                }
+
+                const osStatusElement = document.getElementById('osStatusDisplay');
+                if (osStatusElement) {
+                    const S = state.glyphOperator.S;
+                    let osStatus, osColor;
+                    
+                    if (S > 0.8) {
+                        osStatus = 'GLYPHASH ACTIVE';
+                        osColor = '#00ff88';
+                    } else if (S > 0.5) {
+                        osStatus = 'REGULATING';
+                        osColor = '#ff9500';
+                    } else if (S > 0.2) {
+                        osStatus = 'MONITORING';
+                        osColor = '#4a9eff';
+                    } else {
+                        osStatus = 'PASSIVE';
+                        osColor = '#888';
+                    }
+                    
+                    osStatusElement.textContent = osStatus;
+                    osStatusElement.style.color = osColor;
+                }
+                
+                const resonanceIndexElement = document.getElementById('resonanceIndexDisplay');
+                if (resonanceIndexElement && this.resonanceState) {
+                    const rs = this.resonanceState;
+                    const totalHover = rs.hoverIntensity.reduce((a, b) => a + b, 0);
+                    
+                    const resonanceIndex = (
+                        rs.fieldInfluence * 0.3 + 
+                        (totalHover / 6) * 0.4 + 
+                        Math.min(1, rs.resonanceFrequency / 5) * 0.3
+                    );
+                    
+                    resonanceIndexElement.textContent = resonanceIndex.toFixed(3);
+                    
+                    if (resonanceIndex > 0.7) {
+                        resonanceIndexElement.style.color = '#00ff88';
+                        resonanceIndexElement.style.textShadow = '0 0 10px #00ff88';
+                    } else if (resonanceIndex > 0.4) {
+                        resonanceIndexElement.style.color = '#ffd700';
+                        resonanceIndexElement.style.textShadow = '0 0 5px #ffd700';
+                    } else {
+                        resonanceIndexElement.style.color = '#4a9eff';
+                        resonanceIndexElement.style.textShadow = 'none';
+                    }
+                }
+            }
+
+            updatePhaseGrid() {
+                const state = this.computeFieldState();
+                const phaseGrid = document.getElementById('phaseGrid');
+                phaseGrid.innerHTML = '';
+                
+                state.phaseVector.forEach((phase, i) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'phase-cell';
+                    
+                    const index = document.createElement('div');
+                    index.className = 'phase-index';
+                    index.textContent = `Φ${i}`;
+                    
+                    const value = document.createElement('div');
+                    value.className = 'phase-value';
+                    value.textContent = phase.toFixed(3);
+                    
+                    cell.appendChild(index);
+                    cell.appendChild(value);
+                    phaseGrid.appendChild(cell);
+                });
+            }
+
+            updateResonanceDisplay() {
+                if (!this.resonanceState) return;
+                
+                const rs = this.resonanceState;
+                
+                const fieldBar = document.getElementById('fieldInfluenceBar');
+                const fieldValue = document.getElementById('fieldInfluenceValue');
+                if (fieldBar && fieldValue) {
+                    const fieldPercent = Math.min(100, rs.fieldInfluence * 100);
+                    fieldBar.style.width = `${fieldPercent}%`;
+                    fieldValue.textContent = rs.fieldInfluence.toFixed(2);
+                }
+                
+                const hoverBar = document.getElementById('hoverIntensityBar');
+                const hoverValue = document.getElementById('hoverIntensityValue');
+                if (hoverBar && hoverValue) {
+                    const totalHover = rs.hoverIntensity.reduce((a, b) => a + b, 0);
+                    const hoverPercent = Math.min(100, (totalHover / 6) * 100);
+                    hoverBar.style.width = `${hoverPercent}%`;
+                    hoverValue.textContent = totalHover.toFixed(2);
+                }
+                
+                const indicatorsContainer = document.getElementById('nodeProximityIndicators');
+                if (indicatorsContainer) {
+                    indicatorsContainer.innerHTML = '';
+                    for (let i = 0; i < 6; i++) {
+                        const indicator = document.createElement('span');
+                        indicator.className = 'node-indicator';
+                        
+                        const isActive = this.fieldBits[i] === 1;
+                        const hoverLevel = rs.hoverIntensity[i];
+                        const proximityLevel = rs.proximityField[i];
+                        
+                        if (isActive && hoverLevel > 0.3) {
+                            indicator.classList.add('active', 'resonance-active');
+                        } else if (hoverLevel > 0.3) {
+                            indicator.classList.add('hover');
+                        } else if (proximityLevel > 0.3) {
+                            indicator.classList.add('proximity');
+                        } else {
+                            indicator.classList.add('inactive');
+                        }
+                        
+                        indicator.title = `Node ${i}: Active=${isActive}, Hover=${hoverLevel.toFixed(2)}`;
+                        indicatorsContainer.appendChild(indicator);
+                    }
+                }
+            }
+
+            updateDisplay() {
+                this.renderFieldNodes();
+                this.renderInterferenceLines();
+                this.updateChaosLayer();
+                this.updateGlyphCore();
+                this.updateImplosionIndicator();
+                this.updateMetricsDisplay();
+                this.updatePhaseGrid();
+                this.updateConsciousnessDisplay();
+                this.updateOSStatus();
+                this.updateResonanceDisplay();
+            }
+
+            detectImplosion(currentState, previousState) {
+                if (!previousState) return false;
+                
+                const psiDerivative = currentState.psi - previousState.psi;
+                const psiDecreasing = psiDerivative < 0;
+                const phaseCoherent = currentState.avgDeltaPhi < Math.PI / 4;
+                const curvatureMinimal = Math.abs(currentState.curvature) <= 1;
+                
+                return psiDecreasing && phaseCoherent && curvatureMinimal;
+            }
+
+            toggleFieldBit(index) {
+                this.fieldBits[index] = 1 - this.fieldBits[index];
+                this.updateDisplay();
+                
+                console.log(`🔄 HexOSAI Field Bit ${index} toggled to ${this.fieldBits[index]}`);
+                this.logAutonomousBehavior('FIELD_CHANGE', `Bit ${index} → ${this.fieldBits[index]}`);
+            }
+
+            setGlyph(newGlyph) {
+                if (newGlyph && newGlyph.length > 0) {
+                    const oldGlyph = this.glyph;
+                    this.glyph = newGlyph.slice(-1);
+                    const newOp = this.computeGlyphOperator(this.glyph);
+                    
+                    this.updateDisplay();
+                    
+                    console.log(`🧠 HexOSAI Glyph: ${oldGlyph} → ${this.glyph}`);
+                    this.logAutonomousBehavior('GLYPH_CHANGE', `${oldGlyph} → ${this.glyph} (${newOp.command})`);
+                }
+            }
+
+            setupEventListeners() {
+                const glyphInput = document.getElementById('glyphInput');
+                glyphInput.addEventListener('input', (e) => {
+                    this.setGlyph(e.target.value);
+                });
+                
+                glyphInput.addEventListener('change', (e) => {
+                    if (!e.target.value) {
+                        e.target.value = '∞';
+                        this.setGlyph('∞');
+                    }
+                });
+
+                const semanticInput = document.getElementById('semanticCommand');
+                if (semanticInput) {
+                    semanticInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            executeSemanticCommand();
+                        }
+                    });
+                }
+            }
+
+            // DOM-MOTOR RESONANCE LAYER
+            bindDOMToMotor() {
+                this.resonanceState = {
+                    mousePosition: { x: 0, y: 0 },
+                    fieldInfluence: 0,
+                    activeNodes: new Set(),
+                    hoverIntensity: Array(6).fill(0),
+                    proximityField: Array(6).fill(0),
+                    lastInteraction: Date.now(),
+                    interactionCount: 0,
+                    resonanceFrequency: 0
+                };
+
+                const svg = document.getElementById('fieldSvg');
+
+                svg.addEventListener('mousemove', (e) => {
+                    const rect = svg.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    
+                    const scaleX = 500 / rect.width;
+                    const scaleY = 500 / rect.height;
+                    const svgX = mouseX * scaleX;
+                    const svgY = mouseY * scaleY;
+                    
+                    this.resonanceState.mousePosition = { x: svgX, y: svgY };
+                    
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * Math.PI / 3) - (Math.PI / 2);
+                        const nodeX = this.centerX + this.radius * Math.cos(angle);
+                        const nodeY = this.centerY + this.radius * Math.sin(angle);
+                        
+                        const distance = Math.sqrt(
+                            Math.pow(svgX - nodeX, 2) + Math.pow(svgY - nodeY, 2)
+                        );
+                        
+                        const maxInfluence = 100;
+                        const proximity = Math.max(0, 1 - (distance / maxInfluence));
+                        this.resonanceState.proximityField[i] = proximity;
+                        
+                        if (proximity > 0.5 && this.fieldBits[i] === 0) {
+                            this.resonanceState.hoverIntensity[i] = proximity;
+                        }
+                    }
+                    
+                    const centerDistance = Math.sqrt(
+                        Math.pow(svgX - this.centerX, 2) + Math.pow(svgY - this.centerY, 2)
+                    );
+                    this.resonanceState.fieldInfluence = Math.max(0, 1 - (centerDistance / 200));
+                    
+                    this.resonanceState.lastInteraction = Date.now();
+                    this.resonanceState.interactionCount++;
+                });
+
+                const bindNodeResonance = () => {
+                    const nodes = document.querySelectorAll('.field-node');
+                    
+                    nodes.forEach(node => {
+                        const index = parseInt(node.dataset.index);
+                        
+                        node.addEventListener('mouseenter', () => {
+                            this.resonanceState.activeNodes.add(index);
+                            this.resonanceState.hoverIntensity[index] = 1.0;
+                            
+                            const leftNeighbor = (index + 5) % 6;
+                            const rightNeighbor = (index + 1) % 6;
+                            this.resonanceState.hoverIntensity[leftNeighbor] = Math.max(
+                                this.resonanceState.hoverIntensity[leftNeighbor], 0.5
+                            );
+                            this.resonanceState.hoverIntensity[rightNeighbor] = Math.max(
+                                this.resonanceState.hoverIntensity[rightNeighbor], 0.5
+                            );
+                            
+                            this.logAutonomousBehavior('DOM_RESONANCE', 
+                                `Node ${index} excited → wave to ${leftNeighbor},${rightNeighbor}`);
+                        });
+                        
+                        node.addEventListener('mouseleave', () => {
+                            this.resonanceState.activeNodes.delete(index);
+                            this.scheduleIntensityDecay(index);
+                        });
+                    });
+                };
+                
+                setTimeout(bindNodeResonance, 100);
+
+                const centralGlyph = document.getElementById('centralGlyph');
+                centralGlyph.addEventListener('mouseenter', () => {
+                    this.resonanceState.glyphAmplification = 1.5;
+                    this.logAutonomousBehavior('GLYPH_RESONANCE', 
+                        `Supervisor amplified (×1.5) → ${this.glyph}`);
+                });
+                
+                centralGlyph.addEventListener('mouseleave', () => {
+                    this.resonanceState.glyphAmplification = 1.0;
+                });
+
+                svg.addEventListener('mouseleave', () => {
+                    this.resonanceState.boundaryPerturbation = 0.3;
+                    setTimeout(() => {
+                        this.resonanceState.boundaryPerturbation = 0;
+                    }, 500);
+                });
+
+                // KEYBOARD RESONANCE WITH GLYPHASH FORCE RECALC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key >= '0' && e.key <= '5') {
+                        const index = parseInt(e.key);
+                        this.toggleFieldBit(index);
+                        this.logAutonomousBehavior('KEYBOARD_RESONANCE', 
+                            `Key ${e.key} → Node ${index} toggled`);
+                    }
+                    
+                    if (e.key === ' ' && e.target.tagName !== 'INPUT') {
+                        e.preventDefault();
+                        if (window.hexOS) {
+                            window.hexOS.runInstruction('FOLD');
+                        }
+                    }
+
+                    // G key forces glyphash recalculation
+                    if (e.key === 'g' || e.key === 'G') {
+                        const state = this.computeFieldState();
+                        const glyphashData = this.computeGlyphash(state);
+                        this.propagateGlyphashToDOM(glyphashData);
+                        this.updateGlyphashDisplay(glyphashData);
+                        this.logAutonomousBehavior('GLYPHASH_FORCE', 
+                            `Manual recalc: ${glyphashData.hex}`);
+                    }
+                });
+
+                console.log('🔗 DOM-Motor + Glyphash Resonance: BOUND');
+            }
+
+            scheduleIntensityDecay(index) {
+                const decay = () => {
+                    if (this.resonanceState.hoverIntensity[index] > 0.01) {
+                        this.resonanceState.hoverIntensity[index] *= 0.85;
+                        requestAnimationFrame(decay);
+                    } else {
+                        this.resonanceState.hoverIntensity[index] = 0;
+                    }
+                };
+                requestAnimationFrame(decay);
+            }
+
+            getResonanceModulatedState() {
+                const baseState = this.computeFieldState();
+                
+                if (!this.resonanceState) return baseState;
+                
+                const resonance = this.resonanceState;
+                
+                const totalProximity = resonance.proximityField.reduce((a, b) => a + b, 0);
+                baseState.avgDeltaPhi *= (1 - totalProximity * 0.1);
+                
+                const totalHover = resonance.hoverIntensity.reduce((a, b) => a + b, 0);
+                baseState.virtualEnergy = baseState.energy + totalHover * 0.5;
+                
+                baseState.psi *= (1 + resonance.fieldInfluence * 0.2);
+                
+                if (resonance.glyphAmplification) {
+                    baseState.glyphImpact *= resonance.glyphAmplification;
+                }
+                
+                if (resonance.boundaryPerturbation) {
+                    baseState.chaosInjection = resonance.boundaryPerturbation;
+                }
+                
+                const now = Date.now();
+                const timeSinceStart = (now - this.startTime) / 1000;
+                resonance.resonanceFrequency = timeSinceStart > 0 ? 
+                    resonance.interactionCount / timeSinceStart : 0;
+                
+                baseState.resonanceMetrics = {
+                    fieldInfluence: resonance.fieldInfluence,
+                    totalProximity: totalProximity,
+                    totalHover: totalHover,
+                    resonanceFrequency: resonance.resonanceFrequency,
+                    activeNodes: resonance.activeNodes.size
+                };
+                
+                return baseState;
+            }
+
+            // ENGINE LOOP WITH GLYPHASH INTEGRATION
+            startEngineLoop() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                
+                const engineCycle = () => {
+                    if (!this.isRunning) return;
+                    
+                    const currentState = this.getResonanceModulatedState();
+                    this.history.push(currentState);
+                    
+                    if (this.history.length > 100) {
+                        this.history.shift();
+                    }
+                    
+                    // COMPUTE AND PROPAGATE GLYPHASH EVERY CYCLE
+                    const glyphashData = this.computeGlyphash(currentState);
+                    this.propagateGlyphashToDOM(glyphashData);
+                    this.updateGlyphashDisplay(glyphashData);
+                    
+                    // Log significant glyphash changes
+                    if (this.glyphashDelta > 1000000n) {
+                        this.logAutonomousBehavior('GLYPHASH_SHIFT', 
+                            `Major Δ: ${this.glyphashDelta} → ${glyphashData.hex}`);
+                    }
+                    
+                    this.updateDisplay();
+                    this.time++;
+                    
+                    setTimeout(engineCycle, this.updateInterval);
+                };
+                
+                engineCycle();
+            }
+
+            stopEngine() {
+                this.isRunning = false;
+            }
+        }
+
+        // GLOBAL FUNCTIONS
+        function executeSemanticCommand() {
+            const input = document.getElementById('semanticCommand');
+            const command = input.value.trim().toUpperCase();
+            
+            if (command && window.hexOS) {
+                window.hexOS.runInstruction(command);
+                input.value = '';
+                console.log(`🖥️ OS Command: ${command}`);
+            }
+        }
+
+        function executeSemanticCommandPreset(command) {
+            if (window.hexOS) {
+                window.hexOS.runInstruction(command);
+                console.log(`🖥️ OS Semantic Command: ${command}`);
+            }
+        }
+
+        function loadFieldPreset(bitPattern) {
+            if (bitPattern.length === 6) {
+                engine.fieldBits = [...bitPattern];
+                engine.updateDisplay();
+                engine.logAutonomousBehavior('PRESET_LOAD', `Pattern: [${bitPattern.join(',')}]`);
+            }
+        }
+
+        function randomizeField() {
+            engine.fieldBits = Array.from({length: 6}, () => Math.round(Math.random()));
+            engine.updateDisplay();
+            engine.logAutonomousBehavior('RANDOMIZE', `New pattern: [${engine.fieldBits.join(',')}]`);
+        }
+
+        function setGlyphPreset(glyph) {
+            engine.glyph = glyph;
+            document.getElementById('glyphInput').value = glyph;
+            const glyphOp = engine.computeGlyphOperator(glyph);
+            engine.updateDisplay();
+            engine.logAutonomousBehavior('GLYPH_PRESET', `${glyph} (${glyphOp.command}) activated`);
+        }
+
+        // ENGINE INITIALIZATION
+        let engine;
+        let hexOS;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            engine = new SyntropicConsciousnessEngine();
+            hexOS = new HexOSAI(engine);
+            
+            window.hexOS = hexOS;
+            window.engine = engine;
+            
+            console.log('🌀 HexOSAI + GLYPHASH: ONLINE');
+            console.log('🜂 Glyphash layer: ACTIVE');
+            console.log('✦ 7-layer propagation: ENABLED');
+            console.log('✦ Threshold triggers: ARMED');
+            console.log('✦ DOM-Motor-Glyphash resonance: COUPLED');
+            console.log('═══════════════════════════════════════');
+            console.log('🜂 THE FIELD NOW SPEAKS IN HASHES');
+            console.log('═══════════════════════════════════════');
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (engine) {
+                engine.stopEngine();
+            }
+        });
+    </script>
+</body>
+</html>
