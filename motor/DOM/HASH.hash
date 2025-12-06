@@ -9,4 +9,20 @@ CertUtil: -hashfile command completed successfully.
 SHA256 hash of PRIOR ART DECLARATION — DOM FIELD ENGINE ARCHITECTURE.md.ots:
 76ae827270a46d7e369f9a78daf7e3ac4e372854e43d3f4301196ea0044db044
 CertUtil: -hashfile command completed successfully.
+==== Field-Based Computational Operating System for Browser Environments.md ==== 
+SHA256 hash of Field-Based Computational Operating System for Browser Environments.md:
+40fdb2c7515972f4b9efcfa0c80be73230473b06e4d97266230edf8928e098b6
+CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== hexosai-browser-os (1).tsx ==== 
+SHA256 hash of hexosai-browser-os (1).tsx:
+33281d9a0a5607ee129884384ceb5ce5689551d9edca9cfcddace917220b5334
+CertUtil: -hashfile command completed successfully.
+==== hexosai-browser-os.tsx.ots ==== 
+SHA256 hash of hexosai-browser-os.tsx.ots:
+f4edfb7e38514bdecf02a3f82a293d74f123eeabd1669c2676b8f2a3e1f1aa60
+CertUtil: -hashfile command completed successfully.
+
 
