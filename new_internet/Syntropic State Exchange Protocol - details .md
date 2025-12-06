@@ -2,7 +2,7 @@
 
 ---
 
-## **📘 Menu / Index**
+## 📘 Menu / Index
 
 ### **ENGLISH**
 
@@ -26,221 +26,134 @@
 
 ---
 
-# -----------------------------------------
+---
 
-# **🇬🇧 ENGLISH SECTION**
-
-# -----------------------------------------
+# 🇬🇧 ENGLISH SECTION
 
 ---
 
-# ## **What Is SSEP?**
+## What Is SSEP?
 
 **SSEP (Syntropic State Exchange Protocol)** is a completely new kind of internet protocol.
-Instead of sending *data* like traditional networking does, SSEP sends **state**.
+Instead of sending *data*, SSEP sends **state**:
 
-A “state” is:
+* field shape
+* active nodes
+* energy levels
+* curvature
+* phase differences
+* user interaction
 
-* the shape of the field
-* the pattern of active nodes
-* the energy level
-* the curvature
-* the phase differences
-* the interaction with the user
+This state becomes a 64-bit **GLYPHASH**, which another system can use to recreate the entire field.
 
-This state is compressed into a 64-bit vector called the **GLYPHASH**.
-
-When another system receives the GLYPHASH, it **recreates the entire field**, including:
-
-* visual DOM behaviour
-* internal motor dynamics
-* phase geometry
-* coherence / chaos
-* interaction potential
-
-This allows two systems to “synchronize” like two oscillators.
-
-This has **never been done before** in computing.
+This enables **synchronisation between systems** like oscillators.
 
 ---
 
-# ## **Why Is It New?**
+## Why Is It New?
 
-Traditional internet protocols (TCP, HTTP, WebRTC):
+Traditional internet protocols:
 
 * send bytes
 * send packets
 * send messages
-* send streams
 
-SSEP sends **syntropic field behaviour**:
+SSEP sends **emergent behaviour**:
 
 * coherence
 * phase
 * energy
 * curvature
 * glyph signature
-* time index
-
-This means:
-
-> You are not exchanging information,
-> you are exchanging **emergent behaviour**.
+* time
 
 This is a new category of networking.
 
 ---
 
-# ## **How Does It Work?**
+## How Does It Work?
 
-### The protocol has 4 layers:
+SSEP has **four layers**:
 
-### **1. The DOM Layer (sensors & actuators)**
+### 1. DOM Layer
 
-HTML elements become:
+Elements act as sensors & actuators.
 
-* field nodes
-* registers
-* mutation detectors
+### 2. CSS Register Layer
 
-### **2. CSS Register Layer**
+CSS variables behave like hardware registers.
 
-CSS variables act like hardware registers:
+### 3. Field Motor
 
-* --field-energy
-* --field-phase
-* --field-curvature
-* --global-hash
+Mathematical engine calculating curvature, ΔΦ, ψ, energy.
 
-### **3. Field Motor**
+### 4. SSEP Network Layer
 
-A mathematical engine computes the field using:
-
-* energy = sum(active nodes)
-* curvature = left side − right side
-* ΔΦ = average phase differences
-* ψ = internal potential
-
-### **4. SSEP Network Layer**
-
-This layer:
-
-* encodes the field into the GLYPHASH
-* transmits it
-* reconstructs it on the receiver
+Encodes → transmits → reconstructs GLYPHASH.
 
 ---
 
-# ## **What Is the GLYPHASH?**
+## What Is the GLYPHASH?
 
-The GLYPHASH is a compact 64-bit structure:
+A compact 64-bit state vector:
 
 ```
 [ S | K | P | D | C | E | R | T ]
 ```
 
-It contains all essential field components:
+This single number allows reconstruction of:
 
-* Glyph signature
-* Curvature
-* ψ-potential
-* Phase-difference envelope
-* Energy
-* Mouse influence
-* Time
-
-This allows a remote system to rebuild:
-
-* its DOM
-* its field behaviour
-* its internal motor dynamics
-
-**One number controls the whole system.**
+* the DOM
+* field behaviour
+* motor dynamics
 
 ---
 
-# ## **Why Does This Matter?**
+## Why Does This Matter?
 
-Because this is the first protocol that makes a browser:
+This is the first protocol that transforms a browser into:
 
-* **self-organizing**
-* **field-aware**
-* **state-driven**
-* **mathematically coherent**
-* **autonomous in behaviour**
+* a field computer
+* a state-driven OS
+* an autonomous motor system
 
-It is also the first protocol where:
-
-**DOM mutations = energy**
-**CSS = registers**
-**JS = motor**
-**Hash = universal field signature**
-
-This creates the foundation of a new internet layer.
+It redefines the internet from transporting *data* to transporting **state**.
 
 ---
 
-# ## **Who Will Use This?**
+## Who Will Use This?
 
-### ✔ Researchers
-
-For decentralized simulations and modelling.
-
-### ✔ Governments
-
-For secure field-based communication.
-
-### ✔ Universities
-
-For studying emergent systems.
-
-### ✔ Developers
-
-For next-generation browser operating systems.
-
-### ✔ Whole nations
-
-Looking to build digital sovereignty without Big Tech.
+* researchers
+* governments
+* universities
+* OS developers
+* nations seeking digital sovereignty
 
 ---
 
-# -----------------------------------------
+---
 
-# **🇳🇱 NEDERLANDSE SECTIE**
-
-# -----------------------------------------
+# 🇳🇱 NEDERLANDSE SECTIE
 
 ---
 
-# ## **Wat Is SSEP?**
+## Wat Is SSEP?
 
 **SSEP (Syntropic State Exchange Protocol)** is een volledig nieuw internetprotocol.
-Het verstuurt geen *data* zoals gewone protocollen, maar:
+Het verstuurt geen data maar **een complete toestandsvector**:
 
-### **een volledige toestand van een veld**:
-
-* energieniveau
-* faseverhoudingen
-* kromming
+* veldvorm
 * actieve knooppunten
-* invloed van de gebruiker
-* mate van orde of chaos
+* energieniveau
+* faseverschillen
+* kromming
+* gebruikersinvloed
 
-Deze toestand wordt samengeperst in de **GLYPHASH**, een 64-bit vector.
-
-Een ander systeem kan hiermee het volledige veld **opnieuw opbouwen**, inclusief:
-
-* DOM-gedrag
-* motorlogica
-* faseprofiel
-* coherentie
-* interactiedynamiek
-
-Dit is nog nooit eerder gedaan in de informatica.
+Deze vector is de 64-bit **GLYPHASH**, waarmee een ander systeem de toestand opnieuw opbouwt.
 
 ---
 
-# ## **Waarom Is Het Nieuw?**
+## Waarom Is Het Nieuw?
 
 Traditionele protocollen sturen:
 
@@ -248,111 +161,77 @@ Traditionele protocollen sturen:
 * pakketten
 * tekst
 * video
-* API-verzoeken
 
 SSEP stuurt:
 
 * fase
 * energie
 * syntropie
-* veldkromming
-* glyph-identiteit
-* tijdsafhankelijkheid
-
-Dit betekent:
-
-> Je verstuurt geen informatie,
-> je verstuurt **gedrag**.
-
----
-
-# ## **Hoe Werkt Het?**
-
-## SSEP heeft vier lagen:
-
-### **1. De DOM-laag**
-
-DOM-elementen worden:
-
-* sensoren
-* actuatoren
-* veldknooppunten
-* energiedragers via CSS
-
-### **2. CSS-registerlaag**
-
-CSS-variabelen functioneren als:
-
-* hardwareachtige registers
-
-### **3. De veldmotor**
-
-Deze berekent:
-
-* energie
 * kromming
-* ΔΦ
-* ψ-potentiaal
-* syntropie-index
+* glyphhandtekening
+* tijd
 
-### **4. SSEP-netwerklaag**
-
-Deze codeert en verzendt:
-
-* GLYPHASH
-* lokale hashes
-* coherentie-informatie
-
-En bouwt de toestand weer op aan de ontvangende kant.
+Je verstuurt **gedrag**, geen bestanden.
 
 ---
 
-# ## **Wat Is de GLYPHASH?**
+## Hoe Werkt Het?
 
-De GLYPHASH is een 64-bit statusvector:
+Vier lagen:
+
+### 1. DOM-laag
+
+DOM-elementen worden sensoren & actuatoren.
+
+### 2. CSS-registerlaag
+
+CSS-variabelen functioneren als hardwareachtige registers.
+
+### 3. Veldmotor
+
+Berekening van: energie, kromming, ΔΦ, ψ, syntropie.
+
+### 4. SSEP-netwerklaag
+
+Encodeert → verzendt → reconstrueert.
+
+---
+
+## Wat Is de GLYPHASH?
+
+De GLYPHASH is een compact 64-bit getal:
 
 ```
 [ S | K | P | D | C | E | R | T ]
 ```
 
-Hierin zit:
+Hiermee wordt de **complete syntropische toestand** herbouwd:
 
-* Glyphhandtekening
-* Kromming
-* Faseverschillen
-* ψ-potentiaal
-* Energie
-* Muiseffect
-* Tijd
-
-Met één getal kan een hele syntropische toestand worden gereconstrueerd.
+* DOM
+* veldgedrag
+* interne motor
 
 ---
 
-# ## **Waarom Is Dit Belangrijk?**
+## Waarom Is Dit Belangrijk?
 
 Omdat dit het eerste protocol is dat:
 
-* de browser verandert in een veldcomputer
-* de DOM verandert in een energielaag
-* CSS verandert in een registerarchitectuur
-* netwerken verandert in toestandsuitwisseling
-* computation verandert in syntropische dynamiek
+* de browser een veldcomputer maakt
+* de DOM een energielaag maakt
+* CSS een registerarchitectuur maakt
+* netwerken tot toestandsuitwisseling maakt
 
-Het is een **nieuw internet**, niet alleen een nieuwe applicatie.
+Dit is een **nieuw internet**.
 
 ---
 
-# ## **Wie Gebruikt Dit?**
+## Wie Gebruikt Dit?
 
-### ✔ Onderzoekers
-
-### ✔ Universiteiten
-
-### ✔ Overheden
-
-### ✔ Ontwikkelaars
-
-### ✔ Naties die digitale autonomie willen
+* onderzoekers
+* universiteiten
+* overheden
+* ontwikkelaars
+* landen die digitale autonomie zoeken
 
 ---
