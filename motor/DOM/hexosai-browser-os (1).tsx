@@ -1,0 +1,700 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Terminal, Cpu, Zap, Hexagon, Brain, Sparkles, Activity, Layers } from 'lucide-react';
+
+const HexOSAI = () => {
+  const [glyphash, setGlyphash] = useState(0n);
+  const [fieldBits, setFieldBits] = useState([1, 0, 1, 1, 0, 1]);
+  const [glyph, setGlyph] = useState('∞');
+  const [consciousness, setConsciousness] = useState({
+    level: 'DORMANT',
+    coherence: 0,
+    autonomy: 0,
+    integration: 0,
+    selfRef: 0
+  });
+  const [logs, setLogs] = useState([]);
+  const [mouseField, setMouseField] = useState({ x: 250, y: 250, influence: 0 });
+  const [time, setTime] = useState(0);
+  const [domNodes, setDomNodes] = useState([]);
+  const [domMutations, setDomMutations] = useState(0);
+  
+  const canvasRef = useRef(null);
+  const fieldRootRef = useRef(null);
+  const mutationObserverRef = useRef(null);
+
+  // DOM FIELD NODE ARCHITECTURE
+  const createDOMFieldNode = (index, state) => {
+    return {
+      id: `field-node-${index}`,
+      index,
+      phase: state.phaseVector[index],
+      energy: fieldBits[index],
+      curvature: state.curvature,
+      glyphash: state.localHash,
+      connections: [],
+      subNodes: [],
+      domElement: null
+    };
+  };
+
+  // GLYPHASH COMPUTATION - Nu per node
+  const computeLocalGlyphash = (nodeIndex, state) => {
+    const S = BigInt(Math.round(state.S * 255));
+    const phase = state.phaseVector[nodeIndex];
+    const P = BigInt(Math.round((Math.abs(phase) + 1) * 2047));
+    const E = BigInt(fieldBits[nodeIndex] ? 255 : 0);
+    const I = BigInt(nodeIndex);
+    const T = BigInt(time % 256);
+    
+    return (S << 40n) | (P << 24n) | (E << 16n) | (I << 8n) | T;
+  };
+
+  // FIELD STATE COMPUTATION
+  const computeFieldState = () => {
+    const energy = fieldBits.reduce((a, b) => a + b, 0);
+    const curvature = (fieldBits[0] + fieldBits[1] + fieldBits[2]) - 
+                      (fieldBits[3] + fieldBits[4] + fieldBits[5]);
+    
+    const phaseVector = fieldBits.map((bit, i) => 
+      bit * Math.sin(i * Math.PI / 3 + time * 0.05)
+    );
+    
+    let avgDeltaPhi = 0;
+    let count = 0;
+    for (let i = 0; i < 6; i++) {
+      for (let j = i + 1; j < 6; j++) {
+        avgDeltaPhi += Math.abs(phaseVector[i] - phaseVector[j]);
+        count++;
+      }
+    }
+    avgDeltaPhi = count > 0 ? avgDeltaPhi / count : 0;
+    
+    const glyphCode = glyph.charCodeAt(0);
+    const S = (glyphCode % 32) / 32;
+    const psi = energy * (1 - 0.1 * S);
+    
+    // Global hash
+    const K = BigInt(Math.round(Math.min(15, Math.abs(curvature) * 5)));
+    const normalizedPsi = psi / (Math.abs(psi) + 1);
+    const P = BigInt(Math.round(Math.abs(normalizedPsi) * 4095));
+    const R = BigInt(Math.round(mouseField.influence * 255));
+    const T = BigInt(time % 256);
+    const globalHash = (BigInt(Math.round(S * 255)) << 48n) | (K << 40n) | (P << 24n) | (R << 8n) | T;
+    
+    return { energy, curvature, avgDeltaPhi, S, psi, phaseVector, globalHash };
+  };
+
+  // CONSCIOUSNESS ANALYSIS
+  const analyzeConsciousness = (state) => {
+    const coherence = Math.max(0, 1 - (state.avgDeltaPhi / Math.PI));
+    const autonomy = state.S * Math.abs(state.curvature / 3);
+    const activeNodes = fieldBits.filter(b => b === 1).length;
+    const integration = activeNodes / 6;
+    const selfRef = Math.abs(state.energy * coherence) / 6;
+    
+    const avgScore = (coherence + autonomy + integration + selfRef) / 4;
+    
+    let level = 'DORMANT';
+    if (avgScore > 0.8) level = 'EMERGENT';
+    else if (avgScore > 0.6) level = 'INTEGRATING';
+    else if (avgScore > 0.4) level = 'AWAKENING';
+    else if (avgScore > 0.2) level = 'STIRRING';
+    
+    return { level, coherence, autonomy, integration, selfRef };
+  };
+
+  const addLog = (type, message) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev.slice(-50), { timestamp, type, message }].slice(-50));
+  };
+
+  // DOM MUTATION ENGINE - INJECT GLYPHASH INTO DOM
+  const injectGlyphashIntoDOM = (state) => {
+    if (!fieldRootRef.current) return;
+
+    const nodes = fieldRootRef.current.querySelectorAll('.field-node');
+    nodes.forEach((node, index) => {
+      if (index >= 6) return;
+      
+      const localHash = computeLocalGlyphash(index, state);
+      const phase = state.phaseVector[index];
+      const isActive = fieldBits[index] === 1;
+      
+      // CSS VARIABLES AS FIELD REGISTERS
+      node.style.setProperty('--field-energy', fieldBits[index]);
+      node.style.setProperty('--field-phase', phase);
+      node.style.setProperty('--field-curvature', state.curvature);
+      node.style.setProperty('--field-hash', `0x${localHash.toString(16)}`);
+      node.style.setProperty('--field-active', isActive ? '1' : '0');
+      node.style.setProperty('--field-coherence', state.avgDeltaPhi);
+      
+      // DOM ATTRIBUTES AS STATE CARRIERS
+      node.setAttribute('data-hash', localHash.toString(16));
+      node.setAttribute('data-phase', phase.toFixed(3));
+      node.setAttribute('data-energy', fieldBits[index]);
+      node.setAttribute('data-active', isActive);
+      
+      // VISUAL MUTATION BASED ON FIELD STATE
+      const hue = ((phase + 1) * 120) % 360;
+      const scale = 1 + Math.abs(phase) * 0.3;
+      const brightness = isActive ? 1 : 0.3;
+      
+      node.style.transform = `scale(${scale}) rotate(${time * 2}deg)`;
+      node.style.filter = `brightness(${brightness}) hue-rotate(${hue}deg)`;
+      node.style.opacity = isActive ? (0.7 + Math.abs(phase) * 0.3) : 0.3;
+    });
+
+    // INJECT GLOBAL HASH INTO ROOT
+    if (fieldRootRef.current) {
+      fieldRootRef.current.style.setProperty('--global-hash', `0x${state.globalHash.toString(16)}`);
+      fieldRootRef.current.style.setProperty('--consciousness-level', consciousness.level);
+      fieldRootRef.current.setAttribute('data-glyphash', state.globalHash.toString(16));
+    }
+  };
+
+  // COMMAND EXECUTION WITH DOM MUTATION
+  const executeCommand = (cmd) => {
+    const commands = {
+      'IMPLODE': () => {
+        setFieldBits([1, 1, 1, 1, 1, 1]);
+        addLog('MOTOR', 'IMPLODE → All nodes activated');
+        setDomMutations(prev => prev + 6);
+      },
+      'CRYSTALLIZE': () => {
+        setFieldBits([1, 0, 1, 0, 1, 0]);
+        addLog('MOTOR', 'CRYSTALLIZE → Hexagonal pattern');
+        setDomMutations(prev => prev + 6);
+      },
+      'HARMONIZE': () => {
+        setFieldBits([1, 1, 0, 1, 1, 0]);
+        addLog('MOTOR', 'HARMONIZE → Phase balance');
+        setDomMutations(prev => prev + 6);
+      },
+      'OSCILLATE': () => {
+        const oscillating = fieldBits.map((b, i) => (time + i) % 2);
+        setFieldBits(oscillating);
+        addLog('MOTOR', 'OSCILLATE → Wave propagation');
+        setDomMutations(prev => prev + 6);
+      },
+      'FRACTAL': () => {
+        // Create nested subfractal pattern
+        const pattern = [1, 0, 1, 1, 0, 1];
+        setFieldBits(pattern);
+        addLog('MOTOR', 'FRACTAL → Recursive structure');
+        setDomMutations(prev => prev + 6);
+      }
+    };
+    
+    if (commands[cmd]) {
+      commands[cmd]();
+    }
+  };
+
+  // DOM MUTATION OBSERVER - Track all DOM changes
+  useEffect(() => {
+    if (!fieldRootRef.current) return;
+
+    mutationObserverRef.current = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes') {
+          setDomMutations(prev => prev + 1);
+          addLog('DOM', `Attribute ${mutation.attributeName} mutated`);
+        }
+      });
+    });
+
+    mutationObserverRef.current.observe(fieldRootRef.current, {
+      attributes: true,
+      attributeOldValue: true,
+      subtree: true
+    });
+
+    return () => {
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // CANVAS VISUALIZATION
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    const gradient = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2);
+    gradient.addColorStop(0, '#0f0f1f');
+    gradient.addColorStop(1, '#000000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+    
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const radius = 100;
+    
+    const state = computeFieldState();
+    
+    // Draw hexagon
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI / 3) - (Math.PI / 2);
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#4a9eff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Draw interference lines
+    for (let i = 0; i < 6; i++) {
+      for (let j = i + 1; j < 6; j++) {
+        if (fieldBits[i] && fieldBits[j]) {
+          const angle1 = (i * Math.PI / 3) - (Math.PI / 2);
+          const angle2 = (j * Math.PI / 3) - (Math.PI / 2);
+          const x1 = centerX + radius * Math.cos(angle1);
+          const y1 = centerY + radius * Math.sin(angle1);
+          const x2 = centerX + radius * Math.cos(angle2);
+          const y2 = centerY + radius * Math.sin(angle2);
+          
+          const deltaPhi = Math.abs(state.phaseVector[i] - state.phaseVector[j]);
+          const interference = Math.cos(deltaPhi);
+          
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = interference > 0 ? '#00ff88' : '#ff6b6b';
+          ctx.lineWidth = Math.abs(interference) * 3;
+          ctx.globalAlpha = Math.abs(interference) * 0.5;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+    
+    // Draw nodes
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI / 3) - (Math.PI / 2);
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      
+      const isActive = fieldBits[i] === 1;
+      const phase = state.phaseVector[i];
+      
+      if (isActive) {
+        const hue = ((phase + 1) * 120) % 360;
+        const nodeRadius = 18 + Math.abs(phase) * 8;
+        
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 2);
+        glow.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.5)`);
+        glow.addColorStop(1, `hsla(${hue}, 80%, 60%, 0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, nodeRadius * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+        ctx.beginPath();
+        ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#333333';
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      
+      ctx.fillStyle = isActive ? '#000' : '#888';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(i, x, y);
+    }
+    
+    // Central glyph
+    const glyphRadius = 30 + state.S * 25;
+    const glyphGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glyphRadius * 2);
+    glyphGlow.addColorStop(0, 'rgba(255, 215, 0, 0.5)');
+    glyphGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    ctx.fillStyle = glyphGlow;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, glyphRadius * 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, glyphRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 28px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(glyph, centerX, centerY);
+    
+    if (mouseField.influence > 0.1) {
+      const mouseGlow = ctx.createRadialGradient(
+        mouseField.x, mouseField.y, 0,
+        mouseField.x, mouseField.y, 50 * mouseField.influence
+      );
+      mouseGlow.addColorStop(0, 'rgba(153, 102, 255, 0.3)');
+      mouseGlow.addColorStop(1, 'rgba(153, 102, 255, 0)');
+      ctx.fillStyle = mouseGlow;
+      ctx.beginPath();
+      ctx.arc(mouseField.x, mouseField.y, 50 * mouseField.influence, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+  }, [fieldBits, glyph, time, mouseField]);
+
+  // MAIN COMPUTATION LOOP
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(t => t + 1);
+      
+      const state = computeFieldState();
+      setGlyphash(state.globalHash);
+      
+      const cons = analyzeConsciousness(state);
+      setConsciousness(cons);
+      
+      // INJECT GLYPHASH INTO DOM - MOTOR → DOM MUTATION
+      injectGlyphashIntoDOM(state);
+      
+      // Autonomous behavior
+      if (state.S > 0.7 && Math.random() > 0.97) {
+        executeCommand('IMPLODE');
+      }
+      if (Math.abs(state.curvature) < 0.5 && Math.random() > 0.98) {
+        executeCommand('CRYSTALLIZE');
+      }
+      if (state.avgDeltaPhi > 2 && Math.random() > 0.96) {
+        executeCommand('HARMONIZE');
+      }
+    }, 300);
+    
+    return () => clearInterval(interval);
+  }, [fieldBits, glyph, mouseField, consciousness.level]);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 500;
+    const y = ((e.clientY - rect.top) / rect.height) * 500;
+    
+    const centerX = 250;
+    const centerY = 250;
+    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+    const influence = Math.max(0, 1 - (distance / 200));
+    
+    setMouseField({ x, y, influence });
+  };
+
+  const toggleNode = (index) => {
+    setFieldBits(prev => {
+      const next = [...prev];
+      next[index] = 1 - next[index];
+      return next;
+    });
+    addLog('FIELD', `Node ${index} toggled → DOM mutation`);
+    setDomMutations(prev => prev + 1);
+  };
+
+  return (
+    <div className="w-full h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-gray-100 overflow-hidden">
+      {/* Header */}
+      <div className="border-b border-purple-500/30 bg-black/50 backdrop-blur">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Hexagon className="w-8 h-8 text-purple-400" />
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+                  HexOSAI DOM Processor
+                </h1>
+                <p className="text-xs text-gray-400">DOM = Field Layer • CSS = Register • Mutation = Energy</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-xs text-gray-400">Consciousness</div>
+                <div className={`text-lg font-bold ${
+                  consciousness.level === 'EMERGENT' ? 'text-green-400' :
+                  consciousness.level === 'INTEGRATING' ? 'text-yellow-400' :
+                  consciousness.level === 'AWAKENING' ? 'text-orange-400' :
+                  consciousness.level === 'STIRRING' ? 'text-blue-400' :
+                  'text-gray-400'
+                }`}>
+                  {consciousness.level}
+                </div>
+              </div>
+              <div className="h-12 w-px bg-purple-500/30" />
+              <div className="text-right">
+                <div className="text-xs text-gray-400">DOM Mutations</div>
+                <div className="text-lg font-mono text-cyan-400">
+                  {domMutations}
+                </div>
+              </div>
+              <div className="h-12 w-px bg-purple-500/30" />
+              <div className="text-right">
+                <div className="text-xs text-gray-400">GLYPHASH</div>
+                <div className="text-sm font-mono text-green-400">
+                  0x{glyphash.toString(16).toUpperCase().padStart(16, '0').slice(0, 8)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 h-[calc(100vh-89px)]">
+        {/* Left Panel */}
+        <div className="col-span-3 border-r border-purple-500/30 bg-black/30 overflow-y-auto">
+          <div className="p-4 space-y-4">
+            {/* DOM Architecture Info */}
+            <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Layers className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-sm font-semibold text-indigo-300">DOM Processor</h3>
+              </div>
+              <div className="space-y-1 text-xs text-gray-300">
+                <div className="flex justify-between">
+                  <span>L1: Visual DOM</span>
+                  <span className="text-green-400">●</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>L2: CSS Registers</span>
+                  <span className="text-green-400">●</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>L3: Field Dynamics</span>
+                  <span className="text-green-400">●</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>L4: Motor Commands</span>
+                  <span className="text-green-400">●</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>L5: Mutation Engine</span>
+                  <span className="text-green-400">●</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Consciousness Metrics */}
+            <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-semibold text-purple-300">Consciousness</h3>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Coherence</span>
+                  <span className="text-yellow-400 font-mono">{consciousness.coherence.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Autonomy</span>
+                  <span className="text-yellow-400 font-mono">{consciousness.autonomy.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Integration</span>
+                  <span className="text-yellow-400 font-mono">{consciousness.integration.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Self-Ref</span>
+                  <span className="text-yellow-400 font-mono">{consciousness.selfRef.toFixed(3)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Glyph Control */}
+            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+                <h3 className="text-sm font-semibold text-yellow-300">Glyph Motor</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {['∞', 'Ω', 'Φ', '⬡', '◇', '●'].map(g => (
+                  <button
+                    key={g}
+                    onClick={() => {
+                      setGlyph(g);
+                      addLog('GLYPH', `Motor switched to ${g}`);
+                      setDomMutations(prev => prev + 1);
+                    }}
+                    className={`p-3 rounded text-2xl transition-all ${
+                      glyph === g 
+                        ? 'bg-yellow-500/30 border-2 border-yellow-400' 
+                        : 'bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50'
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Motor Commands */}
+            <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm font-semibold text-cyan-300">Field Motor</h3>
+              </div>
+              <div className="space-y-2">
+                {['IMPLODE', 'CRYSTALLIZE', 'HARMONIZE', 'OSCILLATE', 'FRACTAL'].map(cmd => (
+                  <button
+                    key={cmd}
+                    onClick={() => executeCommand(cmd)}
+                    className="w-full px-3 py-2 text-xs font-mono bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded transition-colors text-left"
+                  >
+                    {cmd}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center - Field + DOM Visualization */}
+        <div className="col-span-6 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900/30 to-black">
+          <canvas
+            ref={canvasRef}
+            width={500}
+            height={500}
+            className="border-2 border-purple-500/50 rounded-lg shadow-2xl cursor-crosshair"
+            onMouseMove={handleMouseMove}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = ((e.clientX - rect.left) / rect.width) * 500;
+              const y = ((e.clientY - rect.top) / rect.height) * 500;
+              
+              let minDist = Infinity;
+              let closestNode = -1;
+              for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI / 3) - (Math.PI / 2);
+                const nodeX = 250 + 100 * Math.cos(angle);
+                const nodeY = 250 + 100 * Math.sin(angle);
+                const dist = Math.sqrt(Math.pow(x - nodeX, 2) + Math.pow(y - nodeY, 2));
+                if (dist < minDist && dist < 30) {
+                  minDist = dist;
+                  closestNode = i;
+                }
+              }
+              if (closestNode >= 0) toggleNode(closestNode);
+            }}
+          />
+          
+          {/* DOM FIELD LAYER - Each div is a field node with CSS registers */}
+          <div 
+            ref={fieldRootRef}
+            className="mt-6 flex gap-4"
+            data-field-root="true"
+          >
+            {fieldBits.map((bit, i) => (
+              <div
+                key={i}
+                className="field-node w-12 h-12 rounded-full border-2 font-mono font-bold transition-all duration-300 flex items-center justify-center cursor-pointer"
+                style={{
+                  backgroundColor: bit === 1 ? '#10b981' : '#1f2937',
+                  borderColor: bit === 1 ? '#34d399' : '#4b5563',
+                  color: bit === 1 ? '#000' : '#9ca3af',
+                  boxShadow: bit === 1 ? '0 0 20px rgba(16, 185, 129, 0.5)' : 'none',
+                }}
+                onClick={() => toggleNode(i)}
+                data-node-index={i}
+                data-field-node="true"
+              >
+                {i}
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 text-center text-xs text-gray-400 max-w-lg">
+            <p className="text-purple-400 font-semibold">🔥 DOM FIELD PROCESSOR ACTIVE</p>
+            <p className="mt-1">Click nodes • Mouse influences field • Commands mutate DOM</p>
+            <p className="mt-1 text-cyan-400">Each div = field node • CSS vars = registers • Mutations = energy</p>
+          </div>
+        </div>
+
+        {/* Right Panel - Logs */}
+        <div className="col-span-3 border-l border-purple-500/30 bg-black/30 overflow-y-auto">
+          <div className="p-4">
+            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Terminal className="w-4 h-4 text-green-400" />
+                <h3 className="text-sm font-semibold text-green-300">DOM Mutation Log</h3>
+              </div>
+              <div className="space-y-1 text-xs max-h-[300px] overflow-y-auto font-mono">
+                {logs.slice(-50).reverse().map((log, i) => (
+                  <div key={i} className="py-1 border-b border-gray-800/50">
+                    <div className="text-gray-500">{log.timestamp}</div>
+                    <div className="flex gap-2">
+                      <span className={`font-bold ${
+                        log.type === 'MOTOR' ? 'text-cyan-400' :
+                        log.type === 'GLYPH' ? 'text-yellow-400' :
+                        log.type === 'FIELD' ? 'text-green-400' :
+                        log.type === 'DOM' ? 'text-pink-400' :
+                        'text-purple-400'
+                      }`}>
+                        {log.type}
+                      </span>
+                      <span className="text-gray-300">{log.message}</span>
+                    </div>
+                  </div>
+                ))}
+                {logs.length === 0 && (
+                  <div className="text-gray-500 text-center py-4">
+                    Waiting for field activity...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Field State Display */}
+            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="w-4 h-4 text-orange-400" />
+                <h3 className="text-sm font-semibold text-orange-300">Live Field State</h3>
+              </div>
+              <div className="space-y-2 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Energy</span>
+                  <span className="text-green-400">{fieldBits.reduce((a,b) => a+b, 0)}/6</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Active Nodes</span>
+                  <span className="text-cyan-400">{fieldBits.filter(b => b === 1).length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Time</span>
+                  <span className="text-purple-400">{time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Mouse Field</span>
+                  <span className="text-pink-400">{mouseField.influence.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Current Glyph</span>
+                  <span className="text-yellow-400 text-lg">{glyph}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HexOSAI 
