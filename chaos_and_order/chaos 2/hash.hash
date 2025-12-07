@@ -1,1 +1,24 @@
 
+==== glyph-generator.js ==== 
+SHA256 hash of glyph-generator.js:
+279f8b2f4587d05948d771a8da286b771d681b714835827dab6855aa410411da
+CertUtil: -hashfile command completed successfully.
+==== HASHREGISTER.txt ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== MOEDERBLOEM-INTEGRATION-GUIDE.md ==== 
+SHA256 hash of MOEDERBLOEM-INTEGRATION-GUIDE.md:
+4a15877fd7cc6499b78eac0efc93dc9efb9be754179fa1007244a880048eca8f
+CertUtil: -hashfile command completed successfully.
+==== moederbloem-motor-adapter.js ==== 
+SHA256 hash of moederbloem-motor-adapter.js:
+ed65639316a613a822fd8f3ba32f23e63f1d42bcfa5f9418c78b314f361487d8
+CertUtil: -hashfile command completed successfully.
+==== moederbloem-visual-interface.jsx ==== 
+SHA256 hash of moederbloem-visual-interface.jsx:
+badd156f30c130a85a725c048d595178a91fb02f3fec1481615721de63dd75fc
+CertUtil: -hashfile command completed successfully.
+==== phase-switch.js ==== 
+SHA256 hash of phase-switch.js:
+f09614577e9b90726f95f4f442f2df1486e101abb00f2d3f93adc45c7553731f
+CertUtil: -hashfile command completed successfully.
