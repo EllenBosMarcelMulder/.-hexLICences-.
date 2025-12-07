@@ -1,4 +1,4 @@
-# ✔ **PRIOR ART BLOCK FOR PUBLIC RELEASE**
+# **PRIOR ART BLOCK FOR PUBLIC RELEASE**
 
 ---
 
@@ -41,7 +41,7 @@ Any reinterpretation, simulation, implementation, modification, or extension of 
 
 ---
 
-# ✔ **HTML FOOTER VERSION**
+# **HTML FOOTER VERSION**
 
 ```html
 <footer style="text-align:center; margin-top:2rem; opacity:0.8;">
@@ -58,7 +58,7 @@ Any reinterpretation, simulation, implementation, modification, or extension of 
 
 ---
 
-# ✔ **GITHUB README VERSION**
+# **GITHUB README VERSION**
 
 
 ```md
@@ -82,7 +82,7 @@ Derivatives must preserve attribution and remain compatible with HHL-π.
 
 ---
 
-# ✔ **CODE HEADER VERSION**
+# **CODE HEADER VERSION**
 
 ```txt
 // Hexagonal Field Glyph Phase Projection Engine
@@ -94,7 +94,8 @@ Derivatives must preserve attribution and remain compatible with HHL-π.
 
 ---
 
-# ✔ **FULL PRIOR-ART LOCK PHRASE**
+# **FULL PRIOR-ART LOCK PHRASE**
 
 > “This disclosure constitutes irreversible prior art under the Humanity Heritage License π.
+
 > Any attempt to patent, commercialise, restrict, or privatise the Hexagonal Field Glyph Phase Projection Engine or any of its derivatives is legally invalid due to this public, timestamped, globally accessible disclosure.”
