@@ -1,4 +1,3 @@
-
 On the Definition of a Non-Digital Physical Computation Class
 
 Based on Continuous State Evolution
