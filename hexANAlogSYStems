@@ -4,7 +4,7 @@ On the Definition of a Non-Digital Physical Computation Class
 Based on Continuous State Evolution
 
 Status: Prior Art Publication
-Version: 1.0
+Version: 1.1
 Date: 2026-02-06
 Disclosure: Public, non-confidential
 
@@ -123,9 +123,7 @@ Any system containing such properties is not a member of this class.
 
 Within this class, computation is defined as:
 
-> The continuous physical evolution of a system state toward a stable, metastable, or unstable configuration under fixed boundary conditions.
-
-
+The continuous physical evolution of a system state toward a stable, metastable, or unstable configuration under fixed boundary conditions.
 
 Computation is not an act, step, or process, but an emergent physical outcome.
 
@@ -160,6 +158,26 @@ error is defined exclusively as physical instability, irreversibility, or breakd
 
 
 There is no internal error detection or correction.
+
+
+---
+
+3.4 Measurement, Discretization, and External Observation
+
+Any form of measurement, discretization, sampling, digitization, or symbolic interpretation of system state occurs strictly external to the Non-Digital Physical Computation System.
+
+Such external observation:
+
+does not constitute computation within the system,
+
+does not alter the internal system dynamics,
+
+does not introduce digital properties into the system itself.
+
+
+The presence of external digital measurement, recording, or interpretation does not reclassify the system as digital.
+
+Any system in which discretization, symbolic encoding, or logical interpretation occurs internally is explicitly excluded from this class.
 
 
 ---
@@ -234,6 +252,73 @@ Any interaction between an NDPCS and a digital system, if present, must occur ex
 
 
 ---
+
+6. Implementation Independence
+
+This definition is implementation-agnostic.
+
+The class does not prescribe or require:
+
+a material substrate,
+
+a geometry,
+
+a fabrication method,
+
+an energy domain,
+
+a specific physical mechanism.
+
+
+Any physical realization that satisfies the definitions in Sections 2 and 3 belongs to this class, regardless of scale or medium.
+
+
+---
+
+7. Prior Art Declaration
+
+This document constitutes a public disclosure of a non-digital physical computation class.
+
+The disclosure:
+
+is independent of implementation,
+
+precedes any specific design,
+
+establishes conceptual and definitional prior art,
+
+is not restricted by confidentiality or patent claims.
+
+
+Any future system claiming computation through continuous physical state evolution without digital representation falls within the scope of this disclosure.
+
+
+---
+
+Terminological and Historical Independence
+
+This disclosure applies irrespective of later terminology, naming conventions, reclassification, or technological framing.
+
+Any future system, concept, or device that satisfies the definitions set forth in Sections 2 and 3 falls within the scope of this disclosure, regardless of how such systems are later described, branded, or contextualized.
+
+This definition precedes and is independent of any specific implementation, interpretation, or theoretical framing introduced at a later date.
+
+
+---
+
+8. Closing Statement
+
+This document defines a computation class solely by what it is not, what it excludes, and how computation is physically defined.
+
+No claims beyond definition are made.
+
+
+---
+
+End of Document
+
+
+
 
 6. Implementation Independence
 
