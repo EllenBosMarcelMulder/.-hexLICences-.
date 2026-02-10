@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hexOS v0.1</title>
+    <!-- 
+    hexOS v0.1 - Field-based BIOS Implementation
+    © Marcel Mulder (52%), Ellen Bos (24%), Paola dal Bianco (24%)
+    LICENTIES: https://github.com/EllenBosMarcelMulder section licences
+    -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: monospace;
+            cursor: none;
+        }
+        
+        #boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            color: #0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        #boot-screen.hidden {
+            display: none;
+        }
+        
+        .boot-line {
+            margin: 5px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        .boot-line:nth-child(1) { animation-delay: 0s; }
+        .boot-line:nth-child(2) { animation-delay: 0.5s; }
+        .boot-line:nth-child(3) { animation-delay: 1s; }
+        .boot-line:nth-child(4) { animation-delay: 1.5s; }
+        .boot-line:nth-child(5) { animation-delay: 2s; }
+        .boot-line:nth-child(6) { animation-delay: 2.5s; }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <div class="boot-line">hexOS v0.1</div>
+        <div class="boot-line">18-sector field kernel</div>
+        <div class="boot-line">Initializing field physics...</div>
+        <div class="boot-line">Loading transducers...</div>
+        <div class="boot-line">Starting projector...</div>
+        <div class="boot-line">CLICK TO ENTER FIELD</div>
+    </div>
+
+    <!-- hexOS Core Components -->
+    <script src="kernel.js"></script>
+    <script src="transducer.js"></script>  
+    <script src="projector.js"></script>
+
+    <script>
+        /**
+         * hexOS BOOTSTRAP v0.1 - BIOS INITIALIZATION
+         * BIOS: Basic Input/Output System
+         * - Initializes field kernel (BIOS)
+         * - Starts runtime loop (not BIOS)
+         * - Transfers control to field evolution
+         */
+
+        let isBooted = false;
+        let lastTime = 0;
+
+        // BIOS BOOT SEQUENCE
+        function boot() {
+            if (isBooted) return;
+            isBooted = true;
+            
+            // Hide boot screen
+            document.getElementById('boot-screen').classList.add('hidden');
+            
+            // Initialize optional inputs (BIOS function)
+            window.hexOS_transducer.initCamera();
+            window.hexOS_transducer.initMicrophone();
+            
+            // Transfer control to runtime
+            startRuntime();
+            
+            console.log('hexOS BIOS v0.1 - Kernel initialized');
+            console.log('BIOS transfer complete - Runtime active');
+        }
+
+        // RUNTIME LOOP (not BIOS - this is field evolution runtime)
+        function startRuntime() {
+            function runtimeLoop(currentTime = 0) {
+                const deltaTime = currentTime - lastTime;
+                lastTime = currentTime;
+                
+                // 1. EVOLVE FIELD (runtime function)
+                window.hexOS.evolve();
+                
+                // 2. PROJECT STATE (runtime function)
+                window.hexOS_projector.project();
+                
+                // 3. CONTINUE RUNTIME
+                requestAnimationFrame(runtimeLoop);
+            }
+            
+            runtimeLoop();
+        }
+
+        // STARTUP: Wait for user interaction (audio policy)
+        document.addEventListener('click', boot, { once: true });
+        document.addEventListener('keydown', boot, { once: true });
+        document.addEventListener('touchstart', boot, { once: true });
+
+        // EMERGENCY RESET (if field becomes unstable)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'R' && e.ctrlKey) {
+                window.hexOS.reset(42);  // Deterministic seed
+                console.log('hexOS: Field kernel reset (deterministic)');
+            }
+        });
+
+        // FIELD STATE DEBUGGING (development only)
+        window.DEBUG_hexOS = () => {
+            const state = window.hexOS.getState();
+            console.table({
+                'Stress': state.stress,
+                'Integrity': state.integrity, 
+                'Coherence': state.coherence,
+                'Time': state.time,
+                'Max Energy': Math.max(...state.rho),
+                'Min Energy': Math.min(...state.rho),
+                'Energy Sum': state.rho.reduce((a,b) => a+b, 0)
+            });
+            return state;
+        };
+
+        // PERFORMANCE MONITORING
+        let frameCount = 0;
+        let startTime = performance.now();
+        
+        setInterval(() => {
+            if (isBooted) {
+                const fps = frameCount / ((performance.now() - startTime) / 1000);
+                document.title = `hexOS v0.1 - ${fps.toFixed(1)} FPS`;
+                frameCount = 0;
+                startTime = performance.now();
+            }
+        }, 1000);
+        
+        // Count frames in main loop
+        const originalMainLoop = mainLoop;
+        mainLoop = function(currentTime) {
+            frameCount++;
+            originalMainLoop(currentTime);
+        };
+
+    </script>
+
+</body>
+</html>

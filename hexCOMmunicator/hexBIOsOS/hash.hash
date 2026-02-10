@@ -1,0 +1,27 @@
+==== files (1).zip ==== 
+SHA256 hash of files (1).zip:
+ad23e31618510408a62ad25a790d4433cf6497f1627a5e580b4a0962101cddaf
+CertUtil: -hashfile command completed successfully.
+==== hash.hash ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== index.html ==== 
+SHA256 hash of index.html:
+3d5096b8a179e1b3af720cd01e6743c02b5b3ffcc054e58bd8174b6a42aa0e39
+CertUtil: -hashfile command completed successfully.
+==== kernel.js ==== 
+SHA256 hash of kernel.js:
+800a5d47af2e321fa96d3b6d0fbbf6061db0cc103fc59e4b2b1e30681cbc5ad9
+CertUtil: -hashfile command completed successfully.
+==== projector.js ==== 
+SHA256 hash of projector.js:
+864e5b0650cb7e113adaca66ee5d820f4f310125698d42500bdf28b888c34cb5
+CertUtil: -hashfile command completed successfully.
+==== README.md ==== 
+SHA256 hash of README.md:
+b987742784302cb2ec5131568542233121f45f5664e2c9048ebc13c9e7a6f74d
+CertUtil: -hashfile command completed successfully.
+==== transducer.js ==== 
+SHA256 hash of transducer.js:
+2bdca4ad9855e5abe395b6745a58fe7df48d161d36d9dd3e4628f2a0d4abb84f
+CertUtil: -hashfile command completed successfully.
