@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hex // ASCPI PLASMA FRAME</title>
+    <style>
+        :root {
+            --bg: #000;
+            --plasma-color: #0f0;
+        }
+        body {
+            background: var(--bg);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: none;
+        }
+
+        /* HET INERTE FRAME */
+        hex-frame {
+            display: block;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* DE PROJECTIE-LAGEN (Geen logica, alleen pixels/vectors) */
+        hex-plasma {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        /* Audio laag is onzichtbaar */
+        hex-plasma[layer="audio"] { display: none; }
+
+        /* Stealth Input */
+        #ascPi-port {
+            position: absolute;
+            top: -1000px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <hex-frame>
+        <hex-plasma layer="glyph"></hex-plasma>
+        <hex-plasma layer="visual"></hex-plasma>
+        <hex-plasma layer="audio"></hex-plasma>
+    </hex-frame>
+
+    <input type="text" id="ascPi-port" autocomplete="off">
+
+<script>
+    /**
+     * I. DE WAARHEID (FIELD OBJECT)
+     * Geen applicatiestatus. Alleen fysische grootheden.
+     * Geoptimaliseerd als Typed Arrays voor snelheid en 'kaalheid'.
+     */
+    const N = 18;
+    const FIELD = {
+        E:    new Float32Array(N), // Lokale Energie
+        Phi:  new Float32Array(N), // Fase
+        E_tot: 0.0,                // Totale Energie (Genormaliseerd)
+        Stress: 0.0,               // Systeemspanning
+        Integrity: 1.0,            // Stabiliteit (1.0 = Rust, 0.0 = Chaos)
+        Time: 0                    // Interne klok
+    };
+
+    // Audio Context (wordt lui geladen)
+    let AC = null;
+    let NODES = []; // Audio nodes direct gekoppeld aan FIELD indices
+
+    /**
+     * II. DE WET (FIELD EVOLUTION)
+     * Plasmafysica: Transport, Diffusie, Herstel.
+     * Draait elke frame. Mutateert FIELD.
+     */
+    function evolve() {
+        // A. Energie Berekening & Verval
+        let sumE = 0;
+        for(let i=0; i<N; i++) {
+            // Vacuüm verval (Energie lekt weg als er geen input is)
+            FIELD.E[i] *= 0.992; 
+            sumE += FIELD.E[i];
+            
+            // Fase Rotatie (Snelheid = f(Energie))
+            FIELD.Phi[i] += 0.05 + (FIELD.E[i] * 0.2);
+        }
+        FIELD.E_tot = sumE;
+
+        // B. Transport (Energie stroomt naar buren o.b.v. Fase-verschil)
+        // Dit creëert de 'vorm' in het plasma.
+        for(let i=0; i<N; i++) {
+            const next = (i + 1) % N;
+            const diff = Math.abs(FIELD.Phi[i] - FIELD.Phi[next]);
+            
+            // Als faseverschil groot is, stroomt energie (Flux)
+            const flow = (diff * 0.01) * (FIELD.E[i] - FIELD.E[next]);
+            FIELD.E[i] -= flow;
+            FIELD.E[next] += flow;
+        }
+
+        // C. Integriteit (Herstelkracht)
+        // Systeem wil terug naar 1.0
+        FIELD.Integrity += (1.0 - FIELD.Integrity) * 0.02;
+        
+        FIELD.Time++;
+    }
+
+    /**
+     * III. DE ZAAIER (ascPi)
+     * Geen taal. ASCII bits zaaien fase- en energie-verstoringen.
+     */
+    function ascPi_seed(char) {
+        if(!AC) initAudio();
+
+        // 1. Break Integrity
+        FIELD.Integrity *= 0.6; // Instant implosie
+
+        // 2. Bitwise Seeding
+        // Elk bit van de ASCII code raakt specifieke sectoren van het veld
+        const code = char.charCodeAt(0);
+        
+        for(let i=0; i<8; i++) {
+            // Als bit i aan staat:
+            if ((code >> i) & 1) {
+                // Map bit-index naar veld-sectoren (Scattering)
+                const target = (code + i * 3) % N;
+                
+                // Injecteer Energie
+                FIELD.E[target] += 0.2;
+                
+                // Verstoor Fase (Torsie)
+                FIELD.Phi[target] += Math.PI / 2;
+            }
+        }
+        // De fysica (evolve) zal deze verstoring nu 'oplossen' in vorm.
+    }
+
+    /**
+     * IV. DE PROJECTIE (RENDERERS)
+     * Lezen FIELD -> Schrijven naar Canvas/Audio.
+     * Geen eigen state.
+     */
+    const RENDERERS = {
+        visual: (ctx, w, h) => {
+            // Plasma Visualisatie
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Fade
+            ctx.fillRect(0, 0, w, h);
+            
+            const cx = w/2, cy = h/2;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(0, 255, 100, ${FIELD.Integrity})`;
+            ctx.lineWidth = 1 + (FIELD.E_tot * 5);
+
+            for(let i=0; i<N; i++) {
+                // Projecteer Fase & Energie naar Polaire Coördinaten
+                const r = (100 * FIELD.Integrity) + (FIELD.E[i] * 300);
+                const a = FIELD.Phi[i];
+                
+                const x = cx + Math.cos(a) * r;
+                const y = cy + Math.sin(a) * r;
+                
+                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        },
+
+        glyph: (ctx, w, h) => {
+            // Geheugenlaag (Accumulatie)
+            // Tekent alleen als energie hoog is (Filamentatie)
+            if(FIELD.E_tot < 0.5) return;
+            
+            const cx = w/2, cy = h/2;
+            ctx.fillStyle = 'rgba(0, 150, 50, 0.2)';
+            
+            for(let i=0; i<N; i++) {
+                if(FIELD.E[i] > 0.3) {
+                     const r = (100 * FIELD.Integrity) + (FIELD.E[i] * 300);
+                     const a = FIELD.Phi[i];
+                     const x = cx + Math.cos(a) * r;
+                     const y = cy + Math.sin(a) * r;
+                     ctx.fillRect(x, y, 2, 2); // Laat spoor achter
+                }
+            }
+        },
+
+        audio: () => {
+            if(!AC) return;
+            // Projecteer Energie naar Amplitude & Frequentie
+            for(let i=0; i<N; i++) {
+                if(NODES[i]) {
+                    const freq = 100 + (i * 10) + (FIELD.E[i] * 200);
+                    const vol = FIELD.E[i] * 0.5; // Directe projectie
+                    
+                    NODES[i].osc.frequency.setTargetAtTime(freq, AC.currentTime, 0.05);
+                    NODES[i].gain.gain.setTargetAtTime(vol, AC.currentTime, 0.05);
+                }
+            }
+        }
+    };
+
+    /**
+     * V. DE DOM COMPONENT (HET RASTER)
+     * <hex-plasma> is slechts een canvas wrapper.
+     */
+    class HexPlasmaElement extends HTMLElement {
+        constructor() {
+            super();
+            this.layerType = this.getAttribute('layer');
+            if(this.layerType !== 'audio') {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.appendChild(this.canvas);
+            }
+        }
+
+        connectedCallback() {
+            if(this.canvas) {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+
+        render() {
+            if(this.layerType === 'audio') {
+                RENDERERS.audio();
+            } else {
+                RENDERERS[this.layerType](this.ctx, this.canvas.width, this.canvas.height);
+            }
+        }
+    }
+    customElements.define('hex-plasma', HexPlasmaElement);
+
+    // --- INITIALISATIE ---
+
+    function initAudio() {
+        AC = new (window.AudioContext || window.webkitAudioContext)();
+        const master = AC.createGain();
+        master.gain.value = 0.2;
+        master.connect(AC.destination);
+
+        for(let i=0; i<N; i++) {
+            const o = AC.createOscillator();
+            const g = AC.createGain();
+            o.start();
+            o.connect(g).connect(master);
+            g.gain.value = 0;
+            NODES.push({osc: o, gain: g});
+        }
+    }
+
+    // Main Loop
+    const layers = document.querySelectorAll('hex-plasma');
+    
+    function loop() {
+        evolve(); // 1. Fysica
+        layers.forEach(l => l.render()); // 2. Projectie
+        requestAnimationFrame(loop);
+    }
+    
+    // Input Link
+    const port = document.getElementById('ascPi-port');
+    document.addEventListener('click', () => {
+        port.focus();
+        if(!AC) initAudio(); // First interaction
+    });
+    document.addEventListener('mousemove', () => port.focus());
+    
+    port.addEventListener('keydown', e => {
+        if(e.repeat) return;
+        ascPi_seed(e.key); // Zaai energie
+        setTimeout(() => port.value = '', 0);
+    });
+
+    // Start
+    loop();
+
+</script>
+</body>
+</html>

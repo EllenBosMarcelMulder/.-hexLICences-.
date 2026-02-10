@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hexFIELD v0.1 // FROZEN RUNTIME</title>
+    <style>
+        :root { --bg: #000; }
+        body {
+            background: var(--bg);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: none; /* OS cursor weg, Hex cursor neemt over */
+            font-family: monospace;
+            color: #444;
+        }
+
+        hex-frame {
+            display: block;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        hex-plasma {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        hex-plasma[layer="audio"] { display: none; }
+
+        #io-port { position: absolute; top: -1000px; opacity: 0; }
+        
+        #meta {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <hex-frame>
+        <hex-plasma layer="glyph"></hex-plasma>   <hex-plasma layer="visual"></hex-plasma>  <hex-plasma layer="cursor"></hex-plasma>  <hex-plasma layer="audio"></hex-plasma>   </hex-frame>
+
+    <div id="meta">
+        hexFIELD v0.1 // HARDENED AXIOMS // 2026-02-10 // ΣE=1
+    </div>
+    
+    <input type="text" id="io-port" autocomplete="off">
+
+<script>
+    /**
+     * hexFIELD v0.1 CANONICAL
+     * -----------------------
+     * Axiom 1: Conservation (ΣE = 1)
+     * Axiom 2: Stress = 1 - Integrity
+     * Axiom 3: Time is Observable (Rotation)
+     * Axiom 4: Stress is Palpable (Inertia)
+     */
+
+    const N = 18;
+
+    // --- I. DE STATUS (FIELD + INTERFACE STATE) ---
+    const FIELD = {
+        E:         new Float32Array(N).fill(1/N), 
+        Phi:       new Float32Array(N).map((_, i) => i * (Math.PI / 9)),
+        Stress:    0.0,
+        Integrity: 1.0,
+        Time:      0,
+        // Interface Fysica (Haptics)
+        Cursor:    { x: window.innerWidth/2, y: window.innerHeight/2 },
+        Target:    { x: window.innerWidth/2, y: window.innerHeight/2 }
+    };
+
+    let AC = null;
+    let NODES = [];
+    let ANCHOR = null;
+
+    // --- II. DE WET (EVOLUTION) ---
+    function evolve() {
+        // A. FYSICA UPDATE
+        for(let i=0; i<N; i++) {
+            FIELD.Phi[i] += 0.02 + (FIELD.E[i] * 0.1);
+        }
+
+        const nextE = new Float32Array(FIELD.E);
+        for(let i=0; i<N; i++) {
+            const neighbor = (i + 1) % N;
+            const dPhi = Math.abs(FIELD.Phi[i] - FIELD.Phi[neighbor]);
+            if (FIELD.E[i] > FIELD.E[neighbor]) {
+                const flow = (FIELD.E[i] - FIELD.E[neighbor]) * (dPhi * 0.05);
+                nextE[i] -= flow;
+                nextE[neighbor] += flow;
+            }
+        }
+        FIELD.E.set(nextE);
+
+        // B. NORMALISATIE (AXIOMA 1)
+        let norm = 0;
+        for (let i = 0; i < N; i++) norm += FIELD.E[i];
+        if (norm > 0.0001) for (let i = 0; i < N; i++) FIELD.E[i] /= norm;
+        else for (let i = 0; i < N; i++) FIELD.E[i] = 1/N;
+
+        // C. INTEGRITEIT & STRESS (AXIOMA 2)
+        FIELD.Integrity += (1.0 - FIELD.Integrity) * 0.01;
+        FIELD.Stress = 1.0 - FIELD.Integrity;
+        
+        // D. HAPTISCHE PROJECTIE (AXIOMA 4)
+        // Cursor volgt muis, maar met vertraging gebaseerd op Stress.
+        // Hoge Stress = Hoge Viscositeit = Trage Cursor.
+        const friction = 0.2 * FIELD.Integrity; // 0.2 (Snel) -> 0.02 (Traag/Zwaar)
+        FIELD.Cursor.x += (FIELD.Target.x - FIELD.Cursor.x) * friction;
+        FIELD.Cursor.y += (FIELD.Target.y - FIELD.Cursor.y) * friction;
+
+        FIELD.Time++;
+    }
+
+    // --- III. INPUT (VECTOR INJECTION) ---
+    function injectVector(vector) {
+        if(!AC) initAudio();
+        
+        FIELD.Integrity *= 0.5; // Trigger Stress
+        
+        for(let i=0; i<N; i++) {
+            if(vector[i] > 0) {
+                FIELD.E[i] += vector[i] * 0.5;
+                FIELD.Phi[i] += Math.PI/2;
+            }
+        }
+    }
+
+    function ascPi_seed(char) {
+        const code = char.charCodeAt(0);
+        const vector = new Float32Array(N).fill(0);
+        for(let i=0; i<8; i++) {
+            if ((code >> i) & 1) vector[(code + i * 3) % N] = 1.0;
+        }
+        injectVector(vector);
+    }
+
+    // --- IV. PROJECTIES ---
+    const RENDERERS = {
+        visual: (ctx, w, h) => {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, w, h);
+            
+            // Gebruik de 'Fysieke' cursor positie als middelpunt
+            // Dit versterkt het gevoel dat JIJ in het veld zit
+            const cx = FIELD.Cursor.x;
+            const cy = FIELD.Cursor.y;
+            const baseR = 150;
+
+            ctx.beginPath();
+            const hue = 120 - (FIELD.Stress * 120);
+            ctx.strokeStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
+            
+            for(let i=0; i<N; i++) {
+                const r = baseR + (FIELD.E[i] * 800) - (FIELD.Stress * 50);
+                const a = FIELD.Phi[i];
+                const x = cx + Math.cos(a) * r;
+                const y = cy + Math.sin(a) * r;
+                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        },
+
+        glyph: (ctx, w, h) => {
+            // AXIOMA 3: TIJD ALS ROTATIE
+            // Het hele geheugenveld roteert langzaam obv FIELD.Time
+            const cx = w/2, cy = h/2;
+            
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(FIELD.Time * 0.0005); // De Tijd-As
+            ctx.translate(-cx, -cy);
+
+            ctx.fillStyle = `rgba(0, 255, 128, 0.15)`;
+            const baseR = 150;
+            
+            // Teken filamenten relatief aan scherm-midden (stabiel anker)
+            // Maar geroteerd door de tijd.
+            for(let i=0; i<N; i++) {
+                if(FIELD.E[i] > 0.1) {
+                     const r = baseR + (FIELD.E[i] * 800);
+                     const a = FIELD.Phi[i];
+                     const x = cx + Math.cos(a) * r;
+                     const y = cy + Math.sin(a) * r;
+                     ctx.fillRect(x, y, 2, 2);
+                }
+            }
+            ctx.restore();
+        },
+
+        cursor: (ctx, w, h) => {
+            // Projectie van de Haptische Weerstand
+            ctx.clearRect(0,0,w,h);
+            
+            const x = FIELD.Cursor.x;
+            const y = FIELD.Cursor.y;
+            
+            // Crosshair
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + FIELD.Stress})`; // Feller bij stress
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y);
+            ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10);
+            ctx.stroke();
+
+            // Lag indicator (Lijn naar echte muis als stress hoog is)
+            if (FIELD.Stress > 0.1) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(FIELD.Target.x, FIELD.Target.y);
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.stroke();
+            }
+        },
+
+        audio: () => {
+            if(!AC) return;
+            const anchorVol = FIELD.Stress * 0.4;
+            ANCHOR.gain.setTargetAtTime(anchorVol, AC.currentTime, 0.05);
+
+            for(let i=0; i<N; i++) {
+                if(NODES[i]) {
+                    const freq = 100 + (i * 12) + (FIELD.E[i] * 500);
+                    const vol = FIELD.E[i]; 
+                    NODES[i].osc.frequency.setTargetAtTime(freq, AC.currentTime, 0.05);
+                    NODES[i].gain.gain.setTargetAtTime(vol, AC.currentTime, 0.05);
+                }
+            }
+        }
+    };
+
+    // --- V. DOM FRAME ---
+    class HexPlasmaElement extends HTMLElement {
+        constructor() {
+            super();
+            this.layerType = this.getAttribute('layer');
+            if(this.layerType !== 'audio') {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.appendChild(this.canvas);
+            }
+        }
+        connectedCallback() {
+            if(this.canvas) {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+        }
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+        render() {
+            if(this.layerType === 'audio') RENDERERS.audio();
+            else RENDERERS[this.layerType](this.ctx, this.canvas.width, this.canvas.height);
+        }
+    }
+    customElements.define('hex-plasma', HexPlasmaElement);
+
+    // --- SETUP & LOOP ---
+    function initAudio() {
+        AC = new (window.AudioContext || window.webkitAudioContext)();
+        const master = AC.createGain();
+        master.gain.value = 0.5; 
+        master.connect(AC.destination);
+
+        for(let i=0; i<N; i++) {
+            const o = AC.createOscillator();
+            const g = AC.createGain();
+            o.start(); o.connect(g).connect(master);
+            g.gain.value = 0; NODES.push({osc: o, gain: g});
+        }
+
+        const buf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+        const d = buf.getChannelData(0);
+        for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+        const noise = AC.createBufferSource();
+        noise.buffer = buf; noise.loop = true;
+        const lpf = AC.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = 60;
+        ANCHOR = AC.createGain(); ANCHOR.gain.value = 0;
+        noise.connect(lpf).connect(ANCHOR).connect(master); noise.start();
+    }
+
+    const layers = document.querySelectorAll('hex-plasma');
+    function loop() {
+        evolve();
+        layers.forEach(l => l.render());
+        requestAnimationFrame(loop);
+    }
+    
+    // Muis tracking voor haptische cursor
+    document.addEventListener('mousemove', e => {
+        FIELD.Target.x = e.clientX;
+        FIELD.Target.y = e.clientY;
+        // Init cursor op eerste beweging
+        if(FIELD.Time < 10) { FIELD.Cursor.x = e.clientX; FIELD.Cursor.y = e.clientY; }
+        
+        document.getElementById('io-port').focus();
+    });
+
+    const port = document.getElementById('io-port');
+    document.addEventListener('click', () => { port.focus(); if(!AC) initAudio(); });
+    
+    port.addEventListener('keydown', e => {
+        if(e.repeat) return;
+        ascPi_seed(e.key);
+        setTimeout(() => port.value = '', 0);
+    });
+
+    loop();
+
+</script>
+</body>
+</html>

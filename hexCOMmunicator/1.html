@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hexFIELD // CANONICAL RUNTIME</title>
+    <style>
+        :root {
+            --hex-bg: #000;
+            --hex-primary: #0f0;
+            --hex-energy: 0; /* Wordt live geüpdatet door het veld */
+        }
+
+        body {
+            background: var(--hex-bg);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+        }
+
+        /* DE CONTAINER */
+        hex-field {
+            display: block;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* PROJECTIES (LAYERS) */
+        hex-lumen, hex-glyph {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        hex-sonus {
+            display: none; /* Audio heeft geen visuele dimensie */
+        }
+
+        /* De UI is onzichtbaar, alleen energie-injectie */
+        #injector {
+            position: absolute;
+            top: -1000px;
+            opacity: 0;
+        }
+
+        #osd {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #444;
+            font-size: 10px;
+            text-align: center;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <hex-field id="TheField">
+        <hex-glyph></hex-glyph>
+        <hex-lumen></hex-lumen>
+        <hex-sonus></hex-sonus>
+    </hex-field>
+
+    <div id="osd">hexFIELD RUNTIME // CLICK TO ENGAGE</div>
+    <input type="text" id="injector" autocomplete="off">
+
+<script>
+    /**
+     * hexFIELD // CORE PHYSICS
+     * Geen DOM, geen Audio, alleen wiskunde.
+     */
+    class HexPhysics {
+        constructor() {
+            this.state = {
+                E_global: 0.1,
+                Ei: new Array(18).fill(0.01),
+                Phi: new Array(18).fill(0).map((_, i) => i * (Math.PI / 9)),
+                Integrity: 1.0,
+                R: 1000,
+                P: 900,
+                LastPulse: 0
+            };
+        }
+
+        update(now) {
+            const S = this.state;
+
+            // 1. Energie Verval & Totaal
+            let total = 0;
+            const vacuum = 0.05;
+            for(let i=0; i<18; i++) {
+                total += S.Ei[i];
+            }
+            if(total > vacuum) {
+                const leak = (total - vacuum) * 0.005;
+                for(let i=0; i<18; i++) S.Ei[i] -= leak * (S.Ei[i]/total);
+            }
+            S.E_global = total;
+
+            // 2. Herstel & Puls
+            const targetR = 800 + (1.0 - S.Integrity) * 2000;
+            S.R += (targetR - S.R) * 0.05;
+            S.P = S.R * 0.9;
+
+            // 3. Puls Trigger
+            if(now - S.LastPulse > S.P) {
+                S.LastPulse = now;
+                if(S.E_global > 0.1) {
+                    S.Integrity *= 0.85; // Break
+                    for(let i=0; i<18; i++) S.Ei[i] *= 1.15; // Surge
+                }
+            }
+
+            // 4. Integriteit & Rotatie
+            S.Integrity += (1.0 - S.Integrity) * 0.01;
+            const velocity = 0.02 + (S.E_global * 0.05);
+            for(let i=0; i<18; i++) S.Phi[i] += velocity;
+
+            // 5. TRANSPORT (De Plasma Wet)
+            for(let i=0; i<18; i++) {
+                const j = (i + 1) % 18;
+                let dPhi = S.Phi[j] - S.Phi[i];
+                if(dPhi < 0) dPhi += Math.PI*2;
+                
+                // Flux van hoge spanning naar lage spanning
+                const flow = (dPhi - (Math.PI/9)) * 0.08; 
+                const transfer = flow * S.Ei[i];
+                
+                if (S.Ei[i] - transfer > 0) {
+                    S.Ei[i] -= transfer;
+                    S.Ei[j] += transfer;
+                }
+            }
+        }
+
+        inject(seed) {
+            this.state.Integrity = 0.4; // Instant Break
+            const bits = seed.toString(2).padStart(8, '0').split('').map(Number);
+            for(let i=0; i<18; i++) {
+                const bit = bits[i%8];
+                const offset = seed % 18;
+                const target = (i + offset) % 18;
+                if(bit) {
+                    this.state.Ei[target] += 0.08;
+                    this.state.Phi[target] += 0.5;
+                }
+            }
+        }
+    }
+
+    /**
+     * <hex-field> // THE HOST
+     * Beheert de loop en de state. De rest volgt.
+     */
+    class HexFieldElement extends HTMLElement {
+        constructor() {
+            super();
+            this.physics = new HexPhysics();
+            this.projectors = [];
+            this.running = false;
+        }
+
+        connectedCallback() {
+            // Vind alle projectie-kinderen
+            this.projectors = Array.from(this.children).filter(c => c.render);
+            
+            // Klik om te starten (Audio Policy)
+            document.addEventListener('click', () => {
+                if(!this.running) {
+                    this.running = true;
+                    document.getElementById('osd').style.opacity = 0;
+                    this.loop();
+                    // Init audio context in sonus child
+                    const sonus = this.querySelector('hex-sonus');
+                    if(sonus) sonus.initAudio();
+                }
+                document.getElementById('injector').focus();
+            }, { once: true });
+        }
+
+        loop() {
+            const now = performance.now();
+            
+            // 1. Update Fysica
+            this.physics.update(now);
+
+            // 2. Projecteer naar DOM (CSS Variables voor globale styling)
+            this.style.setProperty('--hex-energy', this.physics.state.E_global);
+
+            // 3. Projecteer naar Kinderen
+            for(const p of this.projectors) {
+                p.render(this.physics.state, now);
+            }
+
+            requestAnimationFrame(() => this.loop());
+        }
+
+        inject(charCode) {
+            this.physics.inject(charCode);
+        }
+    }
+
+    /**
+     * <hex-lumen> // VISUAL PROJECTION
+     */
+    class HexLumenElement extends HTMLElement {
+        constructor() {
+            super();
+            this.canvas = document.createElement('canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.appendChild(this.canvas);
+        }
+
+        connectedCallback() {
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+
+        render(F, now) {
+            const ctx = this.ctx;
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            const cx = w/2, cy = h/2;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.beginPath();
+            const hue = 120 - (F.E_global * 50);
+            ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${Math.min(1, F.E_global + 0.2)})`;
+            ctx.lineWidth = 1 + (F.E_global * 5);
+
+            for(let i=0; i<18; i++) {
+                const angle = F.Phi[i];
+                const r = (150 * F.Integrity) + (F.Ei[i] * 500);
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     * <hex-glyph> // MEMORY PROJECTION
+     */
+    class HexGlyphElement extends HTMLElement {
+        constructor() {
+            super();
+            this.canvas = document.createElement('canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.history = new Float32Array(2048);
+            this.ptr = 0;
+            this.appendChild(this.canvas);
+        }
+        
+        connectedCallback() {
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+
+        render(F, now) {
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            const cx = w/2, cy = h/2;
+
+            // Alleen renderen als er energie is (zuinigheid)
+            if(F.E_global < 0.02) return;
+
+            // Fade oud geheugen langzaam
+            this.ctx.fillStyle = 'rgba(0,0,0,0.02)';
+            this.ctx.fillRect(0,0,w,h);
+
+            // Schrijf nieuwe punten
+            this.ctx.fillStyle = `rgba(0, 100, 50, 0.3)`;
+            for(let i=0; i<18; i++) {
+                 const angle = F.Phi[i];
+                 const r = (150 * F.Integrity) + (F.Ei[i] * 500);
+                 const x = cx + Math.cos(angle) * r;
+                 const y = cy + Math.sin(angle) * r;
+                 
+                 // Stochastische accumulatie
+                 if(Math.random() > 0.9) {
+                     this.ctx.fillRect(x, y, 2, 2);
+                 }
+            }
+        }
+    }
+
+    /**
+     * <hex-sonus> // AUDIO PROJECTION
+     */
+    class HexSonusElement extends HTMLElement {
+        constructor() {
+            super();
+            this.AC = null;
+            this.oscs = [];
+            this.gains = [];
+            this.anchor = null;
+        }
+
+        initAudio() {
+            this.AC = new (window.AudioContext || window.webkitAudioContext)();
+            const master = this.AC.createGain();
+            master.gain.value = 0.3;
+            master.connect(this.AC.destination);
+
+            // Anchor
+            const buf = this.AC.createBuffer(1, this.AC.sampleRate*2, this.AC.sampleRate);
+            const d = buf.getChannelData(0);
+            for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+            const noise = this.AC.createBufferSource();
+            noise.buffer = buf;
+            noise.loop = true;
+            const lpf = this.AC.createBiquadFilter();
+            lpf.type = 'lowpass';
+            lpf.frequency.value = 60;
+            this.anchor = this.AC.createGain();
+            this.anchor.gain.value = 0;
+            noise.connect(lpf).connect(this.anchor).connect(master);
+            noise.start();
+
+            // Swirl
+            for(let i=0; i<18; i++) {
+                const o = this.AC.createOscillator();
+                const g = this.AC.createGain();
+                o.frequency.value = 100;
+                g.gain.value = 0;
+                o.connect(g).connect(master);
+                o.start();
+                this.oscs.push(o);
+                this.gains.push(g);
+            }
+        }
+
+        render(F, now) {
+            if(!this.AC) return;
+            const t = this.AC.currentTime;
+
+            // Anchor Volume = Stabiliteit
+            const anchorVol = Math.max(0.05, (1.0 - F.Integrity)*0.4);
+            this.anchor.gain.setTargetAtTime(anchorVol, t, 0.1);
+
+            // Swirl Volume & Pitch = Lokale Energie
+            for(let i=0; i<18; i++) {
+                const base = 100 + (i*6);
+                const pitch = base + (F.Ei[i] * 400 * Math.sin(F.Phi[i]));
+                const vol = (F.Ei[i] * 0.8) + 0.001;
+
+                this.oscs[i].frequency.setTargetAtTime(pitch, t, 0.05);
+                this.gains[i].gain.setTargetAtTime(vol, t, 0.05);
+            }
+        }
+    }
+
+    // --- REGISTRATIE ---
+    customElements.define('hex-field', HexFieldElement);
+    customElements.define('hex-lumen', HexLumenElement);
+    customElements.define('hex-glyph', HexGlyphElement);
+    customElements.define('hex-sonus', HexSonusElement);
+
+    // --- INJECTOR LINK ---
+    const field = document.getElementById('TheField');
+    const input = document.getElementById('injector');
+    
+    input.addEventListener('keydown', (e) => {
+        if(e.repeat) return;
+        field.inject(e.key.charCodeAt(0));
+        setTimeout(() => input.value = '', 10);
+    });
+    document.addEventListener('mousemove', () => input.focus());
+
+</script>
+</body>
+</html>
