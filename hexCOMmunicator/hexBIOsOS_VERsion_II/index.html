@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hexOS v0.4 - Autonomous Cycling</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: monospace; cursor: none; }
+        #boot { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; text-align: center; z-index: 1000; }
+        #boot.hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="boot">
+        <h2>hexOS v0.4 - Autonomous Field Cycling</h2>
+        <p>Y=Cycle | S=Snapshot | R=Resonate | C=Clear | L=Language</p>
+        <p>CLICK TO START</p>
+    </div>
+
+    <script src="kernel.js"></script>
+    <script src="transducer.js"></script>  
+    <script src="projector.js"></script>
+
+    <script>
+        let isBooted = false;
+
+        function boot() {
+            if (isBooted) return;
+            isBooted = true;
+            document.getElementById('boot').classList.add('hidden');
+            
+            function mainLoop() {
+                window.hexOS.evolve();
+                window.hexOS_projector.project();
+                requestAnimationFrame(mainLoop);
+            }
+            mainLoop();
+            
+            console.log('hexOS v0.4 - Autonomous cycling ready');
+        }
+
+        document.addEventListener('click', boot, { once: true });
+        document.addEventListener('keydown', boot, { once: true });
+
+        window.DEBUG_hexOS = () => {
+            const s = window.hexOS.getState();
+            console.log(`Cycling: ${s.cycling.active} | Memory: ${s.memory.active} | Stress: ${s.stress.toFixed(3)} | Stability: ${s.stability.toFixed(3)} | Pulses: ${s.cycling.pulse_count}`);
+            return s;
+        };
+    </script>
+</body>
+</html>
