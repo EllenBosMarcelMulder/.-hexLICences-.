@@ -1,0 +1,43 @@
+==== hash.hash ==== 
+CertUtil: -hashfile command FAILED: 0x80070020 (WIN32: 32 ERROR_SHARING_VIOLATION)
+CertUtil: The process cannot access the file because it is being used by another process.
+==== hexKERnKERnel_20260213_140000.js ==== 
+SHA256 hash of hexKERnKERnel_20260213_140000.js:
+3f5ce3e75b01795c24511798b8ceb5ac75a1e65c776d4001c1d656e7c9bc673d
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_binary_20260213_160000.js ==== 
+SHA256 hash of hexKERnKERnel_binary_20260213_160000.js:
+491cefe11eb9328b312907f0f471bc95111465564bb709f8adafcf037f0e27c6
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_energetic_20260213_152000.js ==== 
+SHA256 hash of hexKERnKERnel_energetic_20260213_152000.js:
+cdcfc8ff72406d1ed2f3524c87396107cb90aa0f7244d7ea10eb08704396a81c
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_entropic_20260213_154000.js ==== 
+SHA256 hash of hexKERnKERnel_entropic_20260213_154000.js:
+64bca019a087686a101056c4bb01aee59eda17d4136c594bd7708df8e67f34cb
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_metricless_20260213_144500.js ==== 
+SHA256 hash of hexKERnKERnel_metricless_20260213_144500.js:
+f6f3c455c8cf9ab2b37661834a43e9a68bb900224dc7d449998995dd20bb2a0c
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_multirepresentatie_20260213_162000.js ==== 
+SHA256 hash of hexKERnKERnel_multirepresentatie_20260213_162000.js:
+2fa2651edb04e7f33984d5089324bd6724864c69bb8df07fd93a6efbe270acd9
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_ordinal_20260213_150000.js ==== 
+SHA256 hash of hexKERnKERnel_ordinal_20260213_150000.js:
+bcdf63b64a623bc7ef19d308f1557c8dad8ea960665d2c486826e3f1cbbb7472
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_pure_20260213_141500.js ==== 
+SHA256 hash of hexKERnKERnel_pure_20260213_141500.js:
+dd2732e072c2f23570336129de75b33759bf0c458ed4607a3a918b14ae4b6dc0
+CertUtil: -hashfile command completed successfully.
+==== hexKERnKERnel_topological_20260213_143000.js ==== 
+SHA256 hash of hexKERnKERnel_topological_20260213_143000.js:
+ad38af83a25c32fafffa25724e26a219e3c5b0d910bd84353201d6c0f3bae8bc
+CertUtil: -hashfile command completed successfully.
+==== psych_tech_profile_analysis.txt ==== 
+SHA256 hash of psych_tech_profile_analysis.txt:
+50917bcb20c081c0596cdb65dd4b00e3a7eb9ad971389da7df5332f54c864f87
+CertUtil: -hashfile command completed successfully.
